@@ -1,12 +1,17 @@
+const config = require('./config');
+const dashboard = require('./src/services/dashboard');
+const stateManager = require('./src/utils/stateManager');
+
+const PORT = process.env.PORT || config.dashboardPort || 3030;
+dashboard.startDashboard(PORT);
+
 const { makeWASocket, DisconnectReason, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const qrcode = require('qrcode-terminal');
-const config = require('./config');
 const CommandHandler = require('./handlers/commandHandler');
 const ChatCommandHandler = require('./handlers/chatCommandHandler');
 const ReplyCommandHandler = require('./handlers/replyCommandHandler');
 const health = require('./src/services/health');
-const dashboard = require('./src/services/dashboard');
 const reminders = require('./src/services/reminders');
 const stateManager = require('./src/utils/stateManager');
 const logger = require('./src/utils/logger');
