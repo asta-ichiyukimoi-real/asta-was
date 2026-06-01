@@ -13,7 +13,7 @@ const ChatCommandHandler = require('./handlers/chatCommandHandler');
 const ReplyCommandHandler = require('./handlers/replyCommandHandler');
 const health = require('./src/services/health');
 const reminders = require('./src/services/reminders');
-const stateManager = require('./src/utils/stateManager');
+
 const logger = require('./src/utils/logger');
 
 const style = {
