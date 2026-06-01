@@ -18,7 +18,7 @@ const MODEL_ALIASES = {
 };
 
 function getAuthToken() {
-    const envToken = process.env.PUTER_AUTH_TOKEN || process.env.puterAuthToken || '';
+    const envToken = process.env.PUTER_AUTH_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InYyIn0.eyJ0IjoiZ3VpIiwidiI6IjIiLCJ1IjoiRXNvRFdpTmZSakNaako2Y1MzOExHQT09Iiwic3UiOiJFc29EV2lOZlJqQ1pqSjZjUzM4TEdBPT0iLCJ1dSI6InJTNUZEdG1vVE5haHhTcGpJLzMyQmc9PSIsImFpIjoiclM1RkR0bW9UTmFoeFNwakkvMzJCZz09IiwiaWF0IjoxNzgwMzQ5NzY4fQ.71B5QFI7UUoxm3TFKiKeyMb_k7fqTXFwq2mQP6xFA2Y';
     if (envToken) return envToken.trim();
 
     if (fs.existsSync(TOKEN_FILE)) {
