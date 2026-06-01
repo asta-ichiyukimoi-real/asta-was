@@ -1,0 +1,88 @@
+{
+  "usage": {
+    "totalCommands": 136,
+    "commands": {
+      "help": 25,
+      "menu": 14,
+      "test": 8,
+      "wikipedia": 3,
+      "youtube": 3,
+      "stats": 1,
+      "asta": 13,
+      "smart": 7,
+      "sticker": 2,
+      "time": 1,
+      "backup": 2,
+      "joke": 1,
+      "ping": 2,
+      "listcmd": 1,
+      "health": 1,
+      "groupinfo": 1,
+      "tagall": 1,
+      "mute": 1,
+      "unmute": 1,
+      "setprefix": 2,
+      "hello": 1,
+      "delete": 1,
+      "leave": 2,
+      "qwen": 4,
+      "qwenimage": 2,
+      "rep": 1,
+      "pinterest": 5,
+      "novel": 18,
+      "intelligent": 10,
+      "search": 2
+    }
+  },
+  "welcome": {
+    "enabled": true,
+    "message": "Welcome to the group, {{name}}! Please introduce yourself and enjoy the chat."
+  },
+  "farewell": {
+    "enabled": true,
+    "message": "Goodbye {{name}}! Thanks for being part of the group."
+  },
+  "autoReply": {
+    "enabled": true,
+    "keywords": {
+      "hello": "Hey there! Need help? Send !help to see what I can do.",
+      "hi": "Hello! Send !help if you want a list of commands.",
+      "help": "Need help? Use !help to get the command list.",
+      "rules": "Please be respectful and keep the chat friendly. 😊"
+    }
+  },
+  "moderation": {
+    "groups": {}
+  },
+  "asta": {
+    "conversations": {},
+  "customCommands": {
+    "chats": {}
+  },
+  "commandControls": {
+    "chats": {}
+  },
+  "chatSettings": {
+    "chats": {
+      "120363423367644103@g.us": {
+        "prefix": ".",
+        "welcomeEnabled": null,
+        "welcomeMessage": null,
+        "farewellEnabled": null,
+        "farewellMessage": null,
+        "autoReplyEnabled": null
+      }
+    }
+  },
+  "reminders": {
+    "items": {}
+  },
+  "roles": {
+    "chats": {}
+  },
+  "health": {},
+  "logs": {
+    "recent": []
+  }
+}
+}
