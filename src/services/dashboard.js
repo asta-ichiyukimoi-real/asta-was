@@ -41,7 +41,7 @@ function html(snapshot) {
 </html>`;
 }
 
-function startDashboard(port = 3030) {
+function startDashboard(port = process.env.PORT || 3030) {
     if (serverInstance) return;
 
     const server = http.createServer((req, res) => {
@@ -57,8 +57,8 @@ function startDashboard(port = 3030) {
         res.end(html(snapshot));
     });
 
-    server.listen(port, '127.0.0.1', () => {
-        console.log(`Dashboard running at http://127.0.0.1:${port}`);
+    server.listen(port, '0.0.0.0', () => {
+        console.log(`Dashboard running at http://0.0.0.0:${port}`);
     });
 
     serverInstance = server;
