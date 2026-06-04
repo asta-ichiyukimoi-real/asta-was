@@ -3,9 +3,9 @@ module.exports = {
         name: '',// name of the command
         aliases: [''], //side name of the command
         version: '1.0.0',//version of the 
-        description: 'Replies with pong to check bot responsiveness',
-        permissions: 0,
-        category: 'general'
+        description: 'Replies with pong to check bot responsiveness',// discription on the command
+        permissions: 0, //
+        category: 'general'//category in which the bot is
     },
     onRun: async (sock, msg, args) => {
         const reply = `🏓 *Pong!*

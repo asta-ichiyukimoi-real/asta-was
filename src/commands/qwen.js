@@ -141,7 +141,6 @@ async function callPuterDriver(driverInterface, driver, method, args, timeoutMs 
 
     return data.result !== undefined ? data.result : data;
 }
-
 async function askQwen(prompt, model, imageUrl) {
     const message = imageUrl
         ? {

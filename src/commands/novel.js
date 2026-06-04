@@ -1,4 +1,7 @@
 const axios = require('axios');
+const fs = require("fs");
+const path = require("path");
+const archiver = require("archiver");
 
 const BASE = 'https://omegatech-api.dixonomega.tech/api/Novel/novel';
 const TTS_BASE = 'https://omegatech-api.dixonomega.tech/api/ai/text2speech-v3';
@@ -199,6 +202,182 @@ module.exports = {
                 await sock.sendMessage(chatId, { text: `✅ Done! All ${chunks.length} parts sent.` });
             }
 
+            // Download chapter as TXT
+            else if (subCmd === "download") {
+                const param1 = args[1];
+                const param2 = args[2];
+
+                if (!param1) {
+                    return await sock.sendMessage(chatId, {
+                        text: "❌ Give me a chapterId or novelId."
+                    }, { quoted: msg });
+                }
+
+                let chapterId = param1;
+
+                if (param2 && !isNaN(param2)) {
+                    const chapList = await axios.get(
+                        `${BASE}?action=chapters&novelId=${param1}`,
+                        { timeout: 15000 }
+                    );
+
+                    if (!chapList.data.success) {
+                        return await sock.sendMessage(chatId, {
+                            text: "⚠️ Novel not found."
+                        }, { quoted: msg });
+                    }
+
+                    const chap = chapList.data.chapters.find(
+                        c => c.seq == param2
+                    );
+
+                    if (!chap) {
+                        return await sock.sendMessage(chatId, {
+                            text: `⚠️ Chapter ${param2} not found.`
+                        }, { quoted: msg });
+                    }
+
+                    chapterId = chap.chapterId;
+                }
+
+                await sock.sendMessage(chatId, {
+                    text: "📥 Generating file..."
+                }, { quoted: msg });
+
+                const { data } = await axios.get(
+                    `${BASE}?action=chapter&chapterId=${chapterId}`,
+                    { timeout: 20000 }
+                );
+
+                if (!data.success || !data.content) {
+                    return await sock.sendMessage(chatId, {
+                        text: "⚠️ Chapter not found."
+                    }, { quoted: msg });
+                }
+
+                const safeName = data.chapterName
+                    .replace(/[<>:"/\\|?*]/g, "_");
+
+                const filePath = path.join(
+                    __dirname,
+                    `${safeName}.txt`
+                );
+
+                fs.writeFileSync(
+                    filePath,
+                    `${data.chapterName}\n\n${data.content}`,
+                    "utf8"
+                );
+
+                await sock.sendMessage(chatId, {
+                    document: fs.readFileSync(filePath),
+                    mimetype: "text/plain",
+                    fileName: `${safeName}.txt`
+                }, { quoted: msg });
+
+                fs.unlinkSync(filePath);
+            }
+            // Download entire novel as ZIP
+            else if (subCmd === "zip") {
+
+                const novelId = args[1];
+
+                if (!novelId) {
+                    return await sock.sendMessage(chatId, {
+                        text: "❌ Give me a novelId."
+                    }, { quoted: msg });
+                }
+
+                await sock.sendMessage(chatId, {
+                    text: "📚 Loading chapters..."
+                }, { quoted: msg });
+
+                const { data: chapterList } = await axios.get(
+                    `${BASE}?action=chapters&novelId=${novelId}`,
+                    { timeout: 20000 }
+                );
+
+                if (!chapterList.success) {
+                    return await sock.sendMessage(chatId, {
+                        text: "⚠️ Failed to load chapters."
+                    }, { quoted: msg });
+                }
+
+                const tempDir = path.join(
+                    __dirname,
+                    `novel_${Date.now()}`
+                );
+
+                fs.mkdirSync(tempDir);
+
+                const maxChapters = 100;
+
+                const chapters = chapterList.chapters.slice(
+                    0,
+                    maxChapters
+                );
+
+                for (let i = 0; i < chapters.length; i++) {
+
+                    await sock.sendMessage(chatId, {
+                        text: `📖 Fetching chapter ${i + 1}/${chapters.length}`
+                    });
+
+                    try {
+
+                        const { data: chapter } = await axios.get(
+                            `${BASE}?action=chapter&chapterId=${chapters[i].chapterId}`,
+                            { timeout: 20000 }
+                        );
+
+                        if (!chapter.success) continue;
+
+                        const fileName =
+                            `${chapters[i].seq}.txt`;
+
+                        fs.writeFileSync(
+                            path.join(tempDir, fileName),
+                            `${chapter.chapterName}\n\n${chapter.content}`,
+                            "utf8"
+                        );
+
+                    } catch {}
+                }
+
+                const zipPath = path.join(
+                    __dirname,
+                    `${novelId}.zip`
+                );
+
+                const output = fs.createWriteStream(zipPath);
+
+                const archive = archiver("zip", {
+                    zlib: { level: 9 }
+                });
+
+                archive.pipe(output);
+
+                archive.directory(tempDir, false);
+
+                await archive.finalize();
+
+                await new Promise(resolve => {
+                    output.on("close", resolve);
+                });
+
+                await sock.sendMessage(chatId, {
+                    document: fs.readFileSync(zipPath),
+                    mimetype: "application/zip",
+                    fileName: `${novelId}.zip`
+                }, { quoted: msg });
+
+                fs.rmSync(tempDir, {
+                    recursive: true,
+                    force: true
+                });
+
+                fs.unlinkSync(zipPath);
+            }
             else {
                 await sock.sendMessage(chatId, { text: '❌ Unknown subcommand. Use: search, chapters, read, listen' }, { quoted: msg });
             }
