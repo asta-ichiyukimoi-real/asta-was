@@ -27,6 +27,71 @@ function formatChapterText(chapter) {
     ].join('\n');
 }
 
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function formatChapterHtml(chapter) {
+    const title = chapter.chapterName || 'Untitled Chapter';
+    const words = chapter.totalWords || 0;
+    const content = escapeHtml(chapter.content || '')
+        .replace(/\r\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .split(/\n{2,}/)
+        .map(paragraph => `<p>${paragraph.replace(/\n/g, '<br>')}</p>`)
+        .join('\n');
+
+    return `<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${escapeHtml(title)}</title>
+    <style>
+        body {
+            margin: 0;
+            background: #f5f1e8;
+            color: #221f1a;
+            font-family: Georgia, "Times New Roman", serif;
+            line-height: 1.75;
+        }
+        main {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 40px 20px 64px;
+        }
+        h1 {
+            font-size: 2rem;
+            line-height: 1.25;
+            margin: 0 0 8px;
+        }
+        .meta {
+            color: #6f675c;
+            font-family: Arial, sans-serif;
+            font-size: 0.95rem;
+            margin-bottom: 32px;
+        }
+        p {
+            font-size: 1.15rem;
+            margin: 0 0 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>${escapeHtml(title)}</h1>
+        <div class="meta">${words} words</div>
+        ${content}
+    </main>
+</body>
+</html>`;
+}
+
 function parseChapterRange(rangeText, maxChapter) {
     const value = String(rangeText || '').trim();
     const match = value.match(/^(\d+)(?:-(\d*)?)?$/);
@@ -87,13 +152,13 @@ async function resolveChapterId(novelId, chapterNum) {
 }
 
 async function sendChapterDocument(sock, chatId, msg, chapter) {
-    const fileName = `${safeFileName(chapter.chapterName, 'chapter')}.txt`;
-    const buffer = Buffer.from(formatChapterText(chapter), 'utf8');
+    const fileName = `${safeFileName(chapter.chapterName, 'chapter')}.html`;
+    const buffer = Buffer.from(formatChapterHtml(chapter), 'utf8');
 
     await sock.sendMessage(chatId, {
         document: buffer,
         fileName,
-        mimetype: 'text/plain'
+        mimetype: 'text/html'
     }, { quoted: msg });
 }
 
@@ -114,9 +179,9 @@ async function buildNovelZip(novelId, rangeText, onProgress) {
         const item = selected[i];
         const chapter = await fetchChapter(item.chapterId);
         const seq = String(item.seq).padStart(4, '0');
-        const name = `${seq} - ${safeFileName(chapter.chapterName || item.chapterName, `chapter-${seq}`)}.txt`;
+        const name = `${seq} - ${safeFileName(chapter.chapterName || item.chapterName, `chapter-${seq}`)}.html`;
 
-        zip.addFile(name, Buffer.from(formatChapterText(chapter), 'utf8'));
+        zip.addFile(name, Buffer.from(formatChapterHtml(chapter), 'utf8'));
 
         if (onProgress && ((i + 1) % 10 === 0 || i + 1 === selected.length)) {
             await onProgress(i + 1, selected.length);
@@ -161,7 +226,7 @@ module.exports = {
                     'Read a chapter in chat',
                     '*.novel download <chapterId>*',
                     '*.novel download <novelId> <chapterNum>*',
-                    'Send a chapter as a .txt file',
+                    'Send a chapter as a Chrome-readable .html file',
                     '*.novel zip <novelId> <range>*',
                     'Send many chapters as a zip. Examples: 1-10, 100-200, 5, 1-',
                     '*.novel listen <chapterId> [voice] [language]*',
