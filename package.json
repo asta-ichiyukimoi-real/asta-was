@@ -12,6 +12,7 @@
     "@heyputer/puter.js": "^2.4.2",
     "@whiskeysockets/baileys": "npm:@zentrix/baileys@latest",
     "adm-zip": "^0.5.17",
+    "archiver": "^8.0.0",
     "axios": "^1.16.1",
     "pdf-parse": "^2.4.5",
     "qrcode-terminal": "^0.12.0",
