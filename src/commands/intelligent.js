@@ -42,15 +42,28 @@ function buildContextText(msg) {
 }
 
 function looksLikeImageGenerationRequest(text) {
-    return /\b(draw|generate|create|make|send|need|want|get|find)\b.*\b(image|picture|photo|art|poster|wallpaper|illustration|pin)\b/i.test(text || '')
-        || /\b(show me|make me|draw me)\b/i.test(text || '');
+    return /\b(draw|generate|create|make|send|show|give|need|want|get|find)\b.*\b(images?|pictures?|photos?|arts?|posters?|wallpapers?|illustrations?|pins?)\b/i.test(text || '')
+        || /\b(show me|make me|draw me)\b/i.test(text || '')
+        || /^\s*\d{0,2}\s*(images?|pictures?|photos?|wallpapers?|pins?)\b/i.test(text || '');
 }
 
 function stripImageIntent(text) {
     return String(text || '')
-        .replace(/^(please\s+)?(?:i\s+)?(draw|generate|create|make|send|show me|make me|draw me|need|want|get|find)\s+/i, '')
-        .replace(/^(an?|the)\s+(image|picture|photo|art|poster|wallpaper|illustration)\s+(of|for|about)\s+/i, '')
+        .replace(/^(please\s+)?(?:i\s+)?(show me|make me|draw me|draw|generate|create|make|send|show|give|need|want|get|find)\s+/i, '')
+        .replace(/^(?:(?:an?|the)\s+)?(?:images?|pictures?|photos?|arts?|posters?|wallpapers?|illustrations?|pins?)\s+(?:of|for|about)\s+/i, '')
         .trim();
+}
+
+function normalizeCommandArgs(args) {
+    const commandAliases = new Set(['ai', 'asta', 'brain', 'genius', 'intelligent']);
+    const normalized = [...args];
+    const first = String(normalized[0] || '').toLowerCase().replace(/^[^\w]+/, '');
+
+    if (commandAliases.has(first)) {
+        normalized.shift();
+    }
+
+    return normalized;
 }
 
 function parseImageCount(text) {
@@ -68,6 +81,15 @@ function stripImageCount(text) {
         .replace(/\b(?:send|show|give|need|want|make|get)?\s*\d{1,2}\s*(?:images?|pictures?|photos?|wallpapers?|pins?)\s*(?:of|for|about)?\s*/i, '')
         .replace(/\b(?:images?|pictures?|photos?|wallpapers?|pins?)\s*(?:x|:)?\s*\d{1,2}\b/i, '')
         .trim();
+}
+
+function cleanImagePrompt(text) {
+    const withoutCount = stripImageCount(text);
+    const cleaned = stripImageIntent(withoutCount)
+        .replace(/^(of|for|about)\s+/i, '')
+        .trim();
+
+    return cleaned || withoutCount.replace(/^(of|for|about)\s+/i, '').trim() || String(text || '').trim();
 }
 
 function isImageUrl(value) {
@@ -166,24 +188,24 @@ async function imageMessageToBuffer(imageMessage) {
 }
 
 function parseRequest(args) {
+    args = normalizeCommandArgs(args);
     const first = (args[0] || '').toLowerCase();
     const second = args[1] || '';
     const fullText = args.join(' ').trim();
 
-    if (['draw', 'image', 'generate', 'img'].includes(first)) {
+    if (['draw', 'image', 'images', 'picture', 'pictures', 'photo', 'photos', 'pin', 'pins', 'generate', 'img'].includes(first)) {
         const prompt = args.slice(1).join(' ').trim();
         return {
             type: 'image',
-            prompt: stripImageCount(prompt) || prompt,
+            prompt: cleanImagePrompt(prompt),
             count: parseImageCount(prompt)
         };
     }
 
     if (looksLikeImageGenerationRequest(fullText)) {
-        const prompt = stripImageIntent(fullText) || fullText;
         return {
             type: 'image',
-            prompt: stripImageCount(prompt) || prompt,
+            prompt: cleanImagePrompt(fullText),
             count: parseImageCount(fullText)
         };
     }
@@ -361,7 +383,7 @@ function buildPromptWithMemory(msg, prompt) {
 }
 
 function buildImagePrompt(msg, prompt) {
-    const cleaned = stripImageIntent(prompt);
+    const cleaned = cleanImagePrompt(prompt);
     const context = buildContextText(msg);
 
     if (cleaned && !/\b(it|that|this|them|those|the image|the picture|the photo|what you saw)\b/i.test(cleaned)) {
