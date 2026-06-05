@@ -8,6 +8,7 @@ const PINTEREST_URL = 'https://omegatech-api.dixonomega.tech/api/Search/pinteres
 const CATBOX_UPLOAD_URL = 'https://catbox.moe/user/api.php';
 const LOCAL_TIME_ZONE = process.env.BOT_TIMEZONE || 'Africa/Lagos';
 const MAX_PINTEREST_IMAGES = 8;
+const PRONOUN_REFERENCE_PATTERN = /\b(it|that|this|them|those|he|him|his|she|her|hers|they|their|the image|the picture|the photo|what you saw)\b/i;
 
 function sanitizeId(value) {
     return String(value || 'unknown').replace(/[^a-zA-Z0-9]/g, '_');
@@ -49,7 +50,8 @@ function looksLikeImageGenerationRequest(text) {
 
 function stripImageIntent(text) {
     return String(text || '')
-        .replace(/^(please\s+)?(?:i\s+)?(show me|make me|draw me|draw|generate|create|make|send|show|give|need|want|get|find)\s+/i, '')
+        .replace(/^(please\s+)?(?:can|could|would|will)\s+you\s+/i, '')
+        .replace(/^(please\s+)?(?:i\s+)?(show me|make me|draw me|draw|generate|create|make|send|show|give|need|want|get|find)\s+(?:me\s+)?/i, '')
         .replace(/^(?:(?:an?|the)\s+)?(?:images?|pictures?|photos?|arts?|posters?|wallpapers?|illustrations?|pins?)\s+(?:of|for|about)\s+/i, '')
         .trim();
 }
@@ -86,6 +88,9 @@ function stripImageCount(text) {
 function cleanImagePrompt(text) {
     const withoutCount = stripImageCount(text);
     const cleaned = stripImageIntent(withoutCount)
+        .replace(/^(?:an?|the|some)\s+/i, '')
+        .replace(/^and\s+(?:an?|the|some)?\s*/i, '')
+        .replace(/^(?:images?|pictures?|photos?|arts?|posters?|wallpapers?|illustrations?|pins?)\s+(?:of|for|about)\s+/i, '')
         .replace(/^(of|for|about)\s+/i, '')
         .trim();
 
@@ -307,7 +312,8 @@ async function askOmegaChat(message, sessionId) {
 }
 
 async function askOmegaVision(message, imageUrl, sessionId) {
-    const url = `${VISION_URL}?message=${encodeURIComponent(message)}&imageUrl=${encodeURIComponent(imageUrl)}&model=1&sessionId=${encodeURIComponent(sessionId)}`;
+    const visionSessionId = imageUrl || sessionId;
+    const url = `${VISION_URL}?message=${encodeURIComponent(message)}&imageUrl=${encodeURIComponent(imageUrl)}&model=1&sessionId=${encodeURIComponent(visionSessionId)}`;
     const data = await fetchJson(url, 60000);
     const text = data.answer || data.result || data.message;
 
@@ -382,12 +388,68 @@ function buildPromptWithMemory(msg, prompt) {
     ].join('\n');
 }
 
+function cleanSubjectCandidate(value) {
+    return String(value || '')
+        .replace(/\[[^\]]+\]/g, ' ')
+        .replace(/https?:\/\/\S+/gi, ' ')
+        .replace(/\b(send|show|give|get|find|make|draw|generate|create|need|want|image|images|picture|pictures|photo|photos|wallpaper|wallpapers|pin|pins|please|can|could|would|will|you|me|about|of|for|is|are|was|were|the|a|an)\b/gi, ' ')
+        .replace(/[^\w\s'-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function extractSubjectFromText(text) {
+    const value = String(text || '').trim();
+    const patterns = [
+        /\bwho\s+is\s+(.+?)(?:[?.!]|$)/i,
+        /\bwhat\s+is\s+(.+?)(?:[?.!]|$)/i,
+        /\btell\s+me\s+about\s+(.+?)(?:[?.!]|$)/i,
+        /\bexplain\s+(.+?)(?:[?.!]|$)/i,
+        /\babout\s+(.+?)(?:[?.!]|$)/i
+    ];
+
+    for (const pattern of patterns) {
+        const match = value.match(pattern);
+        const subject = cleanSubjectCandidate(match?.[1]);
+        if (subject) return subject;
+    }
+
+    const capitalized = value.match(/\b[A-Z][a-zA-Z0-9'-]{2,}(?:\s+[A-Z][a-zA-Z0-9'-]{2,}){0,3}\b/g);
+    if (capitalized?.length) {
+        return capitalized[capitalized.length - 1];
+    }
+
+    return '';
+}
+
+function getLastReferencedSubject(msg) {
+    const recent = getRecentMemory(msg).slice(-8).reverse();
+
+    for (const item of recent) {
+        if (item.role !== 'user') continue;
+        const subject = extractSubjectFromText(item.text);
+        if (subject) return subject;
+    }
+
+    for (const item of recent) {
+        const subject = extractSubjectFromText(item.text);
+        if (subject) return subject;
+    }
+
+    return '';
+}
+
 function buildImagePrompt(msg, prompt) {
     const cleaned = cleanImagePrompt(prompt);
     const context = buildContextText(msg);
 
-    if (cleaned && !/\b(it|that|this|them|those|the image|the picture|the photo|what you saw)\b/i.test(cleaned)) {
+    if (cleaned && !PRONOUN_REFERENCE_PATTERN.test(cleaned)) {
         return cleaned;
+    }
+
+    const referencedSubject = getLastReferencedSubject(msg);
+    if (referencedSubject) {
+        return referencedSubject;
     }
 
     if (!context) {
