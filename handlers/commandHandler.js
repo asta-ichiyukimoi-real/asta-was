@@ -3,11 +3,13 @@ const path = require('path');
 const config = require('../config');
 const state = require('../src/utils/stateManager');
 const logger = require('../src/utils/logger');
+const ConfigCommandHandler = require('./configCommandHandler');
 
 class CommandHandler {
-    constructor() {
+    constructor(configCommandHandler = new ConfigCommandHandler(config)) {
         this.commands = new Map();
         this.cooldowns = new Map();
+        this.configCommandHandler = configCommandHandler;
         this.loadCommands();
     }
 
@@ -69,11 +71,11 @@ class CommandHandler {
 
         // Permission check
         const sender = msg.key.participant || msg.key.remoteJid;
-        const isOwner = sender === config.owner;
-        const isAdmin = config.admins.includes(sender);
+        const isOwner = this.configCommandHandler.isOwner(sender, msg);
+        const isAdmin = this.configCommandHandler.isAdmin(sender);
         const isMod = state.hasRole(chatId, sender, 'mod');
         const isBanned = state.hasRole(chatId, sender, 'banned');
-        const cooldownSeconds = command.config.cooldown ?? config.commandCooldown ?? 3;
+        const cooldownSeconds = this.configCommandHandler.getCommandCooldown(command.config);
         const cooldownKey = `${sender}:${command.config.name}`;
 
         if (isBanned && !isOwner) {
@@ -94,18 +96,15 @@ class CommandHandler {
         }
 
         const permLevel = command.config.permissions || 0;
-        if (permLevel === 2) {
-            const ownerDebug = {
-                chatId,
-                command: command.config.name,
-                expectedOwner: config.owner,
-                gotSender: sender,
-                remoteJid: msg.key.remoteJid,
-                participant: msg.key.participant || null,
-                fromMe: Boolean(msg.key.fromMe),
-                isOwner
-            };
+        if (this.configCommandHandler.isCommandDisabledGlobally(command.config.name) && !isOwner) {
+            await this.safeSendMessage(sock, chatId, {
+                text: `The ${command.config.name} command is disabled globally.`
+            }, { quoted: msg });
+            return;
+        }
 
+        if (permLevel === 2 && this.configCommandHandler.shouldDebugOwnerPermission()) {
+            const ownerDebug = this.configCommandHandler.permissionDebug(sender, msg, command.config.name, isOwner);
             console.log('Owner permission debug:', ownerDebug);
             logger.log('owner_permission_debug', ownerDebug);
         }
@@ -116,7 +115,8 @@ class CommandHandler {
                     'This command is only for the owner.',
                     '',
                     '*Owner permission debug*',
-                    `Expected: ${config.owner}`,
+                    `Expected: ${this.configCommandHandler.get('permissions.owner', config.owner)}`,
+                    `Expected list: ${this.configCommandHandler.getOwnerIds().join(', ') || 'none'}`,
                     `Got: ${sender}`,
                     `Chat: ${msg.key.remoteJid}`,
                     `Participant: ${msg.key.participant || 'none'}`
@@ -130,7 +130,7 @@ class CommandHandler {
         }
 
         if (!isOwner && state.isCommandDisabled(chatId, command.config.name)) {
-            const prefix = state.getChatPrefix(chatId, config.prefix);
+            const prefix = state.getChatPrefix(chatId, this.configCommandHandler.getPrefix());
             await this.safeSendMessage(sock, chatId, {
                 text: `The ${prefix}${command.config.name} command is disabled in this chat.`
             }, { quoted: msg });

@@ -2,15 +2,13 @@ const config = require('./config');
 const dashboard = require('./src/services/dashboard');
 const stateManager = require('./src/utils/stateManager');
 
-const PORT = process.env.PORT || config.dashboardPort || 3030;
-dashboard.startDashboard(PORT);
-
 const { makeWASocket, DisconnectReason, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const qrcode = require('qrcode-terminal');
 const CommandHandler = require('./handlers/commandHandler');
 const ChatCommandHandler = require('./handlers/chatCommandHandler');
 const ReplyCommandHandler = require('./handlers/replyCommandHandler');
+const ConfigCommandHandler = require('./handlers/configCommandHandler');
 const health = require('./src/services/health');
 const reminders = require('./src/services/reminders');
 
@@ -101,6 +99,7 @@ function renderPanel(title, lines) {
 }
 
 function showStartup(loadedCommands) {
+    const dashboardPort = config.dashboard?.port || config.dashboardPort || 3030;
     clearScreen();
     console.log(`${style.blue}${style.bright}${APP_NAME}${style.reset}\n`);
     renderPanel('WELCOME', [
@@ -108,7 +107,7 @@ function showStartup(loadedCommands) {
         'Status : Waiting for QR authentication',
         `Prefix : ${config.prefix}`,
         `Commands loaded: ${loadedCommands}`,
-        `Dashboard: http://127.0.0.1:${config.dashboardPort || 3030}`
+        `Dashboard: http://127.0.0.1:${dashboardPort}`
     ]);
     console.log(`\n${style.dim}Tip: Scan the QR code below with WhatsApp to connect.${style.reset}\n`);
 }
@@ -123,12 +122,13 @@ function showConnecting() {
 }
 
 function showConnected() {
+    const dashboardPort = config.dashboard?.port || config.dashboardPort || 3030;
     clearScreen();
     console.log(`${style.green}${style.bright}CONNECTED SUCCESSFULLY${style.reset}\n`);
     renderPanel('STATUS', [
         `${style.green}Online and ready to receive commands.${style.reset}`,
         `Prefix ${style.yellow}${config.prefix}${style.reset} - type commands in chat`,
-        `Dashboard http://127.0.0.1:${config.dashboardPort || 3030}`,
+        `Dashboard http://127.0.0.1:${dashboardPort}`,
         'Use help to list available commands'
     ]);
 }
@@ -156,17 +156,21 @@ async function connectToWhatsApp() {
     installConsoleNoiseFilter();
     installProcessErrorHandlers();
 
-    const { state, saveCreds } = await useMultiFileAuthState('./auth_info_baileys');
-    const commandHandler = new CommandHandler();
+    const configCommandHandler = new ConfigCommandHandler(config);
+    const { state, saveCreds } = await useMultiFileAuthState(configCommandHandler.get('connection.authDir', './auth_info_baileys'));
+    const commandHandler = new CommandHandler(configCommandHandler);
     const chatCommandHandler = new ChatCommandHandler();
     const replyCommandHandler = new ReplyCommandHandler();
 
     global.commandHandler = commandHandler;
     global.chatCommandHandler = chatCommandHandler;
     global.replyCommandHandler = replyCommandHandler;
+    global.configCommandHandler = configCommandHandler;
 
     health.startHealthMonitor(commandHandler);
-    dashboard.startDashboard(config.dashboardPort || 3030);
+    if (configCommandHandler.get('dashboard.enabled', true)) {
+        dashboard.startDashboard(configCommandHandler.getDashboardPort());
+    }
 
     const uniqueCommands = Array.from(new Set(commandHandler.commands.values())).length;
     showStartup(uniqueCommands);
@@ -174,8 +178,8 @@ async function connectToWhatsApp() {
     const sock = makeWASocket({
         auth: state,
         logger: quietLogger,
-        markOnlineOnConnect: false,
-        syncFullHistory: false,
+        markOnlineOnConnect: configCommandHandler.get('connection.markOnlineOnConnect', false),
+        syncFullHistory: configCommandHandler.get('connection.syncFullHistory', false),
         shouldSyncHistoryMessage: () => false
     });
 
@@ -201,7 +205,7 @@ async function connectToWhatsApp() {
                 });
                 logger.log('reconnect', { reason: lastDisconnect?.error?.message });
                 showReconnect(lastDisconnect?.error?.message);
-                setTimeout(() => connectToWhatsApp(), 2000);
+                setTimeout(() => connectToWhatsApp(), configCommandHandler.get('connection.reconnectDelayMs', 2000));
             } else {
                 stateManager.updateHealth({ status: 'logged_out' });
                 logger.log('logged_out');
@@ -221,7 +225,8 @@ async function connectToWhatsApp() {
     sock.ev.on('creds.update', saveCreds);
     require('./src/events/message')(sock, commandHandler, chatCommandHandler, replyCommandHandler, {
         startupTimeMs: STARTED_AT,
-        startupTimeSeconds: STARTED_AT_SECONDS
+        startupTimeSeconds: STARTED_AT_SECONDS,
+        configCommandHandler
     });
 }
 

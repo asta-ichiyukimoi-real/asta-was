@@ -144,13 +144,13 @@ async function isGroupAdmin(sock, groupId, sender) {
     }
 }
 
-async function applyModeration(sock, msg, text) {
+async function applyModeration(sock, msg, text, configCommandHandler = null) {
     const groupId = msg.key.remoteJid;
     if (!groupId.endsWith('@g.us')) return false;
 
     const sender = msg.key.participant || msg.key.remoteJid;
-    const senderIsPrivileged = sender === config.owner
-        || config.admins.includes(sender)
+    const senderIsPrivileged = (configCommandHandler?.isOwner(sender, msg) ?? sender === config.owner)
+        || (configCommandHandler?.isAdmin(sender) ?? config.admins.includes(sender))
         || state.hasRole(groupId, sender, 'mod')
         || state.hasRole(groupId, sender, 'trusted')
         || await isGroupAdmin(sock, groupId, sender);
@@ -209,6 +209,7 @@ async function applyModeration(sock, msg, text) {
 module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler, options = {}) => {
     const startupTimeMs = options.startupTimeMs || Date.now();
     const startupTimeSeconds = options.startupTimeSeconds || Math.floor(startupTimeMs / 1000);
+    const configCommandHandler = options.configCommandHandler || global.configCommandHandler || null;
     let startupMembersByGroup = new Map();
     let startupSnapshotReady = false;
 
@@ -231,7 +232,7 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
                 if (!text) return;
 
                 if (!msg.key.fromMe) {
-                    const moderated = await applyModeration(sock, msg, text);
+                    const moderated = await applyModeration(sock, msg, text, configCommandHandler);
                     if (moderated) return;
                 }
 
@@ -247,7 +248,7 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
                     }
                 }
 
-                const prefix = state.getChatPrefix(msg.key.remoteJid, config.prefix);
+                const prefix = state.getChatPrefix(msg.key.remoteJid, configCommandHandler?.getPrefix?.() || config.prefix);
                 if (text.startsWith(prefix)) {
                     const args = text.slice(prefix.length).trim().split(/ +/);
                     const commandName = args.shift().toLowerCase();
