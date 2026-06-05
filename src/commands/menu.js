@@ -37,32 +37,34 @@ module.exports = {
 *Media*
 13. ${prefix}sticker - Make an image sticker
 14. ${prefix}media faded - Download mp3 or mp4
+15. ${prefix}wallpaper akaza -4 - Send wallpapers
+16. ${prefix}pinterest akaza -4 - Search Pinterest images
 
 *Group*
-15. ${prefix}groupinfo - Show group details
-16. ${prefix}tagall message - Mention everyone
+17. ${prefix}groupinfo - Show group details
+18. ${prefix}tagall message - Mention everyone
 
 *Moderation*
-17. ${prefix}kick @user - Remove a member
-18. ${prefix}warn @user - Warn a member
-19. ${prefix}antilink on - Block links
-20. ${prefix}badword add word - Filter a word
-21. ${prefix}mute - Lock the group
+19. ${prefix}kick @user - Remove a member
+20. ${prefix}warn @user - Warn a member
+21. ${prefix}antilink on - Block links
+22. ${prefix}badword add word - Filter a word
+23. ${prefix}mute - Lock the group
 
 *Custom*
-22. ${prefix}addcmd rules Be respectful - Add a command
-23. ${prefix}listcmd - List custom commands
-24. ${prefix}disable sticker - Disable a command here
-25. ${prefix}enable sticker - Enable it again
+24. ${prefix}addcmd rules Be respectful - Add a command
+25. ${prefix}listcmd - List custom commands
+26. ${prefix}disable sticker - Disable a command here
+27. ${prefix}enable sticker - Enable it again
 
 *Platform*
-26. ${prefix}setprefix . - Set chat prefix
-27. ${prefix}setwelcome Welcome {{name}} - Edit welcome
-28. ${prefix}role add mod @user - Add bot mod
-29. ${prefix}health - Bot health
-30. ${prefix}backup - Backup bot state
-31. ${prefix}ownertest - Debug owner permission
-32. ${prefix}reload - Reload commands
+28. ${prefix}setprefix . - Set chat prefix
+29. ${prefix}setwelcome Welcome {{name}} - Edit welcome
+30. ${prefix}role add mod @user - Add bot mod
+31. ${prefix}health - Bot health
+32. ${prefix}backup - Backup bot state
+33. ${prefix}ownertest - Debug owner permission
+34. ${prefix}reload - Reload commands
 
 Reply with one of the commands above to continue.`;
 

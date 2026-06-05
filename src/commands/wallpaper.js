@@ -1,9 +1,9 @@
-const PINTEREST_URL = 'https://omegatech-api.dixonomega.tech/api/Search/pinterest';
-const MAX_PINTEREST_IMAGES = 8;
+const WALLPAPER_URL = 'https://omegatech-api.dixonomega.tech/api/tools/wallpaper';
+const MAX_WALLPAPERS = 10;
 
 function parseArgs(args) {
     const parts = [...args];
-    let count = 5;
+    let count = 1;
 
     for (let i = parts.length - 1; i >= 0; i -= 1) {
         const match = String(parts[i]).match(/^-?(\d{1,2})$/);
@@ -15,7 +15,7 @@ function parseArgs(args) {
     }
 
     if (!Number.isInteger(count) || count < 1) count = 1;
-    count = Math.min(count, MAX_PINTEREST_IMAGES);
+    count = Math.min(count, MAX_WALLPAPERS);
 
     return {
         query: parts.join(' ').trim(),
@@ -23,33 +23,30 @@ function parseArgs(args) {
     };
 }
 
-async function fetchPinterestImages(query, count) {
-    const limit = Math.min(Math.max(Number(count) || 1, 1), MAX_PINTEREST_IMAGES);
-    const url = `${PINTEREST_URL}?query=${encodeURIComponent(query)}&scope=pins&limit=${limit}`;
+async function fetchWallpapers(query, count) {
+    const url = `${WALLPAPER_URL}?name=${encodeURIComponent(query)}`;
     const response = await fetch(url, {
         headers: { 'User-Agent': 'AstaBot/1.0 (WhatsApp bot)' },
         signal: AbortSignal.timeout(45000)
     });
     const data = await response.json().catch(() => null);
 
-    if (!response.ok || data?.success === false) {
+    if (!response.ok || data?.status === false || data?.success === false) {
         throw new Error(data?.message || data?.error || `API responded with status ${response.status}`);
     }
 
-    const images = (Array.isArray(data?.results) ? data.results : [])
-        .map(item => ({
-            image: item.image || item.thumb,
-            title: item.title || query,
-            link: item.link || item.url || ''
-        }))
-        .filter(item => /^https?:\/\//i.test(item.image || ''))
-        .slice(0, limit);
+    const results = (Array.isArray(data?.results) ? data.results : [])
+        .filter(item => /^https?:\/\//i.test(item?.image || ''))
+        .slice(0, count);
 
-    if (!images.length) {
-        throw new Error('No Pinterest images found for that query.');
+    if (!results.length) {
+        throw new Error('No wallpapers found for that query.');
     }
 
-    return images;
+    return {
+        query: data.query || query,
+        results
+    };
 }
 
 function delay(ms) {
@@ -58,12 +55,12 @@ function delay(ms) {
 
 module.exports = {
     config: {
-        name: 'pinterest',
-        aliases: ['pin', 'pinsearch'],
-        version: '1.1.0',
-        description: 'Search images on Pinterest',
-        usage: 'pinterest <query> [-count]',
-        examples: ['pinterest anime girl', 'pin akaza -4'],
+        name: 'wallpaper',
+        aliases: ['wall', 'walls'],
+        version: '1.0.0',
+        description: 'Search and send wallpapers',
+        usage: 'wallpaper <query> [-count]',
+        examples: ['wallpaper akaza -4', 'wall goku'],
         permissions: 0,
         cooldown: 6,
         category: 'media'
@@ -73,37 +70,37 @@ module.exports = {
 
         if (!query) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Please provide a search query.\nExample: .pinterest anime girl -4'
+                text: 'Send a wallpaper search query.\nExample: .wallpaper akaza -4'
             }, { quoted: msg });
             return;
         }
 
         try {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: `Searching Pinterest for *${query}*...`
+                text: `Searching wallpapers for *${query}*...`
             }, { quoted: msg });
 
-            const images = await fetchPinterestImages(query, count);
+            const { results } = await fetchWallpapers(query, count);
 
-            for (let i = 0; i < images.length; i += 1) {
-                const item = images[i];
+            for (let i = 0; i < results.length; i += 1) {
+                const item = results[i];
                 await sock.sendMessage(msg.key.remoteJid, {
                     image: { url: item.image },
                     caption: [
-                        `*Pinterest Image${images.length > 1 ? ` ${i + 1}/${images.length}` : ''}*`,
+                        `*Wallpaper${results.length > 1 ? ` ${i + 1}/${results.length}` : ''}*`,
                         item.title || query,
                         item.link || ''
                     ].filter(Boolean).join('\n')
                 }, { quoted: i === 0 ? msg : undefined });
 
-                if (i < images.length - 1) {
+                if (i < results.length - 1) {
                     await delay(800);
                 }
             }
         } catch (error) {
-            console.error('Pinterest command error:', error);
+            console.error('Wallpaper command error:', error);
             await sock.sendMessage(msg.key.remoteJid, {
-                text: `Pinterest failed: ${error.message || error}`
+                text: `Wallpaper failed: ${error.message || error}`
             }, { quoted: msg });
         }
     }
