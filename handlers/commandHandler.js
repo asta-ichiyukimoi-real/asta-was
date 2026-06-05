@@ -94,8 +94,34 @@ class CommandHandler {
         }
 
         const permLevel = command.config.permissions || 0;
+        if (permLevel === 2) {
+            const ownerDebug = {
+                chatId,
+                command: command.config.name,
+                expectedOwner: config.owner,
+                gotSender: sender,
+                remoteJid: msg.key.remoteJid,
+                participant: msg.key.participant || null,
+                fromMe: Boolean(msg.key.fromMe),
+                isOwner
+            };
+
+            console.log('Owner permission debug:', ownerDebug);
+            logger.log('owner_permission_debug', ownerDebug);
+        }
+
         if (permLevel === 2 && !isOwner) {
-            await this.safeSendMessage(sock, msg.key.remoteJid, { text: 'This command is only for the owner.' });
+            await this.safeSendMessage(sock, msg.key.remoteJid, {
+                text: [
+                    'This command is only for the owner.',
+                    '',
+                    '*Owner permission debug*',
+                    `Expected: ${config.owner}`,
+                    `Got: ${sender}`,
+                    `Chat: ${msg.key.remoteJid}`,
+                    `Participant: ${msg.key.participant || 'none'}`
+                ].join('\n')
+            }, { quoted: msg });
             return;
         }
         if (permLevel === 1 && !isOwner && !isAdmin && !isGroupAdmin && !isMod) {

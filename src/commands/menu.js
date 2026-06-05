@@ -18,49 +18,51 @@ module.exports = {
 1. ${prefix}help - Show commands list
 2. ${prefix}stats - View bot usage stats
 3. ${prefix}ping - Check bot status
+4. ${prefix}jid - Show your JID
 
 *Useful*
-4. ${prefix}time - Show current time
-5. ${prefix}calc 12 * 4 - Calculate math
-6. ${prefix}remind 10m drink water - Set reminder
+5. ${prefix}time - Show current time
+6. ${prefix}calc 12 * 4 - Calculate math
+7. ${prefix}remind 10m drink water - Set reminder
 
 *AI*
-7. ${prefix}asta hi - Chat with Asta
-8. ${prefix}resetasta - Clear Asta memory
+8. ${prefix}asta hi - Chat with Asta
+9. ${prefix}resetasta - Clear Asta memory
 
 *Fun*
-9. ${prefix}joke - Get a programming joke
-10. ${prefix}quote - Get inspiration
-11. ${prefix}choose rice, pasta - Pick one
+10. ${prefix}joke - Get a programming joke
+11. ${prefix}quote - Get inspiration
+12. ${prefix}choose rice, pasta - Pick one
 
 *Media*
-12. ${prefix}sticker - Make an image sticker
-13. ${prefix}media faded - Download mp3 or mp4
+13. ${prefix}sticker - Make an image sticker
+14. ${prefix}media faded - Download mp3 or mp4
 
 *Group*
-14. ${prefix}groupinfo - Show group details
-15. ${prefix}tagall message - Mention everyone
+15. ${prefix}groupinfo - Show group details
+16. ${prefix}tagall message - Mention everyone
 
 *Moderation*
-16. ${prefix}kick @user - Remove a member
-17. ${prefix}warn @user - Warn a member
-18. ${prefix}antilink on - Block links
-19. ${prefix}badword add word - Filter a word
-20. ${prefix}mute - Lock the group
+17. ${prefix}kick @user - Remove a member
+18. ${prefix}warn @user - Warn a member
+19. ${prefix}antilink on - Block links
+20. ${prefix}badword add word - Filter a word
+21. ${prefix}mute - Lock the group
 
 *Custom*
-21. ${prefix}addcmd rules Be respectful - Add a command
-22. ${prefix}listcmd - List custom commands
-23. ${prefix}disable sticker - Disable a command here
-24. ${prefix}enable sticker - Enable it again
+22. ${prefix}addcmd rules Be respectful - Add a command
+23. ${prefix}listcmd - List custom commands
+24. ${prefix}disable sticker - Disable a command here
+25. ${prefix}enable sticker - Enable it again
 
 *Platform*
-25. ${prefix}setprefix . - Set chat prefix
-26. ${prefix}setwelcome Welcome {{name}} - Edit welcome
-27. ${prefix}role add mod @user - Add bot mod
-28. ${prefix}health - Bot health
-29. ${prefix}backup - Backup bot state
-30. ${prefix}reload - Reload commands
+26. ${prefix}setprefix . - Set chat prefix
+27. ${prefix}setwelcome Welcome {{name}} - Edit welcome
+28. ${prefix}role add mod @user - Add bot mod
+29. ${prefix}health - Bot health
+30. ${prefix}backup - Backup bot state
+31. ${prefix}ownertest - Debug owner permission
+32. ${prefix}reload - Reload commands
 
 Reply with one of the commands above to continue.`;
 
