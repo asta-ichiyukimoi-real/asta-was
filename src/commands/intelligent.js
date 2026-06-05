@@ -109,6 +109,10 @@ function looksLikeResearchRequest(text) {
     return /\b(research|details|detailed|deep|latest|current|recent|news|search|web|google|source|sources|facts|fact-check|explain in detail)\b/i.test(text || '');
 }
 
+function looksLikeCapabilityRequest(text) {
+    return /\b(what can you do|your features|your abilities|what are you able to do|what do you do)\b/i.test(text || '');
+}
+
 function stripResearchIntent(text) {
     return String(text || '')
         .replace(/^(research|details|detail|detailed|deep|search|web|google)\s+/i, '')
@@ -138,6 +142,15 @@ function answerDateTime(text) {
     }
 
     return `Today is ${date}${wantsTime ? `, and the time is ${time}` : ''}.`;
+}
+
+function answerCapabilities() {
+    return [
+        'I can chat with you and keep track of the conversation, so follow-up words like him, her, it, and that can refer to what we were already discussing.',
+        'I can answer questions about images when you send one, reply to one, or give me an image URL.',
+        'I can send Pinterest images from natural requests like "send 3 images of Goku in Super Saiyan mode".',
+        'I can research current topics, explain things, answer date/time questions, and continue from replies.'
+    ].join('\n');
 }
 
 function unwrapMessage(message) {
@@ -234,6 +247,13 @@ function parseRequest(args) {
     if (looksLikeDateTimeRequest(fullText)) {
         return {
             type: 'datetime',
+            prompt: fullText
+        };
+    }
+
+    if (looksLikeCapabilityRequest(fullText)) {
+        return {
+            type: 'capabilities',
             prompt: fullText
         };
     }
@@ -392,7 +412,7 @@ function cleanSubjectCandidate(value) {
     return String(value || '')
         .replace(/\[[^\]]+\]/g, ' ')
         .replace(/https?:\/\/\S+/gi, ' ')
-        .replace(/\b(send|show|give|get|find|make|draw|generate|create|need|want|image|images|picture|pictures|photo|photos|wallpaper|wallpapers|pin|pins|please|can|could|would|will|you|me|about|of|for|is|are|was|were|the|a|an)\b/gi, ' ')
+        .replace(/\b(btw|by the way|send|show|give|get|find|make|draw|generate|create|need|want|image|images|picture|pictures|photo|photos|wallpaper|wallpapers|pin|pins|please|can|could|would|will|you|me|about|of|for|is|are|was|were|the|a|an|do|does|did|know|heard|hear)\b/gi, ' ')
         .replace(/[^\w\s'-]/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
@@ -403,6 +423,9 @@ function extractSubjectFromText(text) {
     const patterns = [
         /\bwho\s+is\s+(.+?)(?:[?.!]|$)/i,
         /\bwhat\s+is\s+(.+?)(?:[?.!]|$)/i,
+        /\bdo\s+you\s+know\s+(.+?)(?:[?.!]|$)/i,
+        /\bhave\s+you\s+heard\s+of\s+(.+?)(?:[?.!]|$)/i,
+        /\bi\s+know\s+(.+?)(?:[?.!]|$)/i,
         /\btell\s+me\s+about\s+(.+?)(?:[?.!]|$)/i,
         /\bexplain\s+(.+?)(?:[?.!]|$)/i,
         /\babout\s+(.+?)(?:[?.!]|$)/i
@@ -439,17 +462,38 @@ function getLastReferencedSubject(msg) {
     return '';
 }
 
+function normalizeImageSearchQuery(query) {
+    return String(query || '')
+        .replace(/\bsuper\s+saiy[ae]n\b/gi, 'Super Saiyan')
+        .replace(/\bdbz\b/gi, 'Dragon Ball Z')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function resolveImagePronouns(prompt, subject) {
+    if (!subject || !PRONOUN_REFERENCE_PATTERN.test(prompt)) {
+        return prompt;
+    }
+
+    const resolved = String(prompt || '')
+        .replace(/\b(the image|the picture|the photo|what you saw|it|that|this|them|those|he|him|his|she|her|hers|they|their)\b/gi, subject)
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    return resolved || subject;
+}
+
 function buildImagePrompt(msg, prompt) {
     const cleaned = cleanImagePrompt(prompt);
     const context = buildContextText(msg);
 
     if (cleaned && !PRONOUN_REFERENCE_PATTERN.test(cleaned)) {
-        return cleaned;
+        return normalizeImageSearchQuery(cleaned);
     }
 
     const referencedSubject = getLastReferencedSubject(msg);
     if (referencedSubject) {
-        return referencedSubject;
+        return normalizeImageSearchQuery(resolveImagePronouns(cleaned || prompt, referencedSubject));
     }
 
     if (!context) {
@@ -509,6 +553,13 @@ async function runIntelligent(sock, msg, request) {
 
     if (request.type === 'datetime') {
         const text = answerDateTime(request.prompt);
+        remember(msg, request.prompt, text);
+        await sendText(sock, msg, 'AI', text);
+        return;
+    }
+
+    if (request.type === 'capabilities') {
+        const text = answerCapabilities();
         remember(msg, request.prompt, text);
         await sendText(sock, msg, 'AI', text);
         return;
