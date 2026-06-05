@@ -280,6 +280,26 @@ function extensionFromMime(mime) {
     return 'jpg';
 }
 
+function dataUriToImage(dataUri) {
+    const match = String(dataUri || '').match(/^data:([^;]+);base64,(.+)$/);
+    if (!match) return null;
+
+    return {
+        buffer: Buffer.from(match[2], 'base64'),
+        mime: match[1]
+    };
+}
+
+function base64ToImage(value) {
+    const text = String(value || '').trim();
+    if (text.length < 500 || !/^[A-Za-z0-9+/]+={0,2}$/.test(text)) return null;
+
+    return {
+        buffer: Buffer.from(text, 'base64'),
+        mime: 'image/jpeg'
+    };
+}
+
 async function uploadImageForVision(image) {
     if (!image?.buffer) {
         throw new Error('No image data to upload.');
@@ -319,7 +339,12 @@ async function generateOmegaImage(prompt) {
     if (contentType.includes('application/json')) {
         const data = await response.json();
         const imageUrl = data.url || data.image || data.imageUrl || data.result;
-        if (imageUrl) return { url: imageUrl };
+        if (/^https?:\/\//i.test(imageUrl || '')) return { url: imageUrl };
+        if (String(imageUrl || '').startsWith('data:')) return dataUriToImage(imageUrl);
+        if (imageUrl) {
+            const image = base64ToImage(imageUrl);
+            if (image) return image;
+        }
         throw new Error(data.message || 'Image API did not return an image.');
     }
 
@@ -382,12 +407,16 @@ async function runIntelligent(sock, msg, request) {
     if (request.type === 'image') {
         const imagePrompt = buildImagePrompt(msg, request.prompt);
         const image = await generateOmegaImage(imagePrompt);
-        const imageContent = image.url
-            ? { url: image.url }
-            : { buffer: image.buffer, mimetype: image.mime || 'image/jpeg' };
+        if (!image.url && !Buffer.isBuffer(image.buffer)) {
+            throw new Error('Image API returned an unreadable image.');
+        }
+
+        const imageMessage = image.url
+            ? { image: { url: image.url } }
+            : { image: image.buffer, mimetype: image.mime || 'image/jpeg' };
 
         await sock.sendMessage(msg.key.remoteJid, {
-            image: imageContent,
+            ...imageMessage,
             caption: `*AI Image*\n${imagePrompt.slice(0, 500)}\n\n_Reply to continue._\n[REPLY_ID:intelligent]`
         }, { quoted: msg });
         remember(msg, request.prompt || 'send an image', `[Generated image] ${imagePrompt}`);
