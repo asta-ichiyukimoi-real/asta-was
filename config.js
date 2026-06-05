@@ -1,6 +1,6 @@
 module.exports = {
     prefix: '.',
-    owner: '63097851101285@lid', 
+    owner: '2349139977668@s.whatsapp.net', 
     admins: [], 
     botName: 'My WhatsApp Bot',
     version: '1.0.0',
