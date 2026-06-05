@@ -1,9 +1,11 @@
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const state = require('../utils/stateManager');
 
+const AI_CHAT_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Qwen-Claude-Haiku';
 const AI_RESEARCH_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Ai-research';
 const VISION_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini';
 const IMAGE_URL = 'https://omegatech-api.dixonomega.tech/api/ai/magicstudio';
+const CATBOX_UPLOAD_URL = 'https://catbox.moe/user/api.php';
 const LOCAL_TIME_ZONE = process.env.BOT_TIMEZONE || 'Africa/Lagos';
 
 function sanitizeId(value) {
@@ -56,6 +58,16 @@ function isImageUrl(value) {
 
 function looksLikeDateTimeRequest(text) {
     return /\b(today'?s date|date today|what date|current date|what day|day today|current time|time now|what time)\b/i.test(text || '');
+}
+
+function looksLikeResearchRequest(text) {
+    return /\b(research|details|detailed|deep|latest|current|recent|news|search|web|google|source|sources|facts|fact-check|explain in detail)\b/i.test(text || '');
+}
+
+function stripResearchIntent(text) {
+    return String(text || '')
+        .replace(/^(research|details|detail|detailed|deep|search|web|google)\s+/i, '')
+        .trim();
 }
 
 function answerDateTime(text) {
@@ -126,13 +138,13 @@ async function streamToBuffer(stream) {
     return Buffer.concat(chunks);
 }
 
-async function imageMessageToDataUrl(imageMessage) {
+async function imageMessageToBuffer(imageMessage) {
     if (!imageMessage) return null;
 
     const stream = await downloadContentFromMessage(imageMessage, 'image');
     const buffer = await streamToBuffer(stream);
     const mime = imageMessage.mimetype || 'image/jpeg';
-    return `data:${mime};base64,${buffer.toString('base64')}`;
+    return { buffer, mime };
 }
 
 function parseRequest(args) {
@@ -174,6 +186,14 @@ function parseRequest(args) {
         return {
             type: 'datetime',
             prompt: fullText
+        };
+    }
+
+    if (looksLikeResearchRequest(fullText)) {
+        return {
+            type: 'research',
+            prompt: fullText,
+            query: stripResearchIntent(fullText) || fullText
         };
     }
 
@@ -225,6 +245,23 @@ async function askOmegaResearch(message) {
     return String(text).trim();
 }
 
+async function askOmegaChat(message, sessionId) {
+    const systemPrompt = [
+        'You are Asta, a helpful WhatsApp AI assistant.',
+        'Reply naturally and clearly. Be brief unless the user asks for detail.',
+        'Do not include sources unless the user asks.'
+    ].join(' ');
+    const url = `${AI_CHAT_URL}?message=${encodeURIComponent(message)}&model=qwen&sessionId=${encodeURIComponent(sessionId)}&systemPrompt=${encodeURIComponent(systemPrompt)}`;
+    const data = await fetchJson(url, 45000);
+    const text = data.answer || data.result || data.response || data.message;
+
+    if (!text) {
+        throw new Error('No answer returned from AI.');
+    }
+
+    return String(text).trim();
+}
+
 async function askOmegaVision(message, imageUrl, sessionId) {
     const url = `${VISION_URL}?message=${encodeURIComponent(message)}&imageUrl=${encodeURIComponent(imageUrl)}&model=1&sessionId=${encodeURIComponent(sessionId)}`;
     const data = await fetchJson(url, 60000);
@@ -235,6 +272,36 @@ async function askOmegaVision(message, imageUrl, sessionId) {
     }
 
     return String(text).trim();
+}
+
+function extensionFromMime(mime) {
+    if (/png/i.test(mime)) return 'png';
+    if (/webp/i.test(mime)) return 'webp';
+    return 'jpg';
+}
+
+async function uploadImageForVision(image) {
+    if (!image?.buffer) {
+        throw new Error('No image data to upload.');
+    }
+
+    const form = new FormData();
+    const fileName = `vision-${Date.now()}.${extensionFromMime(image.mime || 'image/jpeg')}`;
+    form.append('reqtype', 'fileupload');
+    form.append('fileToUpload', new Blob([image.buffer], { type: image.mime || 'image/jpeg' }), fileName);
+
+    const response = await fetch(CATBOX_UPLOAD_URL, {
+        method: 'POST',
+        body: form,
+        signal: AbortSignal.timeout(60000)
+    });
+
+    const text = (await response.text()).trim();
+    if (!response.ok || !/^https?:\/\//i.test(text)) {
+        throw new Error(`Image upload failed: ${text || response.status}`);
+    }
+
+    return text;
 }
 
 async function generateOmegaImage(prompt) {
@@ -300,12 +367,13 @@ function buildImagePrompt(msg, prompt) {
 
 async function runIntelligent(sock, msg, request) {
     const imageMessage = findImageMessage(msg);
-    const imageDataUrl = await imageMessageToDataUrl(imageMessage);
+    const imageData = await imageMessageToBuffer(imageMessage);
     const sessionId = getConversationId(msg);
 
-    if (imageDataUrl && request.type !== 'image') {
+    if (imageData && request.type !== 'image') {
         const prompt = request.prompt || 'What do you see in this image?';
-        const text = await askOmegaVision(buildPromptWithMemory(msg, prompt), imageDataUrl, sessionId);
+        const uploadedImageUrl = await uploadImageForVision(imageData);
+        const text = await askOmegaVision(buildPromptWithMemory(msg, prompt), uploadedImageUrl, sessionId);
         remember(msg, `[Image question] ${prompt}`, `[Vision] ${text}`);
         await sendText(sock, msg, 'AI Vision', text);
         return;
@@ -347,8 +415,16 @@ async function runIntelligent(sock, msg, request) {
         return;
     }
 
+    if (request.type === 'research') {
+        const prompt = buildPromptWithMemory(msg, request.query || request.prompt);
+        const text = await askOmegaResearch(prompt);
+        remember(msg, request.prompt, text);
+        await sendText(sock, msg, 'AI Research', text);
+        return;
+    }
+
     const prompt = buildPromptWithMemory(msg, request.prompt);
-    const text = await askOmegaResearch(prompt);
+    const text = await askOmegaChat(prompt, sessionId);
     remember(msg, request.prompt, text);
     await sendText(sock, msg, 'AI', text);
 }
@@ -372,12 +448,13 @@ module.exports = {
     config: {
         name: 'intelligent',
         aliases: ['ai', 'asta', 'brain', 'genius'],
-        version: '1.1.0',
+        version: '1.2.0',
         description: 'Smart AI command using Omegatech chat, vision, and image generation',
         usage: 'ai <message|draw|vision>',
         examples: [
             'ai what is today date',
             'ai explain photosynthesis simply',
+            'ai research latest AI news',
             'ai vision https://i.pinimg.com/236x/f5/6a/87/f56a87d1d56b3e44233eae545a5f8651.jpg what is here?',
             'ai draw anime boy'
         ],
@@ -394,6 +471,7 @@ module.exports = {
                     'Ask me something:',
                     '.ai what is today date',
                     '.ai explain photosynthesis simply',
+                    '.ai research latest AI news',
                     '.ai vision <imageUrl> what is here?',
                     '.ai draw anime boy'
                 ].join('\n')
