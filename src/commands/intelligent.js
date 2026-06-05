@@ -4,9 +4,10 @@ const state = require('../utils/stateManager');
 const AI_CHAT_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Qwen-Claude-Haiku';
 const AI_RESEARCH_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Ai-research';
 const VISION_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini';
-const IMAGE_URL = 'https://omegatech-api.dixonomega.tech/api/ai/magicstudio';
+const PINTEREST_URL = 'https://omegatech-api.dixonomega.tech/api/Search/pinterest';
 const CATBOX_UPLOAD_URL = 'https://catbox.moe/user/api.php';
 const LOCAL_TIME_ZONE = process.env.BOT_TIMEZONE || 'Africa/Lagos';
+const MAX_PINTEREST_IMAGES = 8;
 
 function sanitizeId(value) {
     return String(value || 'unknown').replace(/[^a-zA-Z0-9]/g, '_');
@@ -41,14 +42,31 @@ function buildContextText(msg) {
 }
 
 function looksLikeImageGenerationRequest(text) {
-    return /\b(draw|generate|create|make|send)\b.*\b(image|picture|photo|art|poster|wallpaper|illustration)\b/i.test(text || '')
+    return /\b(draw|generate|create|make|send|need|want|get|find)\b.*\b(image|picture|photo|art|poster|wallpaper|illustration|pin)\b/i.test(text || '')
         || /\b(show me|make me|draw me)\b/i.test(text || '');
 }
 
 function stripImageIntent(text) {
     return String(text || '')
-        .replace(/^(please\s+)?(draw|generate|create|make|send|show me|make me|draw me)\s+/i, '')
+        .replace(/^(please\s+)?(?:i\s+)?(draw|generate|create|make|send|show me|make me|draw me|need|want|get|find)\s+/i, '')
         .replace(/^(an?|the)\s+(image|picture|photo|art|poster|wallpaper|illustration)\s+(of|for|about)\s+/i, '')
+        .trim();
+}
+
+function parseImageCount(text) {
+    const value = String(text || '');
+    const match = value.match(/\b(?:send|show|give|need|want|make|get)?\s*(\d{1,2})\s*(?:images?|pictures?|photos?|wallpapers?|pins?)\b/i)
+        || value.match(/\b(?:images?|pictures?|photos?|wallpapers?|pins?)\s*(?:x|:)?\s*(\d{1,2})\b/i);
+    const count = match ? Number(match[1]) : 1;
+
+    if (!Number.isInteger(count) || count < 1) return 1;
+    return Math.min(count, MAX_PINTEREST_IMAGES);
+}
+
+function stripImageCount(text) {
+    return String(text || '')
+        .replace(/\b(?:send|show|give|need|want|make|get)?\s*\d{1,2}\s*(?:images?|pictures?|photos?|wallpapers?|pins?)\s*(?:of|for|about)?\s*/i, '')
+        .replace(/\b(?:images?|pictures?|photos?|wallpapers?|pins?)\s*(?:x|:)?\s*\d{1,2}\b/i, '')
         .trim();
 }
 
@@ -153,16 +171,20 @@ function parseRequest(args) {
     const fullText = args.join(' ').trim();
 
     if (['draw', 'image', 'generate', 'img'].includes(first)) {
+        const prompt = args.slice(1).join(' ').trim();
         return {
             type: 'image',
-            prompt: args.slice(1).join(' ').trim()
+            prompt: stripImageCount(prompt) || prompt,
+            count: parseImageCount(prompt)
         };
     }
 
     if (looksLikeImageGenerationRequest(fullText)) {
+        const prompt = stripImageIntent(fullText) || fullText;
         return {
             type: 'image',
-            prompt: stripImageIntent(fullText) || fullText
+            prompt: stripImageCount(prompt) || prompt,
+            count: parseImageCount(fullText)
         };
     }
 
@@ -280,26 +302,6 @@ function extensionFromMime(mime) {
     return 'jpg';
 }
 
-function dataUriToImage(dataUri) {
-    const match = String(dataUri || '').match(/^data:([^;]+);base64,(.+)$/);
-    if (!match) return null;
-
-    return {
-        buffer: Buffer.from(match[2], 'base64'),
-        mime: match[1]
-    };
-}
-
-function base64ToImage(value) {
-    const text = String(value || '').trim();
-    if (text.length < 500 || !/^[A-Za-z0-9+/]+={0,2}$/.test(text)) return null;
-
-    return {
-        buffer: Buffer.from(text, 'base64'),
-        mime: 'image/jpeg'
-    };
-}
-
 async function uploadImageForVision(image) {
     if (!image?.buffer) {
         throw new Error('No image data to upload.');
@@ -324,32 +326,20 @@ async function uploadImageForVision(image) {
     return text;
 }
 
-async function generateOmegaImage(prompt) {
-    const url = `${IMAGE_URL}?prompt=${encodeURIComponent(prompt)}`;
-    const response = await fetch(url, {
-        headers: { 'User-Agent': 'AstaBot/1.0 (WhatsApp bot)' },
-        signal: AbortSignal.timeout(60000)
-    });
+async function searchPinterestImages(query, count = 1) {
+    const limit = Math.min(Math.max(Number(count) || 1, 1), MAX_PINTEREST_IMAGES);
+    const url = `${PINTEREST_URL}?query=${encodeURIComponent(query)}&scope=pins&limit=${limit}`;
+    const data = await fetchJson(url, 45000);
+    const images = (Array.isArray(data.results) ? data.results : [])
+        .map(item => item.image || item.thumb)
+        .filter(value => /^https?:\/\//i.test(value || ''))
+        .slice(0, limit);
 
-    if (!response.ok) {
-        throw new Error(`Image API responded with status ${response.status}`);
+    if (!images.length) {
+        throw new Error('No Pinterest images found.');
     }
 
-    const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-        const data = await response.json();
-        const imageUrl = data.url || data.image || data.imageUrl || data.result;
-        if (/^https?:\/\//i.test(imageUrl || '')) return { url: imageUrl };
-        if (String(imageUrl || '').startsWith('data:')) return dataUriToImage(imageUrl);
-        if (imageUrl) {
-            const image = base64ToImage(imageUrl);
-            if (image) return image;
-        }
-        throw new Error(data.message || 'Image API did not return an image.');
-    }
-
-    const buffer = Buffer.from(await response.arrayBuffer());
-    return { buffer, mime: contentType || 'image/jpeg' };
+    return images;
 }
 
 async function sendText(sock, msg, title, text) {
@@ -379,11 +369,11 @@ function buildImagePrompt(msg, prompt) {
     }
 
     if (!context) {
-        return cleaned || prompt || 'a detailed creative image';
+        return cleaned || prompt || 'anime wallpaper';
     }
 
     return [
-        cleaned || prompt || 'Create an image based on the recent conversation.',
+        cleaned || prompt || 'Find images based on the recent conversation.',
         '',
         'Recent conversation context:',
         context
@@ -406,20 +396,16 @@ async function runIntelligent(sock, msg, request) {
 
     if (request.type === 'image') {
         const imagePrompt = buildImagePrompt(msg, request.prompt);
-        const image = await generateOmegaImage(imagePrompt);
-        if (!image.url && !Buffer.isBuffer(image.buffer)) {
-            throw new Error('Image API returned an unreadable image.');
+        const images = await searchPinterestImages(imagePrompt, request.count || 1);
+
+        for (let i = 0; i < images.length; i += 1) {
+            await sock.sendMessage(msg.key.remoteJid, {
+                image: { url: images[i] },
+                caption: `*Pinterest Image${images.length > 1 ? ` ${i + 1}/${images.length}` : ''}*\n${imagePrompt.slice(0, 500)}${i === images.length - 1 ? '\n\n_Reply to continue._\n[REPLY_ID:intelligent]' : ''}`
+            }, { quoted: i === 0 ? msg : undefined });
         }
 
-        const imageMessage = image.url
-            ? { image: { url: image.url } }
-            : { image: image.buffer, mimetype: image.mime || 'image/jpeg' };
-
-        await sock.sendMessage(msg.key.remoteJid, {
-            ...imageMessage,
-            caption: `*AI Image*\n${imagePrompt.slice(0, 500)}\n\n_Reply to continue._\n[REPLY_ID:intelligent]`
-        }, { quoted: msg });
-        remember(msg, request.prompt || 'send an image', `[Generated image] ${imagePrompt}`);
+        remember(msg, request.prompt || 'send an image', `[Pinterest images] ${imagePrompt} (${images.length})`);
         return;
     }
 
@@ -478,14 +464,14 @@ module.exports = {
         name: 'intelligent',
         aliases: ['ai', 'asta', 'brain', 'genius'],
         version: '1.2.0',
-        description: 'Smart AI command using Omegatech chat, vision, and image generation',
+        description: 'Smart AI command using Omegatech chat, vision, and Pinterest images',
         usage: 'ai <message|draw|vision>',
         examples: [
             'ai what is today date',
             'ai explain photosynthesis simply',
             'ai research latest AI news',
             'ai vision https://i.pinimg.com/236x/f5/6a/87/f56a87d1d56b3e44233eae545a5f8651.jpg what is here?',
-            'ai draw anime boy'
+            'ai send 2 images of akaza'
         ],
         permissions: 0,
         cooldown: 8,
@@ -502,7 +488,7 @@ module.exports = {
                     '.ai explain photosynthesis simply',
                     '.ai research latest AI news',
                     '.ai vision <imageUrl> what is here?',
-                    '.ai draw anime boy'
+                    '.ai send 2 images of akaza'
                 ].join('\n')
             }, { quoted: msg });
             return;
