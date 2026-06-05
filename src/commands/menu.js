@@ -35,31 +35,32 @@ module.exports = {
 
 *Media*
 12. ${prefix}sticker - Make an image sticker
+13. ${prefix}media faded - Download mp3 or mp4
 
 *Group*
-13. ${prefix}groupinfo - Show group details
-14. ${prefix}tagall message - Mention everyone
+14. ${prefix}groupinfo - Show group details
+15. ${prefix}tagall message - Mention everyone
 
 *Moderation*
-15. ${prefix}kick @user - Remove a member
-16. ${prefix}warn @user - Warn a member
-17. ${prefix}antilink on - Block links
-18. ${prefix}badword add word - Filter a word
-19. ${prefix}mute - Lock the group
+16. ${prefix}kick @user - Remove a member
+17. ${prefix}warn @user - Warn a member
+18. ${prefix}antilink on - Block links
+19. ${prefix}badword add word - Filter a word
+20. ${prefix}mute - Lock the group
 
 *Custom*
-20. ${prefix}addcmd rules Be respectful - Add a command
-21. ${prefix}listcmd - List custom commands
-22. ${prefix}disable sticker - Disable a command here
-23. ${prefix}enable sticker - Enable it again
+21. ${prefix}addcmd rules Be respectful - Add a command
+22. ${prefix}listcmd - List custom commands
+23. ${prefix}disable sticker - Disable a command here
+24. ${prefix}enable sticker - Enable it again
 
 *Platform*
-24. ${prefix}setprefix . - Set chat prefix
-25. ${prefix}setwelcome Welcome {{name}} - Edit welcome
-26. ${prefix}role add mod @user - Add bot mod
-27. ${prefix}health - Bot health
-28. ${prefix}backup - Backup bot state
-29. ${prefix}reload - Reload commands
+25. ${prefix}setprefix . - Set chat prefix
+26. ${prefix}setwelcome Welcome {{name}} - Edit welcome
+27. ${prefix}role add mod @user - Add bot mod
+28. ${prefix}health - Bot health
+29. ${prefix}backup - Backup bot state
+30. ${prefix}reload - Reload commands
 
 Reply with one of the commands above to continue.`;
 
