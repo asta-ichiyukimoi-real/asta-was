@@ -52,13 +52,58 @@ class CommandHandler {
         console.log(`Loaded ${uniqueCommands} unique commands with ${this.commands.size} total entries (including aliases).`);
     }
 
+    levenshtein(a, b) {
+        const left = String(a || '').toLowerCase();
+        const right = String(b || '').toLowerCase();
+        const dp = Array.from({ length: left.length + 1 }, () => Array(right.length + 1).fill(0));
+
+        for (let i = 0; i <= left.length; i += 1) dp[i][0] = i;
+        for (let j = 0; j <= right.length; j += 1) dp[0][j] = j;
+
+        for (let i = 1; i <= left.length; i += 1) {
+            for (let j = 1; j <= right.length; j += 1) {
+                const cost = left[i - 1] === right[j - 1] ? 0 : 1;
+                dp[i][j] = Math.min(
+                    dp[i - 1][j] + 1,
+                    dp[i][j - 1] + 1,
+                    dp[i - 1][j - 1] + cost
+                );
+            }
+        }
+
+        return dp[left.length][right.length];
+    }
+
+    suggestCommands(commandName, limit = 3) {
+        return [...this.commands.keys()]
+            .map(name => ({ name, distance: this.levenshtein(commandName, name) }))
+            .filter(item => item.distance <= Math.max(2, Math.ceil(commandName.length / 3)))
+            .sort((a, b) => a.distance - b.distance || a.name.localeCompare(b.name))
+            .slice(0, limit)
+            .map(item => item.name);
+    }
+
     async execute(sock, msg, commandName, args) {
         const command = this.commands.get(commandName);
         const chatId = msg.key.remoteJid;
 
         if (!command) {
             const customCommand = state.getCustomCommand(chatId, commandName);
-            if (!customCommand) return;
+            if (!customCommand) {
+                const suggestions = this.suggestCommands(commandName);
+                if (suggestions.length) {
+                    const prefix = state.getChatPrefix(chatId, this.configCommandHandler.getPrefix());
+                    await this.safeSendMessage(sock, chatId, {
+                        text: [
+                            `Unknown command: ${prefix}${commandName}`,
+                            '',
+                            'Did you mean:',
+                            ...suggestions.map(name => `- ${prefix}${name}`)
+                        ].join('\n')
+                    }, { quoted: msg });
+                }
+                return;
+            }
 
             state.incrementCommandUsage(`custom:${commandName}`);
             logger.log('custom_command', {

@@ -72,6 +72,10 @@ module.exports = {
         }
 
         try {
+            try {
+                await sock.sendPresenceUpdate('uploading', msg.key.remoteJid);
+            } catch {}
+
             await sock.sendMessage(msg.key.remoteJid, {
                 text: `Searching wallpapers for *${query}*...`
             }, { quoted: msg });

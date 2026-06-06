@@ -11,7 +11,7 @@ module.exports = {
         category: 'general'
     },
     onRun: async (sock, msg, args) => {
-        const prefix = state.getChatPrefix(msg.key.remoteJid, config.prefix);
+        const prefix = state.getChatPrefix(msg.key.remoteJid, global.configCommandHandler?.getPrefix?.() || config.prefix);
         const text = `*Bot Command Menu*
 
 *General*
@@ -64,19 +64,20 @@ module.exports = {
 31. ${prefix}role add mod @user - Add bot mod
 32. ${prefix}health - Bot health
 33. ${prefix}config get media.wallpaperMaxImages - Runtime config
-34. ${prefix}backup - Backup bot state
-35. ${prefix}ownertest - Debug owner permission
-36. ${prefix}reload - Reload commands
+34. ${prefix}features media off - Toggle categories
+35. ${prefix}backup - Backup bot state
+36. ${prefix}ownertest - Debug owner permission
+37. ${prefix}reload - Reload commands
 
 *Developer*
-37. ${prefix}logs 20 - Show recent logs
-38. ${prefix}shell git status --short - Run shell command
-39. ${prefix}file list src/commands - Manage files
-40. ${prefix}analytics - Bot metrics
-41. ${prefix}apistatus - Check API health
-42. ${prefix}env - Check allowed env vars
-43. ${prefix}eval commands.size - Evaluate JS
-44. ${prefix}restart - Restart bot
+38. ${prefix}logs 20 - Show recent logs
+39. ${prefix}shell git status --short - Run shell command
+40. ${prefix}file list src/commands - Manage files
+41. ${prefix}analytics - Bot metrics
+42. ${prefix}apistatus - Check API health
+43. ${prefix}env - Check allowed env vars
+44. ${prefix}eval commands.size - Evaluate JS
+45. ${prefix}restart - Restart bot
 
 Reply with one of the commands above to continue.`;
 

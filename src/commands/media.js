@@ -147,6 +147,10 @@ async function askDelivery(sock, msg, query, format) {
 }
 
 async function sendMedia(sock, msg, query, format, delivery) {
+    try {
+        await sock.sendPresenceUpdate('uploading', msg.key.remoteJid);
+    } catch {}
+
     await sock.sendMessage(msg.key.remoteJid, {
         text: `Downloading *${query}* as ${format.toUpperCase()}...`
     }, { quoted: msg });

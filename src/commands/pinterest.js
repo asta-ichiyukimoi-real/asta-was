@@ -75,6 +75,10 @@ module.exports = {
         }
 
         try {
+            try {
+                await sock.sendPresenceUpdate('uploading', msg.key.remoteJid);
+            } catch {}
+
             await sock.sendMessage(msg.key.remoteJid, {
                 text: `Searching Pinterest for *${query}*...`
             }, { quoted: msg });

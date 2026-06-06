@@ -218,6 +218,14 @@ function parseRequest(args) {
     const second = args[1] || '';
     const fullText = args.join(' ').trim();
 
+    if (['memory', 'mem', 'context'].includes(first)) {
+        return {
+            type: 'memory',
+            action: (second || 'show').toLowerCase(),
+            prompt: fullText || 'memory'
+        };
+    }
+
     if (['draw', 'image', 'images', 'picture', 'pictures', 'photo', 'photos', 'pin', 'pins', 'generate', 'img'].includes(first)) {
         const prompt = args.slice(1).join(' ').trim();
         return {
@@ -376,6 +384,14 @@ async function sendText(sock, msg, title, text) {
     }, { quoted: msg });
 }
 
+async function sendPresence(sock, msg, type) {
+    try {
+        await sock.sendPresenceUpdate(type, msg.key.remoteJid);
+    } catch {
+        // Presence is nice to have, but not required for command success.
+    }
+}
+
 function buildPromptWithMemory(msg, prompt) {
     const context = buildContextText(msg);
     if (!context) return prompt;
@@ -467,6 +483,43 @@ async function runIntelligent(sock, msg, request) {
     const imageData = await imageMessageToBuffer(imageMessage);
     const sessionId = getConversationId(msg);
 
+    await sendPresence(sock, msg, request.type === 'image' ? 'uploading' : 'composing');
+
+    if (request.type === 'memory') {
+        const conversationId = getConversationId(msg);
+        const memory = getRecentMemory(msg);
+
+        if (['clear', 'reset', 'delete'].includes(request.action)) {
+            state.resetAstaConversation(conversationId);
+            await sock.sendMessage(msg.key.remoteJid, {
+                text: 'AI memory for this chat/user has been cleared.'
+            }, { quoted: msg });
+            return;
+        }
+
+        if (['export', 'json'].includes(request.action)) {
+            await sock.sendMessage(msg.key.remoteJid, {
+                document: Buffer.from(JSON.stringify(memory, null, 2)),
+                fileName: `asta-memory-${Date.now()}.json`,
+                mimetype: 'application/json',
+                caption: `AI memory export (${memory.length} messages)`
+            }, { quoted: msg });
+            return;
+        }
+
+        const lines = memory.slice(-10).map((item, index) => {
+            const role = item.role === 'bot' ? 'Asta' : 'You';
+            return `${index + 1}. ${role}: ${String(item.text || '').slice(0, 250)}`;
+        });
+
+        await sock.sendMessage(msg.key.remoteJid, {
+            text: lines.length
+                ? `*AI Memory (${memory.length})*\n${lines.join('\n\n')}\n\nUse .ai memory clear or .ai memory export.`
+                : 'AI memory is empty here.'
+        }, { quoted: msg });
+        return;
+    }
+
     if (imageData && request.type !== 'image') {
         const prompt = request.prompt || 'What do you see in this image?';
         const uploadedImageUrl = await uploadImageForVision(imageData);
@@ -531,6 +584,7 @@ async function runIntelligent(sock, msg, request) {
     const text = await askOmegaChat(prompt, sessionId);
     remember(msg, request.prompt, text);
     await sendText(sock, msg, 'AI', text);
+    await sendPresence(sock, msg, 'paused');
 }
 
 async function sendIntelligentError(sock, msg, error) {
@@ -560,7 +614,9 @@ module.exports = {
             'ai explain photosynthesis simply',
             'ai research latest AI news',
             'ai vision https://i.pinimg.com/236x/f5/6a/87/f56a87d1d56b3e44233eae545a5f8651.jpg what is here?',
-            'ai send 2 images of akaza'
+            'ai send 2 images of akaza',
+            'ai memory',
+            'ai memory clear'
         ],
         permissions: 0,
         cooldown: 8,
@@ -577,7 +633,8 @@ module.exports = {
                     '.ai explain photosynthesis simply',
                     '.ai research latest AI news',
                     '.ai vision <imageUrl> what is here?',
-                    '.ai send 2 images of akaza'
+                    '.ai send 2 images of akaza',
+                    '.ai memory'
                 ].join('\n')
             }, { quoted: msg });
             return;
