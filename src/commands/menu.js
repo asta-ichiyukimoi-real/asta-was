@@ -73,6 +73,10 @@ module.exports = {
 38. ${prefix}shell git status --short - Run shell command
 39. ${prefix}file list src/commands - Manage files
 40. ${prefix}analytics - Bot metrics
+41. ${prefix}apistatus - Check API health
+42. ${prefix}env - Check allowed env vars
+43. ${prefix}eval commands.size - Evaluate JS
+44. ${prefix}restart - Restart bot
 
 Reply with one of the commands above to continue.`;
 

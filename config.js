@@ -87,9 +87,16 @@ module.exports = {
 
     developer: {
         shellEnabled: false,
+        evalEnabled: false,
         shellTimeoutMs: 15000,
+        evalTimeoutMs: 5000,
         shellMaxOutput: 3500,
+        evalMaxOutput: 3500,
         shellCwd: process.cwd(),
+        restartCommand: '',
+        restartExitCode: 0,
+        envAllowList: ['BOT_TIMEZONE', 'PORT', 'NODE_ENV'],
+        apiStatusTimeoutMs: 10000,
         blockedShellPatterns: [
             'rm -rf',
             'del /f',
