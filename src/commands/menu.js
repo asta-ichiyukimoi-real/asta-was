@@ -68,6 +68,10 @@ module.exports = {
 35. ${prefix}ownertest - Debug owner permission
 36. ${prefix}reload - Reload commands
 
+*Developer*
+37. ${prefix}logs 20 - Show recent logs
+38. ${prefix}shell git status --short - Run shell command
+
 Reply with one of the commands above to continue.`;
 
         await sock.sendMessage(msg.key.remoteJid, { text }, { quoted: msg });

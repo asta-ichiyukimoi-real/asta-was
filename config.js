@@ -32,7 +32,7 @@ module.exports = {
         maxArgsLength: 1000,
         mentionPrefixEnabled: false,
         disabledGlobally: [],
-        categories: ['general', 'utility', 'ai', 'media', 'group', 'moderation', 'admin', 'fun']
+        categories: ['general', 'utility', 'ai', 'media', 'group', 'moderation', 'admin', 'developer', 'fun']
     },
 
     media: {
@@ -85,6 +85,24 @@ module.exports = {
         maxRecentLogs: 100
     },
 
+    developer: {
+        shellEnabled: false,
+        shellTimeoutMs: 15000,
+        shellMaxOutput: 3500,
+        shellCwd: process.cwd(),
+        blockedShellPatterns: [
+            'rm -rf',
+            'del /f',
+            'format ',
+            'shutdown',
+            'restart-computer',
+            'stop-computer',
+            'remove-item -recurse',
+            'git reset --hard'
+        ],
+        logsMaxLines: 30
+    },
+
     moderation: {
         antiLinkDefault: false,
         warningsBeforeAction: 3,
@@ -97,6 +115,7 @@ module.exports = {
         welcome: true,
         farewell: true,
         autoReply: true,
-        customCommands: true
+        customCommands: true,
+        developerCommands: true
     }
 };
