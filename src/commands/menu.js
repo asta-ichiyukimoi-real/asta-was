@@ -71,6 +71,8 @@ module.exports = {
 *Developer*
 37. ${prefix}logs 20 - Show recent logs
 38. ${prefix}shell git status --short - Run shell command
+39. ${prefix}file list src/commands - Manage files
+40. ${prefix}analytics - Bot metrics
 
 Reply with one of the commands above to continue.`;
 
