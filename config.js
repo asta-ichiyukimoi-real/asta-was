@@ -55,7 +55,7 @@ module.exports = {
 
     apis: {
         omegatechBase: 'https://omegatech-api.dixonomega.tech',
-        aiChat: 'https://omegatech-api.dixonomega.tech/api/ai/Qwen-Claude-Haiku',
+        aiChat: 'https://vision-scrape-2ex8.onrender.com/ai/chat',
         aiResearch: 'https://omegatech-api.dixonomega.tech/api/ai/Ai-research',
         aiVision: 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini',
         pinterest: 'https://omegatech-api.dixonomega.tech/api/Search/pinterest',

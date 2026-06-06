@@ -4,7 +4,7 @@ const state = require('../utils/stateManager');
 const { requestJson, friendlyApiError, getErrorMessage, isTimeout } = require('../utils/apiClient');
 const contextResolver = require('../utils/contextResolver');
 
-const AI_CHAT_URL = config.apis?.aiChat || 'https://omegatech-api.dixonomega.tech/api/ai/Qwen-Claude-Haiku';
+const AI_CHAT_URL = config.apis?.aiChat || 'https://vision-scrape-2ex8.onrender.com/ai/chat';
 const AI_RESEARCH_URL = config.apis?.aiResearch || 'https://omegatech-api.dixonomega.tech/api/ai/Ai-research';
 const VISION_URL = config.apis?.aiVision || 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini';
 const PINTEREST_URL = config.apis?.pinterest || 'https://omegatech-api.dixonomega.tech/api/Search/pinterest';
@@ -300,12 +300,7 @@ async function askOmegaResearch(message) {
 }
 
 async function askOmegaChat(message, sessionId) {
-    const systemPrompt = [
-        'You are Asta, a helpful WhatsApp AI assistant.',
-        'Reply naturally and clearly. Be brief unless the user asks for detail.',
-        'Do not include sources unless the user asks.'
-    ].join(' ');
-    const url = `${AI_CHAT_URL}?message=${encodeURIComponent(message)}&model=qwen&sessionId=${encodeURIComponent(sessionId)}&systemPrompt=${encodeURIComponent(systemPrompt)}`;
+    const url = `${AI_CHAT_URL}?message=${encodeURIComponent(message)}&session_id=${encodeURIComponent(sessionId)}`;
     const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
     const text = data.answer || data.result || data.response || data.message;
 

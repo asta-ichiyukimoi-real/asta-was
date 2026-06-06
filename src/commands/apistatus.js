@@ -10,7 +10,7 @@ function endpointConfig() {
     return [
         {
             name: 'AI Chat',
-            url: `${apis.aiChat}?message=${encodeURIComponent('ping')}&model=qwen&sessionId=apistatus`
+            url: `${apis.aiChat}?message=${encodeURIComponent('ping')}&session_id=apistatus`
         },
         {
             name: 'AI Research',
