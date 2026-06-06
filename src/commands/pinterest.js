@@ -1,5 +1,9 @@
-const PINTEREST_URL = 'https://omegatech-api.dixonomega.tech/api/Search/pinterest';
-const MAX_PINTEREST_IMAGES = 8;
+const config = require('../../config');
+const { requestJson, friendlyApiError } = require('../utils/apiClient');
+
+const PINTEREST_URL = config.apis?.pinterest || 'https://omegatech-api.dixonomega.tech/api/Search/pinterest';
+const MAX_PINTEREST_IMAGES = config.media?.pinterestMaxImages || 8;
+const IMAGE_SEND_DELAY_MS = config.media?.imageSendDelayMs || 800;
 
 function parseArgs(args) {
     const parts = [...args];
@@ -26,15 +30,7 @@ function parseArgs(args) {
 async function fetchPinterestImages(query, count) {
     const limit = Math.min(Math.max(Number(count) || 1, 1), MAX_PINTEREST_IMAGES);
     const url = `${PINTEREST_URL}?query=${encodeURIComponent(query)}&scope=pins&limit=${limit}`;
-    const response = await fetch(url, {
-        headers: { 'User-Agent': 'AstaBot/1.0 (WhatsApp bot)' },
-        signal: AbortSignal.timeout(45000)
-    });
-    const data = await response.json().catch(() => null);
-
-    if (!response.ok || data?.success === false) {
-        throw new Error(data?.message || data?.error || `API responded with status ${response.status}`);
-    }
+    const data = await requestJson(url, { service: 'Pinterest API' });
 
     const images = (Array.isArray(data?.results) ? data.results : [])
         .map(item => ({
@@ -97,13 +93,13 @@ module.exports = {
                 }, { quoted: i === 0 ? msg : undefined });
 
                 if (i < images.length - 1) {
-                    await delay(800);
+                    await delay(IMAGE_SEND_DELAY_MS);
                 }
             }
         } catch (error) {
             console.error('Pinterest command error:', error);
             await sock.sendMessage(msg.key.remoteJid, {
-                text: `Pinterest failed: ${error.message || error}`
+                text: friendlyApiError(error, 'Pinterest API')
             }, { quoted: msg });
         }
     }

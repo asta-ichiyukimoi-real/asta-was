@@ -4,6 +4,7 @@ const config = require('../config');
 const state = require('../src/utils/stateManager');
 const logger = require('../src/utils/logger');
 const ConfigCommandHandler = require('./configCommandHandler');
+const commandQueue = require('../src/utils/commandQueue');
 
 class CommandHandler {
     constructor(configCommandHandler = new ConfigCommandHandler(config)) {
@@ -96,6 +97,7 @@ class CommandHandler {
         }
 
         const permLevel = command.config.permissions || 0;
+        const category = command.config.category || 'other';
         if (this.configCommandHandler.isCommandDisabledGlobally(command.config.name) && !isOwner) {
             await this.safeSendMessage(sock, chatId, {
                 text: `The ${command.config.name} command is disabled globally.`
@@ -137,6 +139,13 @@ class CommandHandler {
             return;
         }
 
+        if (!isOwner && state.isCategoryDisabled(chatId, category)) {
+            await this.safeSendMessage(sock, chatId, {
+                text: `The ${category} command category is disabled in this chat.`
+            }, { quoted: msg });
+            return;
+        }
+
         if (!isOwner && cooldownSeconds > 0) {
             const now = Date.now();
             const availableAt = this.cooldowns.get(cooldownKey) || 0;
@@ -159,7 +168,12 @@ class CommandHandler {
                 command: command.config.name,
                 args: args.join(' ').slice(0, 250)
             });
-            await command.onRun(sock, msg, args);
+            const shouldQueue = command.config.queue || category === 'media';
+            if (shouldQueue) {
+                await commandQueue.enqueue(`${chatId}:${category}`, () => command.onRun(sock, msg, args));
+            } else {
+                await command.onRun(sock, msg, args);
+            }
         } catch (error) {
             console.error(`Error executing command ${commandName}:`, error);
             state.updateHealth({ lastError: error.message });

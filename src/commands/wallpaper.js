@@ -1,5 +1,9 @@
-const WALLPAPER_URL = 'https://omegatech-api.dixonomega.tech/api/tools/wallpaper';
-const MAX_WALLPAPERS = 10;
+const config = require('../../config');
+const { requestJson, friendlyApiError } = require('../utils/apiClient');
+
+const WALLPAPER_URL = config.apis?.wallpaper || 'https://omegatech-api.dixonomega.tech/api/tools/wallpaper';
+const MAX_WALLPAPERS = config.media?.wallpaperMaxImages || 10;
+const IMAGE_SEND_DELAY_MS = config.media?.imageSendDelayMs || 800;
 
 function parseArgs(args) {
     const parts = [...args];
@@ -25,15 +29,7 @@ function parseArgs(args) {
 
 async function fetchWallpapers(query, count) {
     const url = `${WALLPAPER_URL}?name=${encodeURIComponent(query)}`;
-    const response = await fetch(url, {
-        headers: { 'User-Agent': 'AstaBot/1.0 (WhatsApp bot)' },
-        signal: AbortSignal.timeout(45000)
-    });
-    const data = await response.json().catch(() => null);
-
-    if (!response.ok || data?.status === false || data?.success === false) {
-        throw new Error(data?.message || data?.error || `API responded with status ${response.status}`);
-    }
+    const data = await requestJson(url, { service: 'Wallpaper API' });
 
     const results = (Array.isArray(data?.results) ? data.results : [])
         .filter(item => /^https?:\/\//i.test(item?.image || ''))
@@ -94,13 +90,13 @@ module.exports = {
                 }, { quoted: i === 0 ? msg : undefined });
 
                 if (i < results.length - 1) {
-                    await delay(800);
+                    await delay(IMAGE_SEND_DELAY_MS);
                 }
             }
         } catch (error) {
             console.error('Wallpaper command error:', error);
             await sock.sendMessage(msg.key.remoteJid, {
-                text: `Wallpaper failed: ${error.message || error}`
+                text: friendlyApiError(error, 'Wallpaper API')
             }, { quoted: msg });
         }
     }

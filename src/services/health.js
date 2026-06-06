@@ -1,5 +1,6 @@
 const os = require('os');
 const state = require('../utils/stateManager');
+const commandQueue = require('../utils/commandQueue');
 
 let intervalStarted = false;
 
@@ -35,6 +36,7 @@ function getSnapshot() {
         customCommandChats: Object.keys(snapshot.customCommands.chats || {}).length,
         moderationGroups: Object.keys(snapshot.moderation.groups || {}).length,
         pendingReminders: Object.values(snapshot.reminders.items || {}).filter(item => !item.sent).length,
+        queueSize: commandQueue.size(),
         recentLogs: snapshot.logs.recent || []
     };
 }

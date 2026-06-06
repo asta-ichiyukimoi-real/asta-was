@@ -1,4 +1,5 @@
 const rawConfig = require('../config');
+const state = require('../src/utils/stateManager');
 
 const DEFAULT_CONFIG = {
     prefix: '.',
@@ -61,13 +62,39 @@ function normalizeJid(value) {
     return String(value || '').trim().toLowerCase();
 }
 
+function setDeepValue(target, path, value) {
+    const keys = String(path || '').split('.').filter(Boolean);
+    let current = target;
+
+    for (let i = 0; i < keys.length - 1; i += 1) {
+        const key = keys[i];
+        if (!isPlainObject(current[key])) current[key] = {};
+        current = current[key];
+    }
+
+    if (keys.length) {
+        current[keys[keys.length - 1]] = value;
+    }
+}
+
 class ConfigCommandHandler {
     constructor(config = rawConfig) {
+        this.rawConfig = config;
         this.config = this.normalize(config);
+    }
+
+    reload() {
+        this.config = this.normalize(this.rawConfig);
+        return this.config;
     }
 
     normalize(config) {
         const merged = mergeConfig(DEFAULT_CONFIG, config || {});
+        const runtimeConfig = state.getRuntimeConfig?.() || {};
+
+        Object.entries(runtimeConfig).forEach(([path, value]) => {
+            setDeepValue(merged, path, value);
+        });
 
         merged.prefix = merged.prefix || merged.commands.prefix || '.';
         merged.commands.prefix = merged.commands.prefix || merged.prefix;

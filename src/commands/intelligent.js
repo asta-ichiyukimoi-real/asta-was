@@ -1,14 +1,21 @@
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
+const config = require('../../config');
 const state = require('../utils/stateManager');
+const { requestJson, friendlyApiError, getErrorMessage, isTimeout } = require('../utils/apiClient');
+const contextResolver = require('../utils/contextResolver');
 
-const AI_CHAT_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Qwen-Claude-Haiku';
-const AI_RESEARCH_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Ai-research';
-const VISION_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini';
-const PINTEREST_URL = 'https://omegatech-api.dixonomega.tech/api/Search/pinterest';
-const CATBOX_UPLOAD_URL = 'https://catbox.moe/user/api.php';
-const LOCAL_TIME_ZONE = process.env.BOT_TIMEZONE || 'Africa/Lagos';
-const MAX_PINTEREST_IMAGES = 8;
-const PRONOUN_REFERENCE_PATTERN = /\b(it|that|this|them|those|he|him|his|she|her|hers|they|their|the image|the picture|the photo|what you saw)\b/i;
+const AI_CHAT_URL = config.apis?.aiChat || 'https://omegatech-api.dixonomega.tech/api/ai/Qwen-Claude-Haiku';
+const AI_RESEARCH_URL = config.apis?.aiResearch || 'https://omegatech-api.dixonomega.tech/api/ai/Ai-research';
+const VISION_URL = config.apis?.aiVision || 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini';
+const PINTEREST_URL = config.apis?.pinterest || 'https://omegatech-api.dixonomega.tech/api/Search/pinterest';
+const CATBOX_UPLOAD_URL = config.apis?.catboxUpload || 'https://catbox.moe/user/api.php';
+const LOCAL_TIME_ZONE = process.env.BOT_TIMEZONE || config.ai?.timezone || config.bot?.timezone || 'Africa/Lagos';
+const MAX_PINTEREST_IMAGES = config.ai?.maxPinterestImages || config.media?.pinterestMaxImages || 8;
+const AI_REQUEST_TIMEOUT_MS = config.ai?.requestTimeoutMs || 45000;
+const AI_VISION_TIMEOUT_MS = config.ai?.visionTimeoutMs || 60000;
+const AI_RESEARCH_TIMEOUT_MS = config.ai?.researchTimeoutMs || 60000;
+const AI_CONTEXT_MESSAGES = config.ai?.contextMessages || 8;
+const PRONOUN_REFERENCE_PATTERN = contextResolver.PRONOUN_REFERENCE_PATTERN;
 
 function sanitizeId(value) {
     return String(value || 'unknown').replace(/[^a-zA-Z0-9]/g, '_');
@@ -34,7 +41,7 @@ function getRecentMemory(msg) {
 }
 
 function buildContextText(msg) {
-    const recent = getRecentMemory(msg).slice(-8);
+    const recent = getRecentMemory(msg).slice(-AI_CONTEXT_MESSAGES);
     if (!recent.length) return '';
 
     return recent
@@ -272,39 +279,17 @@ function parseRequest(args) {
     };
 }
 
-function getErrorMessage(error) {
-    if (!error) return 'Unknown error';
-    if (typeof error === 'string') return error;
-    if (error.message) return error.message;
-    if (error.cause?.message) return error.cause.message;
-    return String(error);
-}
-
 function isNetworkTimeout(error, message) {
-    return error?.cause?.code === 'UND_ERR_CONNECT_TIMEOUT'
-        || error?.name === 'TimeoutError'
-        || error?.name === 'AbortError'
-        || /timeout|fetch failed|connect/i.test(message);
+    return isTimeout(error) || /timeout|fetch failed|connect/i.test(message || '');
 }
 
 async function fetchJson(url, timeoutMs = 45000) {
-    const response = await fetch(url, {
-        headers: { 'User-Agent': 'AstaBot/1.0 (WhatsApp bot)' },
-        signal: AbortSignal.timeout(timeoutMs)
-    });
-
-    const data = await response.json().catch(() => null);
-
-    if (!response.ok || data?.success === false) {
-        throw new Error(data?.message || data?.error || `API responded with status ${response.status}`);
-    }
-
-    return data;
+    return requestJson(url, { timeoutMs, service: 'AI API' });
 }
 
 async function askOmegaResearch(message) {
     const url = `${AI_RESEARCH_URL}?message=${encodeURIComponent(message)}`;
-    const data = await fetchJson(url, 60000);
+    const data = await fetchJson(url, AI_RESEARCH_TIMEOUT_MS);
     const text = data.result || data.answer || data.message;
 
     if (!text) {
@@ -321,7 +306,7 @@ async function askOmegaChat(message, sessionId) {
         'Do not include sources unless the user asks.'
     ].join(' ');
     const url = `${AI_CHAT_URL}?message=${encodeURIComponent(message)}&model=qwen&sessionId=${encodeURIComponent(sessionId)}&systemPrompt=${encodeURIComponent(systemPrompt)}`;
-    const data = await fetchJson(url, 45000);
+    const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
     const text = data.answer || data.result || data.response || data.message;
 
     if (!text) {
@@ -334,7 +319,7 @@ async function askOmegaChat(message, sessionId) {
 async function askOmegaVision(message, imageUrl, sessionId) {
     const visionSessionId = imageUrl || sessionId;
     const url = `${VISION_URL}?message=${encodeURIComponent(message)}&imageUrl=${encodeURIComponent(imageUrl)}&model=1&sessionId=${encodeURIComponent(visionSessionId)}`;
-    const data = await fetchJson(url, 60000);
+    const data = await fetchJson(url, AI_VISION_TIMEOUT_MS);
     const text = data.answer || data.result || data.message;
 
     if (!text) {
@@ -363,7 +348,7 @@ async function uploadImageForVision(image) {
     const response = await fetch(CATBOX_UPLOAD_URL, {
         method: 'POST',
         body: form,
-        signal: AbortSignal.timeout(60000)
+        signal: AbortSignal.timeout(AI_VISION_TIMEOUT_MS)
     });
 
     const text = (await response.text()).trim();
@@ -377,7 +362,7 @@ async function uploadImageForVision(image) {
 async function searchPinterestImages(query, count = 1) {
     const limit = Math.min(Math.max(Number(count) || 1, 1), MAX_PINTEREST_IMAGES);
     const url = `${PINTEREST_URL}?query=${encodeURIComponent(query)}&scope=pins&limit=${limit}`;
-    const data = await fetchJson(url, 45000);
+    const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
     const images = (Array.isArray(data.results) ? data.results : [])
         .map(item => item.image || item.thumb)
         .filter(value => /^https?:\/\//i.test(value || ''))
@@ -446,41 +431,15 @@ function extractSubjectFromText(text) {
 }
 
 function getLastReferencedSubject(msg) {
-    const recent = getRecentMemory(msg).slice(-8).reverse();
-
-    for (const item of recent) {
-        if (item.role !== 'user') continue;
-        const subject = extractSubjectFromText(item.text);
-        if (subject) return subject;
-    }
-
-    for (const item of recent) {
-        const subject = extractSubjectFromText(item.text);
-        if (subject) return subject;
-    }
-
-    return '';
+    return contextResolver.getLastReferencedSubject(getRecentMemory(msg));
 }
 
 function normalizeImageSearchQuery(query) {
-    return String(query || '')
-        .replace(/\bsuper\s+saiy[ae]n\b/gi, 'Super Saiyan')
-        .replace(/\bdbz\b/gi, 'Dragon Ball Z')
-        .replace(/\s+/g, ' ')
-        .trim();
+    return contextResolver.normalizeImageSearchQuery(query);
 }
 
 function resolveImagePronouns(prompt, subject) {
-    if (!subject || !PRONOUN_REFERENCE_PATTERN.test(prompt)) {
-        return prompt;
-    }
-
-    const resolved = String(prompt || '')
-        .replace(/\b(the image|the picture|the photo|what you saw|it|that|this|them|those|he|him|his|she|her|hers|they|their)\b/gi, subject)
-        .replace(/\s+/g, ' ')
-        .trim();
-
-    return resolved || subject;
+    return contextResolver.resolvePronouns(prompt, subject);
 }
 
 function buildImagePrompt(msg, prompt) {
@@ -589,7 +548,7 @@ async function sendIntelligentError(sock, msg, error) {
 
     const text = isNetworkTimeout(error, errorMessage)
         ? 'AI could not connect before the network timed out. Please try again in a moment.'
-        : `AI failed: ${errorMessage}`;
+        : friendlyApiError(error, 'AI API');
 
     await sock.sendMessage(msg.key.remoteJid, { text }, { quoted: msg });
 }

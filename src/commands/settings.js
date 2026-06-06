@@ -4,7 +4,7 @@ const config = require('../../config');
 module.exports = {
     config: {
         name: 'settings',
-        aliases: ['config'],
+        aliases: ['setting'],
         version: '1.1.0',
         description: 'Manage bot settings (owner only)',
         permissions: 2,

@@ -55,12 +55,14 @@
     "groups": {}
   },
   "asta": {
-    "conversations": {},
+    "conversations": {}
+  },
   "customCommands": {
     "chats": {}
   },
   "commandControls": {
-    "chats": {}
+    "chats": {},
+    "runtimeConfig": {}
   },
   "chatSettings": {
     "chats": {
@@ -80,9 +82,15 @@
   "roles": {
     "chats": {}
   },
-  "health": {},
+  "health": {
+    "status": "starting",
+    "startedAt": null,
+    "lastConnectedAt": null,
+    "lastError": null,
+    "reconnects": 0,
+    "commandsRun": 0
+  },
   "logs": {
     "recent": []
   }
-}
 }

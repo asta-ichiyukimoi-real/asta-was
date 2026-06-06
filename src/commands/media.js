@@ -1,5 +1,9 @@
-const API_URL = 'https://omegatech-api.dixonomega.tech/api/download/play';
-const DEFAULT_QUALITY = '360p';
+const config = require('../../config');
+const { requestJson, friendlyApiError } = require('../utils/apiClient');
+
+const API_URL = config.apis?.mediaDownload || 'https://omegatech-api.dixonomega.tech/api/download/play';
+const DEFAULT_QUALITY = config.media?.mediaDownloadQuality || '360p';
+const DOWNLOAD_TIMEOUT_MS = config.media?.mediaDownloadTimeoutMs || 60000;
 
 function unwrapMessage(message) {
     let current = message || {};
@@ -98,15 +102,7 @@ function mediaCaption(data) {
 
 async function fetchMedia(query, format) {
     const url = `${API_URL}?query=${encodeURIComponent(query)}&format=${encodeURIComponent(format)}&quality=${encodeURIComponent(DEFAULT_QUALITY)}`;
-    const response = await fetch(url, {
-        headers: { 'User-Agent': 'AstaBot/1.0 (WhatsApp bot)' },
-        signal: AbortSignal.timeout(60000)
-    });
-    const data = await response.json().catch(() => null);
-
-    if (!response.ok || data?.success === false) {
-        throw new Error(data?.message || data?.error || `API responded with status ${response.status}`);
-    }
+    const data = await requestJson(url, { timeoutMs: DOWNLOAD_TIMEOUT_MS, service: 'Media API' });
 
     if (!data?.downloadUrl) {
         throw new Error('No download URL returned for that media.');
@@ -192,7 +188,7 @@ async function sendMedia(sock, msg, query, format, delivery) {
 async function handleMediaError(sock, msg, error) {
     console.error('Media command error:', error);
     await sock.sendMessage(msg.key.remoteJid, {
-        text: `Media failed: ${error.message || error}`
+        text: friendlyApiError(error, 'Media API')
     }, { quoted: msg });
 }
 

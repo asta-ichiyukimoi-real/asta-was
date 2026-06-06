@@ -45,7 +45,8 @@ module.exports = {
         const commands = loadCommands();
         const requested = args[0]?.toLowerCase();
         const chatId = msg.key.remoteJid;
-        const prefix = state.getChatPrefix(chatId, config.prefix);
+        const configHandler = global.configCommandHandler;
+        const prefix = state.getChatPrefix(chatId, configHandler?.getPrefix?.() || config.prefix);
 
         if (requested) {
             const command = findCommand(commands, requested);
@@ -68,16 +69,19 @@ module.exports = {
             const aliases = command.config.aliases || [];
             const examples = command.config.examples || [];
             const usage = command.config.usage || command.config.name;
+            const category = command.config.category || 'other';
             const disabled = state.isCommandDisabled(chatId, command.config.name);
+            const categoryDisabled = state.isCategoryDisabled(chatId, category);
+            const cooldown = configHandler?.getCommandCooldown?.(command.config) ?? command.config.cooldown ?? config.commandCooldown ?? 3;
             const detail = `*${prefix}${command.config.name}*
 
 ${command.config.description}
 
 Usage: ${prefix}${usage}
-Category: ${command.config.category || 'other'}
+Category: ${category}
 Permission: ${permissionLabel(command.config.permissions || 0)}
-Cooldown: ${command.config.cooldown ?? config.commandCooldown ?? 3}s
-Status: ${disabled ? 'Disabled in this chat' : 'Enabled'}
+Cooldown: ${cooldown}s
+Status: ${disabled || categoryDisabled ? 'Disabled in this chat' : 'Enabled'}${categoryDisabled ? ` (${category} category off)` : ''}
 ${aliases.length ? `Aliases: ${aliases.map(alias => `${prefix}${alias}`).join(', ')}` : ''}
 ${examples.length ? `\nExamples:\n${examples.map(example => `- ${prefix}${example}`).join('\n')}` : ''}`;
 
@@ -98,9 +102,10 @@ Use ${prefix}<command> to interact with me.
 Use ${prefix}help <command> for examples.`;
 
         Object.keys(grouped).sort().forEach(category => {
-            helpMessage += `\n\n*${category.charAt(0).toUpperCase() + category.slice(1)}*`;
+            const categoryDisabled = state.isCategoryDisabled(chatId, category);
+            helpMessage += `\n\n*${category.charAt(0).toUpperCase() + category.slice(1)}${categoryDisabled ? ' (off)' : ''}*`;
             grouped[category].forEach(command => {
-                const disabled = state.isCommandDisabled(chatId, command.config.name);
+                const disabled = state.isCommandDisabled(chatId, command.config.name) || categoryDisabled;
                 helpMessage += `\n- ${prefix}${command.config.name}${disabled ? ' (disabled)' : ''} - ${command.config.description}`;
             });
         });

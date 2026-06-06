@@ -35,7 +35,8 @@ const DEFAULT_STATE = {
         chats: {}
     },
     commandControls: {
-        chats: {}
+        chats: {},
+        runtimeConfig: {}
     },
     chatSettings: {
         chats: {}
@@ -97,7 +98,7 @@ function loadState() {
 
         const raw = fs.readFileSync(STATE_PATH, 'utf8');
         const state = mergeDefaults(JSON.parse(raw), DEFAULT_STATE);
-        return saveState(state);
+        return state;
     } catch (error) {
         return saveState(DEFAULT_STATE);
     }
@@ -263,6 +264,11 @@ function getDisabledCommands(chatId) {
     return state.commandControls.chats[chatId]?.disabled || [];
 }
 
+function getDisabledCategories(chatId) {
+    const state = loadState();
+    return state.commandControls.chats[chatId]?.disabledCategories || [];
+}
+
 function setCommandDisabled(chatId, commandName, disabled) {
     const state = loadState();
     const controls = state.commandControls.chats[chatId] || { disabled: [] };
@@ -281,6 +287,45 @@ function setCommandDisabled(chatId, commandName, disabled) {
 
 function isCommandDisabled(chatId, commandName) {
     return getDisabledCommands(chatId).includes(commandName);
+}
+
+function setCategoryDisabled(chatId, category, disabled) {
+    const state = loadState();
+    const controls = state.commandControls.chats[chatId] || { disabled: [], disabledCategories: [] };
+    const categories = new Set(controls.disabledCategories || []);
+
+    if (disabled) {
+        categories.add(category);
+    } else {
+        categories.delete(category);
+    }
+
+    controls.disabledCategories = Array.from(categories).sort();
+    state.commandControls.chats[chatId] = controls;
+    return saveState(state).commandControls.chats[chatId].disabledCategories;
+}
+
+function isCategoryDisabled(chatId, category) {
+    return getDisabledCategories(chatId).includes(category);
+}
+
+function getRuntimeConfig() {
+    const state = loadState();
+    return state.commandControls.runtimeConfig || {};
+}
+
+function setRuntimeConfig(path, value) {
+    const state = loadState();
+    state.commandControls.runtimeConfig = state.commandControls.runtimeConfig || {};
+    state.commandControls.runtimeConfig[path] = value;
+    return saveState(state).commandControls.runtimeConfig;
+}
+
+function deleteRuntimeConfig(path) {
+    const state = loadState();
+    state.commandControls.runtimeConfig = state.commandControls.runtimeConfig || {};
+    delete state.commandControls.runtimeConfig[path];
+    return saveState(state).commandControls.runtimeConfig;
 }
 
 function defaultChatSettings() {
@@ -429,8 +474,14 @@ module.exports = {
     removeCustomCommand,
     getCustomCommand,
     getDisabledCommands,
+    getDisabledCategories,
     setCommandDisabled,
     isCommandDisabled,
+    setCategoryDisabled,
+    isCategoryDisabled,
+    getRuntimeConfig,
+    setRuntimeConfig,
+    deleteRuntimeConfig,
     getChatSettings,
     setChatSettings,
     getChatPrefix,
