@@ -108,12 +108,57 @@ function createTables() {
         )
     `);
 
+    // Banned users table
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS banned_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            chat_id TEXT NOT NULL,
+            reason TEXT,
+            banned_by TEXT,
+            banned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            is_global INTEGER DEFAULT 0,
+            UNIQUE(user_id, chat_id)
+        )
+    `);
+
+    // User warnings table
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS user_warns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            chat_id TEXT NOT NULL,
+            reason TEXT,
+            warned_by TEXT,
+            warn_count INTEGER DEFAULT 1,
+            warned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, chat_id)
+        )
+    `);
+
+    // Muted users table
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS muted_users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            chat_id TEXT NOT NULL,
+            reason TEXT,
+            muted_by TEXT,
+            muted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            duration_minutes INTEGER,
+            UNIQUE(user_id, chat_id)
+        )
+    `);
+
     // Create indexes for faster queries
     db.exec(`
         CREATE INDEX IF NOT EXISTS idx_command_stats_date ON command_stats(created_at);
         CREATE INDEX IF NOT EXISTS idx_command_stats_name ON command_stats(command_name);
         CREATE INDEX IF NOT EXISTS idx_user_stats_id ON user_stats(user_id);
         CREATE INDEX IF NOT EXISTS idx_chat_stats_id ON chat_stats(chat_id);
+        CREATE INDEX IF NOT EXISTS idx_banned_users_id ON banned_users(user_id);
+        CREATE INDEX IF NOT EXISTS idx_warns_id ON user_warns(user_id);
+        CREATE INDEX IF NOT EXISTS idx_muted_users_id ON muted_users(user_id);
     `);
 }
 

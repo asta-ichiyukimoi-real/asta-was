@@ -1,5 +1,6 @@
 const state = require('../utils/stateManager');
 const { getTargetJids } = require('../utils/targets');
+const statsManager = require('../models/stats');
 
 module.exports = {
     config: {
@@ -22,12 +23,68 @@ module.exports = {
             const targets = getTargetJids(msg);
             targets.length ? targets.forEach(target => state.clearWarnings(groupId, target)) : state.clearWarnings(groupId);
             await sock.sendMessage(groupId, { text: 'Warnings cleared.' }, { quoted: msg });
+            
+            try {
+                await statsManager.recordCommand('warnings', groupId, msg.key.participant, 0, 'success');
+            } catch (error) {
+                console.error('Error recording command:', error);
+            }
             return;
         }
 
-        const warnings = state.getGroupModeration(groupId).warnings || {};
-        const entries = Object.entries(warnings).filter(([, count]) => count > 0);
-        if (!entries.length) {
+        try {
+            // Get warnings from database
+            const allWarns = await statsManager.all(
+                `SELECT DISTINCT user_id, warn_count FROM user_warns WHERE chat_id = ? ORDER BY warn_count DESC LIMIT 10`,
+                [groupId]
+            );
+
+            // Fallback to state if no database records
+            const warnings = state.getGroupModeration(groupId).warnings || {};
+            const entries = Object.entries(warnings).filter(([, count]) => count > 0);
+            
+            if (!entries.length && allWarns.length === 0) {
+                await sock.sendMessage(groupId, { text: 'No warnings in this group.' }, { quoted: msg });
+                return;
+            }
+
+            let text = '*⚠️ Warning List*\n\n';
+            
+            if (allWarns.length > 0) {
+                allWarns.forEach((warn, i) => {
+                    text += `${i + 1}. ${warn.user_id.split('@')[0]}: ${warn.warn_count} warning${warn.warn_count > 1 ? 's' : ''}\n`;
+                });
+            } else {
+                entries.slice(0, 10).forEach(([jid, count], i) => {
+                    text += `${i + 1}. ${jid.split('@')[0]}: ${count} warning${count > 1 ? 's' : ''}\n`;
+                });
+            }
+
+            await sock.sendMessage(groupId, { text }, { quoted: msg });
+
+            await statsManager.recordCommand('warnings', groupId, msg.key.participant, 0, 'success');
+        } catch (error) {
+            console.error('Error getting warnings:', error);
+            
+            // Fallback to state-based warnings
+            const warnings = state.getGroupModeration(groupId).warnings || {};
+            const entries = Object.entries(warnings).filter(([, count]) => count > 0);
+            if (!entries.length) {
+                await sock.sendMessage(groupId, { text: 'No warnings in this group.' }, { quoted: msg });
+                return;
+            }
+
+            let text = '*⚠️ Warning List*\n\n';
+            entries.slice(0, 10).forEach(([jid, count], i) => {
+                text += `${i + 1}. ${jid.split('@')[0]}: ${count} warning${count > 1 ? 's' : ''}\n`;
+            });
+
+            await sock.sendMessage(groupId, { text }, { quoted: msg });
+
+            await statsManager.recordCommand('warnings', groupId, msg.key.participant, 0, 'success');
+        }
+    }
+};
             await sock.sendMessage(groupId, { text: 'No warnings in this group.' }, { quoted: msg });
             return;
         }

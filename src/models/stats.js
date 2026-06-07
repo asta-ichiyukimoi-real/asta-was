@@ -381,6 +381,333 @@ class StatsManager {
             console.error('Error clearing old data:', error);
         }
     }
+
+    // ========== USER MANAGEMENT (BAN/MUTE/WARN) ==========
+    async banUser(userId, chatId, reason = '', bannedBy = '', isGlobal = false) {
+        try {
+            const sql = `
+                INSERT OR REPLACE INTO banned_users (user_id, chat_id, reason, banned_by, is_global, banned_at)
+                VALUES (?, ?, ?, ?, ?, datetime('now'))
+            `;
+            await this.run(sql, [userId, chatId, reason, bannedBy, isGlobal ? 1 : 0]);
+            return true;
+        } catch (error) {
+            console.error('Error banning user:', error);
+            return false;
+        }
+    }
+
+    async unbanUser(userId, chatId) {
+        try {
+            const sql = `DELETE FROM banned_users WHERE user_id = ? AND chat_id = ?`;
+            await this.run(sql, [userId, chatId]);
+            return true;
+        } catch (error) {
+            console.error('Error unbanning user:', error);
+            return false;
+        }
+    }
+
+    async isBanned(userId, chatId) {
+        try {
+            const result = await this.get(
+                `SELECT * FROM banned_users WHERE user_id = ? AND (chat_id = ? OR is_global = 1)`,
+                [userId, chatId]
+            );
+            return !!result;
+        } catch (error) {
+            console.error('Error checking ban status:', error);
+            return false;
+        }
+    }
+
+    async getBannedUsers(chatId, isGlobal = false) {
+        try {
+            const sql = isGlobal 
+                ? `SELECT * FROM banned_users WHERE is_global = 1 ORDER BY banned_at DESC`
+                : `SELECT * FROM banned_users WHERE chat_id = ? ORDER BY banned_at DESC`;
+            return await this.all(sql, isGlobal ? [] : [chatId]);
+        } catch (error) {
+            console.error('Error getting banned users:', error);
+            return [];
+        }
+    }
+
+    async muteUser(userId, chatId, durationMinutes = null, reason = '', mutedBy = '') {
+        try {
+            const sql = `
+                INSERT OR REPLACE INTO muted_users (user_id, chat_id, duration_minutes, reason, muted_by, muted_at)
+                VALUES (?, ?, ?, ?, ?, datetime('now'))
+            `;
+            await this.run(sql, [userId, chatId, durationMinutes, reason, mutedBy]);
+            return true;
+        } catch (error) {
+            console.error('Error muting user:', error);
+            return false;
+        }
+    }
+
+    async unmuteUser(userId, chatId) {
+        try {
+            const sql = `DELETE FROM muted_users WHERE user_id = ? AND chat_id = ?`;
+            await this.run(sql, [userId, chatId]);
+            return true;
+        } catch (error) {
+            console.error('Error unmuting user:', error);
+            return false;
+        }
+    }
+
+    async isMuted(userId, chatId) {
+        try {
+            const result = await this.get(
+                `SELECT * FROM muted_users WHERE user_id = ? AND chat_id = ?`,
+                [userId, chatId]
+            );
+            if (!result) return false;
+            
+            // Check if mute duration has expired
+            if (result.duration_minutes) {
+                const mutedTime = new Date(result.muted_at);
+                const now = new Date();
+                const minutesElapsed = (now - mutedTime) / (1000 * 60);
+                if (minutesElapsed > result.duration_minutes) {
+                    await this.unmuteUser(userId, chatId);
+                    return false;
+                }
+            }
+            return true;
+        } catch (error) {
+            console.error('Error checking mute status:', error);
+            return false;
+        }
+    }
+
+    async getMutedUsers(chatId) {
+        try {
+            return await this.all(
+                `SELECT * FROM muted_users WHERE chat_id = ? ORDER BY muted_at DESC`,
+                [chatId]
+            );
+        } catch (error) {
+            console.error('Error getting muted users:', error);
+            return [];
+        }
+    }
+
+    async warnUser(userId, chatId, reason = '', warnedBy = '') {
+        try {
+            const existing = await this.get(
+                `SELECT * FROM user_warns WHERE user_id = ? AND chat_id = ?`,
+                [userId, chatId]
+            );
+
+            if (existing) {
+                const sql = `UPDATE user_warns SET warn_count = warn_count + 1, warned_at = datetime('now') WHERE user_id = ? AND chat_id = ?`;
+                await this.run(sql, [userId, chatId]);
+            } else {
+                const sql = `
+                    INSERT INTO user_warns (user_id, chat_id, reason, warned_by, warn_count, warned_at)
+                    VALUES (?, ?, ?, ?, 1, datetime('now'))
+                `;
+                await this.run(sql, [userId, chatId, reason, warnedBy]);
+            }
+            return true;
+        } catch (error) {
+            console.error('Error warning user:', error);
+            return false;
+        }
+    }
+
+    async getWarnings(userId, chatId) {
+        try {
+            return await this.get(
+                `SELECT * FROM user_warns WHERE user_id = ? AND chat_id = ?`,
+                [userId, chatId]
+            );
+        } catch (error) {
+            console.error('Error getting warnings:', error);
+            return null;
+        }
+    }
+
+    async removeWarnings(userId, chatId) {
+        try {
+            const sql = `DELETE FROM user_warns WHERE user_id = ? AND chat_id = ?`;
+            await this.run(sql, [userId, chatId]);
+            return true;
+        } catch (error) {
+            console.error('Error removing warnings:', error);
+            return false;
+        }
+    }
+
+    // ========== ADVANCED QUERIES & EXPORT ==========
+    async queryCommandsByDateRange(startDate, endDate, limit = 100) {
+        try {
+            return await this.all(
+                `SELECT * FROM command_stats 
+                 WHERE DATE(created_at) BETWEEN ? AND ?
+                 ORDER BY created_at DESC
+                 LIMIT ?`,
+                [startDate, endDate, limit]
+            );
+        } catch (error) {
+            console.error('Error querying commands by date:', error);
+            return [];
+        }
+    }
+
+    async queryUserActivity(userId, days = 30) {
+        try {
+            return await this.all(
+                `SELECT command_name, COUNT(*) as count, AVG(execution_time) as avg_time
+                 FROM command_stats
+                 WHERE user_id = ? AND created_at > datetime('now', ? || ' days')
+                 GROUP BY command_name
+                 ORDER BY count DESC`,
+                [userId, `-${days}`]
+            );
+        } catch (error) {
+            console.error('Error querying user activity:', error);
+            return [];
+        }
+    }
+
+    async queryChatActivity(chatId, days = 30) {
+        try {
+            return await this.all(
+                `SELECT command_name, COUNT(*) as count, COUNT(DISTINCT user_id) as unique_users
+                 FROM command_stats
+                 WHERE chat_id = ? AND created_at > datetime('now', ? || ' days')
+                 GROUP BY command_name
+                 ORDER BY count DESC`,
+                [chatId, `-${days}`]
+            );
+        } catch (error) {
+            console.error('Error querying chat activity:', error);
+            return [];
+        }
+    }
+
+    async getCommandStats(commandName = null, days = 7, limit = 100) {
+        try {
+            let sql = `
+                SELECT command_name, COUNT(*) as usage_count, 
+                       SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as success_count,
+                       ROUND(AVG(execution_time)) as avg_time
+                FROM command_stats
+                WHERE created_at > datetime('now', ? || ' days')
+            `;
+            const params = [`-${days}`];
+
+            if (commandName) {
+                sql += ` AND command_name = ?`;
+                params.push(commandName);
+            }
+
+            sql += ` GROUP BY command_name ORDER BY usage_count DESC LIMIT ?`;
+            params.push(limit);
+
+            return await this.all(sql, params);
+        } catch (error) {
+            console.error('Error getting command stats:', error);
+            return [];
+        }
+    }
+
+    async getErrorStats(days = 7) {
+        try {
+            return await this.all(
+                `SELECT command_name, COUNT(*) as error_count, 
+                        GROUP_CONCAT(DISTINCT user_id) as users_affected
+                 FROM command_stats
+                 WHERE status = 'error' AND created_at > datetime('now', ? || ' days')
+                 GROUP BY command_name
+                 ORDER BY error_count DESC`,
+                [`-${days}`]
+            );
+        } catch (error) {
+            console.error('Error getting error stats:', error);
+            return [];
+        }
+    }
+
+    // Export data as JSON
+    async exportStatsJSON(format = 'all', days = 30) {
+        try {
+            const exports = {};
+
+            if (format === 'all' || format === 'commands') {
+                exports.commands = await this.queryCommandsByDateRange(
+                    new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    new Date().toISOString().split('T')[0],
+                    1000
+                );
+            }
+
+            if (format === 'all' || format === 'users') {
+                exports.topUsers = await this.getTopUsers(100);
+            }
+
+            if (format === 'all' || format === 'chats') {
+                exports.topChats = await this.getTopChats(100);
+            }
+
+            if (format === 'all' || format === 'daily') {
+                exports.dailyStats = await this.getDailyStats(days);
+            }
+
+            if (format === 'all' || format === 'errors') {
+                exports.errors = await this.getErrorStats(days);
+            }
+
+            return exports;
+        } catch (error) {
+            console.error('Error exporting stats:', error);
+            return {};
+        }
+    }
+
+    // Export data as CSV
+    async exportStatsCSV(format = 'commands', days = 30) {
+        try {
+            let data = [];
+            let headers = [];
+
+            if (format === 'commands') {
+                data = await this.queryCommandsByDateRange(
+                    new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    new Date().toISOString().split('T')[0],
+                    10000
+                );
+                headers = ['command_name', 'chat_id', 'user_id', 'execution_time', 'status', 'created_at'];
+            } else if (format === 'users') {
+                data = await this.all('SELECT * FROM user_stats LIMIT 1000');
+                headers = ['user_id', 'total_messages', 'total_commands', 'first_seen', 'last_seen'];
+            } else if (format === 'chats') {
+                data = await this.all('SELECT * FROM chat_stats LIMIT 1000');
+                headers = ['chat_id', 'chat_name', 'total_messages', 'total_commands', 'members_count'];
+            }
+
+            if (data.length === 0) return '';
+
+            // Build CSV
+            let csv = headers.join(',') + '\n';
+            data.forEach(row => {
+                const values = headers.map(h => {
+                    const val = row[h];
+                    return typeof val === 'string' && val.includes(',') ? `"${val}"` : val;
+                });
+                csv += values.join(',') + '\n';
+            });
+
+            return csv;
+        } catch (error) {
+            console.error('Error exporting CSV:', error);
+            return '';
+        }
+    }
 }
 
 module.exports = new StatsManager();

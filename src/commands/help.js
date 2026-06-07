@@ -69,25 +69,21 @@ module.exports = {
             const customCommand = state.getCustomCommand(chatId, requested);
 
             if (!command && !customCommand) {
-                const errorMsg = `╔════════════════════════╗
-║        ❌ NOT FOUND       ║
-╚════════════════════════╝
+                const errorMsg = `❌ Command Not Found
 
-Command *${prefix}${requested}* doesn't exist.
+"${requested}" doesn't exist in my database.
 
-💡 *Tip:* Type ${prefix}help to see all available commands.`;
+💡 Try ${prefix}help to see all commands.`;
                 await sock.sendMessage(chatId, { text: errorMsg }, { quoted: msg });
                 return;
             }
 
             if (customCommand) {
-                const customMsg = `╔════════════════════════╗
-║      ⚙️ CUSTOM COMMAND    ║
-╚════════════════════════╝
+                const customMsg = `⚙️ Custom Command
 
-*${prefix}${requested}*
+${prefix}${requested}
 
-📝 Custom command for this chat.
+📝 This is a custom command for this chat.
 
 *Response:*
 ${customCommand.response}`;
@@ -103,36 +99,37 @@ ${customCommand.response}`;
             const categoryDisabled = state.isCategoryDisabled(chatId, category);
             const cooldown = configHandler?.getCommandCooldown?.(command.config) ?? command.config.cooldown ?? config.commandCooldown ?? 3;
             
-            let statusEmoji = '✅ Enabled';
+            let statusEmoji = '✅';
             if (disabled || categoryDisabled) {
-                statusEmoji = '❌ Disabled';
-                if (categoryDisabled) statusEmoji += ` (${category} category off)`;
+                statusEmoji = '❌';
             }
 
-            const detail = `╔════════════════════════╗
-║      📖 COMMAND INFO     ║
-╚════════════════════════╝
-
-*${prefix}${command.config.name}*
+            let detail = `${getCategoryEmoji(category)} *${command.config.name.toUpperCase()}*
 
 ${command.config.description}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
-📌 *Category:* ${getCategoryEmoji(category)} ${category}
-🔑 *Permission:* ${permissionLabel(command.config.permissions || 0)}
-⏱️ *Cooldown:* ${cooldown}s
-${aliases.length ? `🏷️ *Aliases:* ${aliases.map(a => `${prefix}${a}`).join(', ')}` : ''}
-✨ *Status:* ${statusEmoji}
-
-━━━━━━━━━━━━━━━━━━━━━━━━
-
-📚 *Usage:* 
+📚 *Usage:*
 ${prefix}${usage}
 
-${examples.length ? `💡 *Examples:*\n${examples.map(ex => `• ${prefix}${ex}`).join('\n')}` : ''}`;
+*Category:* ${getCategoryEmoji(category)} ${category}
+*Permission:* ${permissionLabel(command.config.permissions || 0)}
+*Cooldown:* ⏱️ ${cooldown}s
+*Status:* ${statusEmoji} ${disabled || categoryDisabled ? 'Disabled' : 'Enabled'}`;
 
-            await sock.sendMessage(chatId, { text: detail.trim() }, { quoted: msg });
+            if (aliases.length) {
+                detail += `\n*Aliases:* ${aliases.map(a => prefix + a).join(', ')}`;
+            }
+
+            if (examples.length) {
+                detail += `\n\n*Examples:*`;
+                examples.forEach(ex => {
+                    detail += `\n• ${prefix}${ex}`;
+                });
+            }
+
+            await sock.sendMessage(chatId, { text: detail }, { quoted: msg });
             return;
         }
 
@@ -144,16 +141,19 @@ ${examples.length ? `💡 *Examples:*\n${examples.map(ex => `• ${prefix}${ex}`
             return acc;
         }, {});
 
-        let helpMessage = `╔══════════════════════════╗
-║     🤖 COMMAND CENTER    ║
-╚══════════════════════════╝
+        const customCommands = Object.keys(state.getChatCustomCommands(chatId)).sort();
+        const totalCommands = commands.length + customCommands.length;
 
-👋 Welcome to Asta Bot!
+        let helpMessage = `🤖 *ASTA BOT - COMMAND LIST*
 
-Use *${prefix}<command>* to run a command.
-Type *${prefix}help <command>* for detailed info.
+_Total: ${totalCommands} commands (${commands.length} built-in + ${customCommands.length} custom)_
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+📖 Type: ${prefix}help <command> for detailed info
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+`;
 
         // List categories with emoji
         const categories = Object.keys(grouped).sort();
@@ -162,26 +162,31 @@ Type *${prefix}help <command>* for detailed info.
             const emoji = getCategoryEmoji(category);
             const count = grouped[category].length;
             const status = categoryDisabled ? ' ⛔' : '';
-            helpMessage += `\n\n${emoji} *${category.charAt(0).toUpperCase() + category.slice(1)}* (${count})${status}`;
+            
+            helpMessage += `\n${emoji} *${category.toUpperCase()}* (${count})${status}\n`;
             
             grouped[category].forEach(command => {
                 const disabled = state.isCommandDisabled(chatId, command.config.name) || categoryDisabled;
-                const cmdEmoji = disabled ? '🚫' : '✓';
-                helpMessage += `\n  ${cmdEmoji} ${prefix}${command.config.name}`;
+                const cmdEmoji = disabled ? '🚫' : '';
+                const desc = command.config.description ? ` - ${command.config.description}` : '';
+                helpMessage += `   ${cmdEmoji} ${prefix}${command.config.name}${desc}\n`;
             });
         });
 
-        // Custom commands
-        const customCommands = Object.keys(state.getChatCustomCommands(chatId)).sort();
+        // Custom commands section
         if (customCommands.length) {
-            helpMessage += `\n\n⚙️ *Custom Commands* (${customCommands.length})`;
+            helpMessage += `\n⚙️ *CUSTOM COMMANDS* (${customCommands.length})\n`;
             customCommands.forEach(name => {
-                helpMessage += `\n  ⚡ ${prefix}${name}`;
+                helpMessage += `   ⚡ ${prefix}${name}\n`;
             });
         }
 
-        helpMessage += `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 *Total:* ${commands.length} built-in + ${customCommands.length} custom commands`;
+        helpMessage += `\n━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 *Tips:*
+• Use ${prefix}help <command> for details
+• Commands with 🚫 are disabled in this chat
+• Type ${prefix}settings to manage commands`;
 
         await sock.sendMessage(chatId, { text: helpMessage }, { quoted: msg });
     }
