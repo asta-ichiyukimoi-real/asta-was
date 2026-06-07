@@ -41,7 +41,7 @@ function initDatabase() {
 
 function createTables() {
     // Command stats table
-    db.run(`
+    db.exec(`
         CREATE TABLE IF NOT EXISTS command_stats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             command_name TEXT NOT NULL,
@@ -49,12 +49,13 @@ function createTables() {
             user_id TEXT,
             execution_time INTEGER,
             status TEXT DEFAULT 'success',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(command_name, chat_id, created_at)
         )
     `);
 
     // User stats table
-    db.run(`
+    db.exec(`
         CREATE TABLE IF NOT EXISTS user_stats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT NOT NULL UNIQUE,
@@ -67,7 +68,7 @@ function createTables() {
     `);
 
     // Chat stats table
-    db.run(`
+    db.exec(`
         CREATE TABLE IF NOT EXISTS chat_stats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             chat_id TEXT NOT NULL UNIQUE,
@@ -82,7 +83,7 @@ function createTables() {
     `);
 
     // Bot performance table
-    db.run(`
+    db.exec(`
         CREATE TABLE IF NOT EXISTS bot_performance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             memory_usage INTEGER,
@@ -95,7 +96,7 @@ function createTables() {
     `);
 
     // Daily stats table (for charts)
-    db.run(`
+    db.exec(`
         CREATE TABLE IF NOT EXISTS daily_stats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             stat_date DATE NOT NULL UNIQUE,
@@ -108,32 +109,26 @@ function createTables() {
     `);
 
     // Create indexes for faster queries
-    db.run(`CREATE INDEX IF NOT EXISTS idx_command_stats_date ON command_stats(created_at)`);
-    db.run(`CREATE INDEX IF NOT EXISTS idx_command_stats_name ON command_stats(command_name)`);
-    db.run(`CREATE INDEX IF NOT EXISTS idx_user_stats_id ON user_stats(user_id)`);
-    db.run(`CREATE INDEX IF NOT EXISTS idx_chat_stats_id ON chat_stats(chat_id)`);
+    db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_command_stats_date ON command_stats(created_at);
+        CREATE INDEX IF NOT EXISTS idx_command_stats_name ON command_stats(command_name);
+        CREATE INDEX IF NOT EXISTS idx_user_stats_id ON user_stats(user_id);
+        CREATE INDEX IF NOT EXISTS idx_chat_stats_id ON chat_stats(chat_id);
+    `);
+}
 
 function getDatabase() {
     if (!db) {
-        throw new Error('Database not initialized. Call initDatabase() first.');
+        initDatabase();
     }
     return db;
 }
 
 function closeDatabase() {
-    return new Promise((resolve, reject) => {
-        if (db) {
-            db.close((err) => {
-                if (err) reject(err);
-                else {
-                    db = null;
-                    resolve();
-                }
-            });
-        } else {
-            resolve();
-        }
-    });
+    if (db) {
+        db.close();
+        db = null;
+    }
 }
 
 // Export database functions
