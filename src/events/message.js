@@ -2,6 +2,19 @@ const config = require('../../config');
 const state = require('../utils/stateManager');
 const logger = require('../utils/logger');
 
+// Lazy load stats to avoid circular dependencies
+let statsManager = null;
+function getStats() {
+    if (!statsManager) {
+        try {
+            statsManager = require('../models/stats');
+        } catch (e) {
+            return null;
+        }
+    }
+    return statsManager;
+}
+
 const STARTUP_MESSAGE_GRACE_SECONDS = 300;
 
 function unwrapMessage(message) {
@@ -252,11 +265,39 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
                 if (text.startsWith(prefix)) {
                     const args = text.slice(prefix.length).trim().split(/ +/);
                     const commandName = args.shift().toLowerCase();
-                    await commandHandler.execute(sock, msg, commandName, args);
+                    
+                    // Track command execution
+                    const stats = getStats();
+                    const userId = msg.key.participant || msg.key.remoteJid;
+                    const chatId = msg.key.remoteJid;
+                    
+                    if (stats && !msg.key.fromMe) {
+                        const startTime = Date.now();
+                        try {
+                            await commandHandler.execute(sock, msg, commandName, args);
+                            const executionTime = Date.now() - startTime;
+                            stats.recordCommand(commandName, chatId, userId, executionTime, 'success');
+                            stats.updateUserStats(userId, 1, true); // true = isCommand
+                            stats.updateChatStats(chatId, null, 0, 1); // 0 messages, 1 command
+                        } catch (error) {
+                            stats.recordCommand(commandName, chatId, userId, 0, 'error');
+                        }
+                    } else {
+                        await commandHandler.execute(sock, msg, commandName, args);
+                    }
                     return;
                 }
 
                 if (msg.key.fromMe) return;
+
+                // Track messages
+                const stats = getStats();
+                if (stats) {
+                    const userId = msg.key.participant || msg.key.remoteJid;
+                    const chatId = msg.key.remoteJid;
+                    stats.updateUserStats(userId, 1, false); // 1 message, not a command
+                    stats.updateChatStats(chatId, null, 1, 0); // 1 message, 0 commands
+                }
 
                 const chatCommandTriggered = await chatCommandHandler.execute(sock, msg, text);
                 if (chatCommandTriggered) {

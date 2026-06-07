@@ -25,18 +25,33 @@ function findCommand(commands, name) {
 }
 
 function permissionLabel(level) {
-    if (level === 2) return 'Owner only';
-    if (level === 1) return 'Admin only';
-    return 'Everyone';
+    if (level === 2) return '👑 Owner only';
+    if (level === 1) return '🔐 Admin only';
+    return '👥 Everyone';
+}
+
+function getCategoryEmoji(category) {
+    const emojiMap = {
+        'general': '📋',
+        'admin': '⚙️',
+        'media': '🖼️',
+        'utility': '🛠️',
+        'fun': '🎮',
+        'owner': '👑',
+        'search': '🔍',
+        'ai': '🤖',
+        'other': '📚'
+    };
+    return emojiMap[category] || '📦';
 }
 
 module.exports = {
     config: {
         name: 'help',
-        aliases: ['commands', 'h'],
-        version: '1.1.0',
-        description: 'Shows available bot commands',
-        usage: 'help [command]',
+        aliases: ['commands', 'h', 'menu'],
+        version: '2.0.0',
+        description: 'Shows available bot commands with detailed information',
+        usage: 'help [command_name]',
         examples: ['help', 'help sticker', 'help addcmd'],
         permissions: 0,
         category: 'general'
@@ -48,21 +63,35 @@ module.exports = {
         const configHandler = global.configCommandHandler;
         const prefix = state.getChatPrefix(chatId, configHandler?.getPrefix?.() || config.prefix);
 
+        // DETAILED COMMAND VIEW
         if (requested) {
             const command = findCommand(commands, requested);
             const customCommand = state.getCustomCommand(chatId, requested);
 
             if (!command && !customCommand) {
-                await sock.sendMessage(chatId, {
-                    text: `No command named ${prefix}${requested} found.`
-                }, { quoted: msg });
+                const errorMsg = `╔════════════════════════╗
+║        ❌ NOT FOUND       ║
+╚════════════════════════╝
+
+Command *${prefix}${requested}* doesn't exist.
+
+💡 *Tip:* Type ${prefix}help to see all available commands.`;
+                await sock.sendMessage(chatId, { text: errorMsg }, { quoted: msg });
                 return;
             }
 
             if (customCommand) {
-                await sock.sendMessage(chatId, {
-                    text: `*${prefix}${requested}*\n\nCustom command for this chat.\n\nResponse:\n${customCommand.response}`
-                }, { quoted: msg });
+                const customMsg = `╔════════════════════════╗
+║      ⚙️ CUSTOM COMMAND    ║
+╚════════════════════════╝
+
+*${prefix}${requested}*
+
+📝 Custom command for this chat.
+
+*Response:*
+${customCommand.response}`;
+                await sock.sendMessage(chatId, { text: customMsg }, { quoted: msg });
                 return;
             }
 
@@ -73,22 +102,41 @@ module.exports = {
             const disabled = state.isCommandDisabled(chatId, command.config.name);
             const categoryDisabled = state.isCategoryDisabled(chatId, category);
             const cooldown = configHandler?.getCommandCooldown?.(command.config) ?? command.config.cooldown ?? config.commandCooldown ?? 3;
-            const detail = `*${prefix}${command.config.name}*
+            
+            let statusEmoji = '✅ Enabled';
+            if (disabled || categoryDisabled) {
+                statusEmoji = '❌ Disabled';
+                if (categoryDisabled) statusEmoji += ` (${category} category off)`;
+            }
+
+            const detail = `╔════════════════════════╗
+║      📖 COMMAND INFO     ║
+╚════════════════════════╝
+
+*${prefix}${command.config.name}*
 
 ${command.config.description}
 
-Usage: ${prefix}${usage}
-Category: ${category}
-Permission: ${permissionLabel(command.config.permissions || 0)}
-Cooldown: ${cooldown}s
-Status: ${disabled || categoryDisabled ? 'Disabled in this chat' : 'Enabled'}${categoryDisabled ? ` (${category} category off)` : ''}
-${aliases.length ? `Aliases: ${aliases.map(alias => `${prefix}${alias}`).join(', ')}` : ''}
-${examples.length ? `\nExamples:\n${examples.map(example => `- ${prefix}${example}`).join('\n')}` : ''}`;
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+📌 *Category:* ${getCategoryEmoji(category)} ${category}
+🔑 *Permission:* ${permissionLabel(command.config.permissions || 0)}
+⏱️ *Cooldown:* ${cooldown}s
+${aliases.length ? `🏷️ *Aliases:* ${aliases.map(a => `${prefix}${a}`).join(', ')}` : ''}
+✨ *Status:* ${statusEmoji}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 *Usage:* 
+${prefix}${usage}
+
+${examples.length ? `💡 *Examples:*\n${examples.map(ex => `• ${prefix}${ex}`).join('\n')}` : ''}`;
 
             await sock.sendMessage(chatId, { text: detail.trim() }, { quoted: msg });
             return;
         }
 
+        // MAIN HELP MENU
         const grouped = commands.reduce((acc, cmd) => {
             const category = cmd.config.category || 'other';
             acc[category] = acc[category] || [];
@@ -96,24 +144,44 @@ ${examples.length ? `\nExamples:\n${examples.map(example => `- ${prefix}${exampl
             return acc;
         }, {});
 
-        let helpMessage = `*Command Center*
+        let helpMessage = `╔══════════════════════════╗
+║     🤖 COMMAND CENTER    ║
+╚══════════════════════════╝
 
-Use ${prefix}<command> to interact with me.
-Use ${prefix}help <command> for examples.`;
+👋 Welcome to Asta Bot!
 
-        Object.keys(grouped).sort().forEach(category => {
+Use *${prefix}<command>* to run a command.
+Type *${prefix}help <command>* for detailed info.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+
+        // List categories with emoji
+        const categories = Object.keys(grouped).sort();
+        categories.forEach(category => {
             const categoryDisabled = state.isCategoryDisabled(chatId, category);
-            helpMessage += `\n\n*${category.charAt(0).toUpperCase() + category.slice(1)}${categoryDisabled ? ' (off)' : ''}*`;
+            const emoji = getCategoryEmoji(category);
+            const count = grouped[category].length;
+            const status = categoryDisabled ? ' ⛔' : '';
+            helpMessage += `\n\n${emoji} *${category.charAt(0).toUpperCase() + category.slice(1)}* (${count})${status}`;
+            
             grouped[category].forEach(command => {
                 const disabled = state.isCommandDisabled(chatId, command.config.name) || categoryDisabled;
-                helpMessage += `\n- ${prefix}${command.config.name}${disabled ? ' (disabled)' : ''} - ${command.config.description}`;
+                const cmdEmoji = disabled ? '🚫' : '✓';
+                helpMessage += `\n  ${cmdEmoji} ${prefix}${command.config.name}`;
             });
         });
 
+        // Custom commands
         const customCommands = Object.keys(state.getChatCustomCommands(chatId)).sort();
         if (customCommands.length) {
-            helpMessage += `\n\n*Custom*\n${customCommands.map(name => `- ${prefix}${name}`).join('\n')}`;
+            helpMessage += `\n\n⚙️ *Custom Commands* (${customCommands.length})`;
+            customCommands.forEach(name => {
+                helpMessage += `\n  ⚡ ${prefix}${name}`;
+            });
         }
+
+        helpMessage += `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 *Total:* ${commands.length} built-in + ${customCommands.length} custom commands`;
 
         await sock.sendMessage(chatId, { text: helpMessage }, { quoted: msg });
     }

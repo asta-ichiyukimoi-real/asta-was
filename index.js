@@ -1,6 +1,9 @@
 const config = require('./config');
 const dashboard = require('./src/services/dashboard');
 const stateManager = require('./src/utils/stateManager');
+const { initDatabase } = require('./src/services/database');
+const statsManager = require('./src/models/stats');
+const { startCleanupService } = require('./src/services/cleanup');
 
 const { makeWASocket, DisconnectReason, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
@@ -155,6 +158,17 @@ const quietLogger = {
 async function connectToWhatsApp() {
     installConsoleNoiseFilter();
     installProcessErrorHandlers();
+    
+    // Initialize database
+    try {
+        initDatabase();
+        console.log(`${style.green}✅ SQLite Database initialized${style.reset}`);
+        
+        // Start cleanup service (runs every 24 hours)
+        startCleanupService(24);
+    } catch (error) {
+        console.log(`${style.red}❌ Database initialization failed: ${error.message}${style.reset}`);
+    }
 
     const configCommandHandler = new ConfigCommandHandler(config);
     const { state, saveCreds } = await useMultiFileAuthState(configCommandHandler.get('connection.authDir', './auth_info_baileys'));
