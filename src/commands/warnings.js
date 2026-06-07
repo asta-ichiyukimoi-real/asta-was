@@ -85,15 +85,3 @@ module.exports = {
         }
     }
 };
-            await sock.sendMessage(groupId, { text: 'No warnings in this group.' }, { quoted: msg });
-            return;
-        }
-
-        const mentions = entries.map(([jid]) => jid);
-        const lines = entries.map(([jid, count]) => `@${jid.split('@')[0]}: ${count}/3`);
-        await sock.sendMessage(groupId, {
-            text: `*Warnings*\n\n${lines.join('\n')}`,
-            mentions
-        }, { quoted: msg });
-    }
-};
