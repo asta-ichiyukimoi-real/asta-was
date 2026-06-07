@@ -23,8 +23,8 @@ module.exports = {
                 targetUserId = contextInfo?.mentionedJid?.[0] || targetUserId;
             }
 
-            const userStats = statsManager.getUserStats(targetUserId);
-            const allStats = statsManager.getAllStats();
+            const userStats = await statsManager.getUserStats(targetUserId);
+            const allStats = await statsManager.getAllStats();
             
             if (!userStats) {
                 await sock.sendMessage(chatId, 
@@ -38,7 +38,7 @@ module.exports = {
             const userName = isSelf ? 'Your' : targetUserId.split('@')[0] + "'s";
             
             // Calculate rank
-            const topUsers = statsManager.getTopUsers(1000);
+            const topUsers = await statsManager.getTopUsers(1000);
             const userRank = topUsers.findIndex(u => u.user_id === targetUserId) + 1;
 
             const firstSeen = new Date(userStats.first_seen);

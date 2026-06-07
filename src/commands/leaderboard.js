@@ -18,7 +18,7 @@ module.exports = {
             let response = '';
 
             if (type === 'users' || type === 'u') {
-                const topUsers = statsManager.getTopUsers(10);
+                const topUsers = await statsManager.getTopUsers(10);
 
                 response = `╔═══════════════════════════╗
 ║      👥 TOP USERS          ║
@@ -36,7 +36,7 @@ module.exports = {
                     });
                 }
             } else if (type === 'commands' || type === 'c' || type === 'cmd') {
-                const topCommands = statsManager.getTopCommands(7, 10);
+                const topCommands = await statsManager.getTopCommands(7, 10);
 
                 response = `╔═══════════════════════════╗
 ║    🔥 TOP COMMANDS (7d)     ║

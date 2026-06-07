@@ -40,7 +40,7 @@ function getStatusBg(status) {
     return '#fee2e2';
 }
 
-function html(snapshot) {
+async function html(snapshot) {
     const status = snapshot.health?.status || 'offline';
     const uptime = snapshot.health?.uptimeSeconds || 0;
     const memory = snapshot.health?.memoryMb || 0;
@@ -50,11 +50,22 @@ function html(snapshot) {
     
     // Get stats if available
     const stats = getStats();
-    const allStats = stats ? stats.getAllStats() : null;
-    const dailyStats = stats ? stats.recordDailyStats() : null;
-    const topCommands = allStats?.topCommands || [];
-    const topUsers = allStats?.topUsers || [];
-    const topChats = allStats?.topChats || [];
+    let allStats = null;
+    let topCommands = [];
+    let topUsers = [];
+    let topChats = [];
+    
+    if (stats) {
+        try {
+            allStats = await stats.getAllStats();
+            topCommands = allStats?.topCommands || [];
+            topUsers = allStats?.topUsers || [];
+            topChats = allStats?.topChats || [];
+            await stats.recordDailyStats();
+        } catch (error) {
+            console.error('Error getting stats for dashboard:', error);
+        }
+    }
     
     const logs = (snapshot.recentLogs || [])
         .slice(0, 15)
@@ -384,25 +395,39 @@ function html(snapshot) {
 function startDashboard(port = process.env.PORT || 3030) {
     if (serverInstance) return;
 
-    const server = http.createServer((req, res) => {
-        const snapshot = health.getSnapshot();
+    const server = http.createServer(async (req, res) => {
+        try {
+            const snapshot = health.getSnapshot();
 
-        if (req.url === '/api/health') {
-            res.writeHead(200, { 'content-type': 'application/json' });
-            res.end(JSON.stringify(snapshot, null, 2));
-            return;
+            if (req.url === '/api/health') {
+                res.writeHead(200, { 'content-type': 'application/json' });
+                res.end(JSON.stringify(snapshot, null, 2));
+                return;
+            }
+
+            if (req.url === '/api/stats') {
+                const stats = getStats();
+                let allStats = {};
+                if (stats) {
+                    try {
+                        allStats = await stats.getAllStats();
+                    } catch (error) {
+                        console.error('Error getting stats:', error);
+                    }
+                }
+                res.writeHead(200, { 'content-type': 'application/json' });
+                res.end(JSON.stringify(allStats, null, 2));
+                return;
+            }
+
+            res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+            const htmlContent = await html(snapshot);
+            res.end(htmlContent);
+        } catch (error) {
+            console.error('Dashboard error:', error);
+            res.writeHead(500, { 'content-type': 'text/plain' });
+            res.end('Internal Server Error');
         }
-
-        if (req.url === '/api/stats') {
-            const stats = getStats();
-            const allStats = stats ? stats.getAllStats() : {};
-            res.writeHead(200, { 'content-type': 'application/json' });
-            res.end(JSON.stringify(allStats, null, 2));
-            return;
-        }
-
-        res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-        res.end(html(snapshot));
     });
 
     server.listen(port, '0.0.0.0', () => {

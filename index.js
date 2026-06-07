@@ -161,7 +161,7 @@ async function connectToWhatsApp() {
     
     // Initialize database
     try {
-        initDatabase();
+        await initDatabase();
         console.log(`${style.green}✅ SQLite Database initialized${style.reset}`);
         
         // Start cleanup service (runs every 24 hours)

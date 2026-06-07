@@ -1,4 +1,4 @@
-const Database = require('better-sqlite3');
+const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
@@ -13,21 +13,35 @@ if (!fs.existsSync(dataDir)) {
 let db = null;
 
 function initDatabase() {
-    if (db) return db;
+    return new Promise((resolve, reject) => {
+        if (db) {
+            resolve(db);
+            return;
+        }
 
-    db = new Database(DB_PATH);
-    db.pragma('journal_mode = WAL');
+        db = new sqlite3.Database(DB_PATH, (err) => {
+            if (err) {
+                reject(err);
+                return;
+            }
 
-    // Create tables
-    createTables();
-
-    console.log('✅ Database initialized at', DB_PATH);
-    return db;
+            // Enable foreign keys and WAL mode
+            db.configure('busyTimeout', 5000);
+            
+            db.serialize(() => {
+                db.run('PRAGMA foreign_keys = ON');
+                db.run('PRAGMA journal_mode = WAL');
+                createTables();
+                console.log('✅ Database initialized at', DB_PATH);
+                resolve(db);
+            });
+        });
+    });
 }
 
 function createTables() {
     // Command stats table
-    db.exec(`
+    db.run(`
         CREATE TABLE IF NOT EXISTS command_stats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             command_name TEXT NOT NULL,
@@ -35,13 +49,12 @@ function createTables() {
             user_id TEXT,
             execution_time INTEGER,
             status TEXT DEFAULT 'success',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(command_name, chat_id, created_at)
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     `);
 
     // User stats table
-    db.exec(`
+    db.run(`
         CREATE TABLE IF NOT EXISTS user_stats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT NOT NULL UNIQUE,
@@ -54,7 +67,7 @@ function createTables() {
     `);
 
     // Chat stats table
-    db.exec(`
+    db.run(`
         CREATE TABLE IF NOT EXISTS chat_stats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             chat_id TEXT NOT NULL UNIQUE,
@@ -69,7 +82,7 @@ function createTables() {
     `);
 
     // Bot performance table
-    db.exec(`
+    db.run(`
         CREATE TABLE IF NOT EXISTS bot_performance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             memory_usage INTEGER,
@@ -82,7 +95,7 @@ function createTables() {
     `);
 
     // Daily stats table (for charts)
-    db.exec(`
+    db.run(`
         CREATE TABLE IF NOT EXISTS daily_stats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             stat_date DATE NOT NULL UNIQUE,
@@ -95,26 +108,32 @@ function createTables() {
     `);
 
     // Create indexes for faster queries
-    db.exec(`
-        CREATE INDEX IF NOT EXISTS idx_command_stats_date ON command_stats(created_at);
-        CREATE INDEX IF NOT EXISTS idx_command_stats_name ON command_stats(command_name);
-        CREATE INDEX IF NOT EXISTS idx_user_stats_id ON user_stats(user_id);
-        CREATE INDEX IF NOT EXISTS idx_chat_stats_id ON chat_stats(chat_id);
-    `);
-}
+    db.run(`CREATE INDEX IF NOT EXISTS idx_command_stats_date ON command_stats(created_at)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_command_stats_name ON command_stats(command_name)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_user_stats_id ON user_stats(user_id)`);
+    db.run(`CREATE INDEX IF NOT EXISTS idx_chat_stats_id ON chat_stats(chat_id)`);
 
 function getDatabase() {
     if (!db) {
-        initDatabase();
+        throw new Error('Database not initialized. Call initDatabase() first.');
     }
     return db;
 }
 
 function closeDatabase() {
-    if (db) {
-        db.close();
-        db = null;
-    }
+    return new Promise((resolve, reject) => {
+        if (db) {
+            db.close((err) => {
+                if (err) reject(err);
+                else {
+                    db = null;
+                    resolve();
+                }
+            });
+        } else {
+            resolve();
+        }
+    });
 }
 
 // Export database functions
