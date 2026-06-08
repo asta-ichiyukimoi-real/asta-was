@@ -4,7 +4,7 @@ const statsManager = require('../models/stats');
 module.exports = {
     config: {
         name: 'ytdl',
-        aliases: ['youtube', 'yt', 'download'],
+        aliases: ['downl'],
         version: '1.0.0',
         description: 'Download YouTube videos or audio',
         usage: 'ytdl <url> [video|audio]',
@@ -100,4 +100,5 @@ module.exports = {
             await statsManager.recordCommand('ytdl', chat, msg.key.participant, 0, 'error');
         }
     }
+    
 };
