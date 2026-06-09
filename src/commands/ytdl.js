@@ -1,9 +1,11 @@
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const axios = require('axios');
 const config = require('../../config');
-const { requestJson, friendlyApiError } = require('../utils/apiClient');
 
-const PLAY_URL = config.apis?.mediaDownload || 'https://omegatech-api.dixonomega.tech/api/download/play';
 const ALL_URL = 'https://omegatech-api.dixonomega.tech/api/download/all';
-const OEMBED_URL = 'https://www.youtube.com/oembed';
+const MAX_DOWNLOAD_BYTES = 80 * 1024 * 1024;
 
 function isYouTubeUrl(value) {
     try {
@@ -28,144 +30,111 @@ function isYouTubeUrl(value) {
     }
 }
 
-function getYouTubeVideoId(value) {
-    try {
-        const url = new URL(value);
-        const host = url.hostname.replace(/^www\./, '').toLowerCase();
-        const parts = url.pathname.split('/').filter(Boolean);
-
-        if (host === 'youtu.be') return parts[0] || '';
-        if (url.searchParams.get('v')) return url.searchParams.get('v');
-        if (['shorts', 'live', 'embed'].includes(parts[0])) return parts[1] || '';
-        return '';
-    } catch {
-        return '';
-    }
-}
-
-function downloadQueries(value) {
-    const id = getYouTubeVideoId(value);
-    const queries = [value];
-
-    if (id) {
-        queries.push(`https://youtube.com/watch?v=${id}`);
-        queries.push(id);
-    }
-
-    return [...new Set(queries.filter(Boolean))];
-}
-
-function findTitle(value) {
-    if (!value || typeof value !== 'object') return '';
-
-    const direct = value.title
-        || value.videoTitle
-        || value.name
-        || value.details?.title
-        || value.videoDetails?.title
-        || value.result?.title
-        || value.result?.videoTitle
-        || value.result?.details?.title
-        || value.result?.videoDetails?.title;
-
-    if (direct) return String(direct).trim();
-
-    for (const nested of Object.values(value)) {
-        if (nested && typeof nested === 'object') {
-            const title = findTitle(nested);
-            if (title) return title;
-        }
-    }
-
-    return '';
-}
-
-async function fetchMetadataTitle(url) {
-    const endpoint = `${ALL_URL}?url=${encodeURIComponent(url)}`;
-    const data = await requestJson(endpoint, {
-        timeoutMs: config.media?.mediaDownloadTimeoutMs || 60000,
-        service: 'YouTube Metadata API'
-    });
-
-    return findTitle(data);
-}
-
-async function fetchOEmbedTitle(url) {
-    const endpoint = `${OEMBED_URL}?url=${encodeURIComponent(url)}&format=json`;
-    const data = await requestJson(endpoint, {
-        timeoutMs: 15000,
-        service: 'YouTube oEmbed'
-    });
-
-    return String(data?.title || '').trim();
-}
-
-async function tryPlayQuery(query, type, quality) {
-    const endpoint = `${PLAY_URL}?query=${encodeURIComponent(query)}&format=${encodeURIComponent(type)}&quality=${encodeURIComponent(quality)}`;
-    const data = await requestJson(endpoint, {
-        timeoutMs: config.media?.mediaDownloadTimeoutMs || 60000,
-        service: 'YouTube Download API'
-    });
-
-    if (!data?.downloadUrl) {
-        throw new Error('no download URL');
-    }
-
-    return data;
-}
-
 function parseArgs(args) {
     const typeWords = new Set(['video', 'mp4', 'audio', 'mp3', 'song']);
     const url = args.find(arg => isYouTubeUrl(arg)) || args[0] || '';
     const typeWord = args.find(arg => typeWords.has(String(arg).toLowerCase()));
-    const type = ['audio', 'mp3', 'song'].includes(String(typeWord || '').toLowerCase()) ? 'mp3' : 'mp4';
+    const type = ['audio', 'mp3', 'song'].includes(String(typeWord || '').toLowerCase()) ? 'audio' : 'video';
 
     return { url, type };
 }
 
-async function fetchDownload(url, type) {
-    const quality = config.media?.mediaDownloadQuality || '360p';
-    const attempts = [];
-    const queries = downloadQueries(url);
+function safeName(value, extension) {
+    const base = String(value || 'youtube-download')
+        .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 80) || 'youtube-download';
 
-    for (const query of queries) {
-        try {
-            return await tryPlayQuery(query, type, quality);
-        } catch (error) {
-            attempts.push(`${query}: ${error.message || error}`);
-        }
+    return `${base}.${extension}`;
+}
+
+function pickMediaFile(result, type) {
+    if (type === 'audio') {
+        return result.audio?.find(item => /mp3/i.test(item.label || item.mimeType || ''))
+            || result.audio?.find(item => /m4a|opus/i.test(item.label || item.mimeType || ''))
+            || result.audio?.[result.audio.length - 1];
     }
 
+    return result.video?.find(item => /360p/i.test(item.label || ''))
+        || result.video?.find(item => /mp4/i.test(item.label || item.mimeType || ''))
+        || result.video?.[0];
+}
+
+function extensionFor(mediaFile, type) {
+    const label = `${mediaFile?.label || ''} ${mediaFile?.mimeType || ''}`.toLowerCase();
+    if (type === 'audio') {
+        if (label.includes('m4a')) return 'm4a';
+        if (label.includes('opus')) return 'opus';
+        return 'mp3';
+    }
+
+    return 'mp4';
+}
+
+async function fetchAllDownload(url) {
+    const endpoint = `${ALL_URL}?url=${encodeURIComponent(url)}`;
+    const response = await axios.get(endpoint, {
+        timeout: config.media?.mediaDownloadTimeoutMs || 60000,
+        headers: { 'User-Agent': 'AstaBot/1.0 (WhatsApp bot)' }
+    });
+
+    if (!response.data?.success) {
+        throw new Error(response.data?.message || response.data?.error || 'Download API could not fetch this YouTube URL.');
+    }
+
+    return response.data.result || response.data;
+}
+
+async function downloadToTemp(url, fileName) {
+    const tempPath = path.join(os.tmpdir(), `${Date.now()}-${fileName}`);
+    const response = await axios.get(url, {
+        responseType: 'stream',
+        timeout: config.media?.mediaDownloadTimeoutMs || 60000,
+        maxRedirects: 5,
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125 Safari/537.36',
+            Accept: '*/*',
+            Referer: 'https://www.youtube.com/'
+        },
+        validateStatus: status => status >= 200 && status < 400
+    });
+
+    const contentLength = Number(response.headers['content-length'] || 0);
+    if (contentLength > MAX_DOWNLOAD_BYTES) {
+        throw new Error(`File is too large (${Math.round(contentLength / 1024 / 1024)} MB).`);
+    }
+
+    let downloaded = 0;
+    const writer = fs.createWriteStream(tempPath);
+
+    await new Promise((resolve, reject) => {
+        response.data.on('data', (chunk) => {
+            downloaded += chunk.length;
+            if (downloaded > MAX_DOWNLOAD_BYTES) {
+                response.data.destroy(new Error('File exceeded download size limit.'));
+            }
+        });
+        response.data.on('error', reject);
+        writer.on('error', reject);
+        writer.on('finish', resolve);
+        response.data.pipe(writer);
+    });
+
+    return tempPath;
+}
+
+function removeTemp(filePath) {
     try {
-        const title = await fetchMetadataTitle(url);
-        if (title && !queries.includes(title)) {
-            return await tryPlayQuery(title, type, quality);
-        } else {
-            attempts.push('metadata title: not found');
-        }
-    } catch (error) {
-        attempts.push(`metadata title: ${error.message || error}`);
-    }
-
-    try {
-        const title = await fetchOEmbedTitle(url);
-        if (title && !queries.includes(title)) {
-            return await tryPlayQuery(title, type, quality);
-        }
-
-        attempts.push('oEmbed title: not found');
-    } catch (error) {
-        attempts.push(`oEmbed title: ${error.message || error}`);
-    }
-
-    throw new Error(`No ${type === 'mp3' ? 'audio' : 'video'} found. Tried: ${attempts.join(' | ')}`);
+        if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    } catch {}
 }
 
 module.exports = {
     config: {
         name: 'ytdl',
         aliases: ['downl'],
-        version: '1.2.0',
+        version: '1.3.0',
         description: 'Download YouTube videos or audio',
         usage: 'ytdl <url> [video|audio]',
         examples: [
@@ -179,6 +148,7 @@ module.exports = {
     onRun: async (sock, msg, args) => {
         const chat = msg.key.remoteJid;
         const { url, type } = parseArgs(args);
+        let tempPath = '';
 
         if (!url) {
             await sock.sendMessage(chat, { text: 'Please provide a YouTube URL.' }, { quoted: msg });
@@ -197,38 +167,57 @@ module.exports = {
                 await sock.sendPresenceUpdate('uploading', chat);
             } catch {}
 
-            await sock.sendMessage(chat, { text: `Downloading ${type === 'mp3' ? 'audio' : 'video'}... please wait.` }, { quoted: msg });
+            await sock.sendMessage(chat, {
+                text: `Fetching ${type} link and preparing upload...`
+            }, { quoted: msg });
 
-            const data = await fetchDownload(url, type);
-            const title = data.title || 'YouTube download';
-            const caption = [
-                title,
-                data.duration?.timestamp ? `Duration: ${data.duration.timestamp}` : '',
-                data.quality ? `Quality: ${data.quality}` : '',
-                data.fileSize ? `Size: ${data.fileSize}` : ''
-            ].filter(Boolean).join('\n');
+            const result = await fetchAllDownload(url);
+            const mediaFile = pickMediaFile(result, type);
 
-            if (type === 'mp3') {
+            if (!mediaFile?.url) {
                 await sock.sendMessage(chat, {
-                    audio: { url: data.downloadUrl },
-                    mimetype: 'audio/mpeg',
-                    fileName: `${title}.mp3`,
+                    text: `No ${type} file was found for this YouTube URL.`
+                }, { quoted: msg });
+                return;
+            }
+
+            const title = result.title || result.videoTitle || result.details?.title || 'YouTube download';
+            const extension = extensionFor(mediaFile, type);
+            const fileName = safeName(title, extension);
+
+            await sock.sendMessage(chat, {
+                text: `Downloading to temp file...\nQuality: ${mediaFile.label || 'unknown'}`
+            }, { quoted: msg });
+
+            tempPath = await downloadToTemp(mediaFile.url, fileName);
+
+            if (type === 'audio') {
+                await sock.sendMessage(chat, {
+                    audio: { url: tempPath },
+                    mimetype: mediaFile.mimeType || 'audio/mpeg',
+                    fileName,
                     ptt: false
                 }, { quoted: msg });
                 return;
             }
 
             await sock.sendMessage(chat, {
-                video: { url: data.downloadUrl },
-                mimetype: 'video/mp4',
-                fileName: `${title}.mp4`,
-                caption
+                video: { url: tempPath },
+                mimetype: mediaFile.mimeType || 'video/mp4',
+                fileName,
+                caption: `${title}\nQuality: ${mediaFile.label || 'unknown'}`
             }, { quoted: msg });
         } catch (error) {
             console.error('YTDL command error:', error);
-            await sock.sendMessage(chat, {
-                text: friendlyApiError(error, 'YouTube Download API')
-            }, { quoted: msg });
+
+            const status = error.response?.status || error.status;
+            const text = status === 403
+                ? 'The raw YouTube file link returned 403 even when the bot tried to download it first. That means the link is restricted to another IP/session.'
+                : `Download failed: ${error.message || error}`;
+
+            await sock.sendMessage(chat, { text }, { quoted: msg });
+        } finally {
+            removeTemp(tempPath);
         }
     }
 };
