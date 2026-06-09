@@ -2,6 +2,7 @@ const config = require('../../config');
 const { requestJson, friendlyApiError } = require('../utils/apiClient');
 
 const PLAY_URL = config.apis?.mediaDownload || 'https://omegatech-api.dixonomega.tech/api/download/play';
+const ALL_URL = 'https://omegatech-api.dixonomega.tech/api/download/all';
 
 function isYouTubeUrl(value) {
     try {
@@ -53,6 +54,41 @@ function downloadQueries(value) {
     return [...new Set(queries.filter(Boolean))];
 }
 
+function findTitle(value) {
+    if (!value || typeof value !== 'object') return '';
+
+    const direct = value.title
+        || value.videoTitle
+        || value.name
+        || value.details?.title
+        || value.videoDetails?.title
+        || value.result?.title
+        || value.result?.videoTitle
+        || value.result?.details?.title
+        || value.result?.videoDetails?.title;
+
+    if (direct) return String(direct).trim();
+
+    for (const nested of Object.values(value)) {
+        if (nested && typeof nested === 'object') {
+            const title = findTitle(nested);
+            if (title) return title;
+        }
+    }
+
+    return '';
+}
+
+async function fetchMetadataTitle(url) {
+    const endpoint = `${ALL_URL}?url=${encodeURIComponent(url)}`;
+    const data = await requestJson(endpoint, {
+        timeoutMs: config.media?.mediaDownloadTimeoutMs || 60000,
+        service: 'YouTube Metadata API'
+    });
+
+    return findTitle(data);
+}
+
 function parseArgs(args) {
     const typeWords = new Set(['video', 'mp4', 'audio', 'mp3', 'song']);
     const url = args.find(arg => isYouTubeUrl(arg)) || args[0] || '';
@@ -65,8 +101,9 @@ function parseArgs(args) {
 async function fetchDownload(url, type) {
     const quality = config.media?.mediaDownloadQuality || '360p';
     const attempts = [];
+    const queries = downloadQueries(url);
 
-    for (const query of downloadQueries(url)) {
+    for (const query of queries) {
         const endpoint = `${PLAY_URL}?query=${encodeURIComponent(query)}&format=${encodeURIComponent(type)}&quality=${encodeURIComponent(quality)}`;
 
         try {
@@ -83,6 +120,27 @@ async function fetchDownload(url, type) {
         } catch (error) {
             attempts.push(`${query}: ${error.message || error}`);
         }
+    }
+
+    try {
+        const title = await fetchMetadataTitle(url);
+        if (title && !queries.includes(title)) {
+            const endpoint = `${PLAY_URL}?query=${encodeURIComponent(title)}&format=${encodeURIComponent(type)}&quality=${encodeURIComponent(quality)}`;
+            const data = await requestJson(endpoint, {
+                timeoutMs: config.media?.mediaDownloadTimeoutMs || 60000,
+                service: 'YouTube Download API'
+            });
+
+            if (data?.downloadUrl) {
+                return data;
+            }
+
+            attempts.push(`${title}: no download URL`);
+        } else {
+            attempts.push('metadata title: not found');
+        }
+    } catch (error) {
+        attempts.push(`metadata title: ${error.message || error}`);
     }
 
     throw new Error(`No ${type === 'mp3' ? 'audio' : 'video'} found. Tried: ${attempts.join(' | ')}`);
