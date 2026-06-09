@@ -1,5 +1,7 @@
-const axios = require('axios');
-const statsManager = require('../models/stats');
+const config = require('../../config');
+const { requestJson, friendlyApiError } = require('../utils/apiClient');
+
+const PLAY_URL = config.apis?.mediaDownload || 'https://omegatech-api.dixonomega.tech/api/download/play';
 
 function isYouTubeUrl(value) {
     try {
@@ -28,22 +30,31 @@ function parseArgs(args) {
     const typeWords = new Set(['video', 'mp4', 'audio', 'mp3', 'song']);
     const url = args.find(arg => isYouTubeUrl(arg)) || args[0] || '';
     const typeWord = args.find(arg => typeWords.has(String(arg).toLowerCase()));
-    const type = ['audio', 'mp3', 'song'].includes(String(typeWord || '').toLowerCase()) ? 'audio' : 'video';
+    const type = ['audio', 'mp3', 'song'].includes(String(typeWord || '').toLowerCase()) ? 'mp3' : 'mp4';
 
     return { url, type };
 }
 
-async function record(command, chat, sender, status) {
-    try {
-        await statsManager.recordCommand(command, chat, sender, 0, status);
-    } catch {}
+async function fetchDownload(url, type) {
+    const quality = config.media?.mediaDownloadQuality || '360p';
+    const endpoint = `${PLAY_URL}?query=${encodeURIComponent(url)}&format=${encodeURIComponent(type)}&quality=${encodeURIComponent(quality)}`;
+    const data = await requestJson(endpoint, {
+        timeoutMs: config.media?.mediaDownloadTimeoutMs || 60000,
+        service: 'YouTube Download API'
+    });
+
+    if (!data?.downloadUrl) {
+        throw new Error('No download URL returned.');
+    }
+
+    return data;
 }
 
 module.exports = {
     config: {
         name: 'ytdl',
         aliases: ['downl'],
-        version: '1.1.0',
+        version: '1.2.0',
         description: 'Download YouTube videos or audio',
         usage: 'ytdl <url> [video|audio]',
         examples: [
@@ -56,7 +67,6 @@ module.exports = {
     },
     onRun: async (sock, msg, args) => {
         const chat = msg.key.remoteJid;
-        const sender = msg.key.participant || msg.key.remoteJid;
         const { url, type } = parseArgs(args);
 
         if (!url) {
@@ -76,75 +86,38 @@ module.exports = {
                 await sock.sendPresenceUpdate('uploading', chat);
             } catch {}
 
-            await sock.sendMessage(chat, { text: 'Downloading... please wait.' }, { quoted: msg });
+            await sock.sendMessage(chat, { text: `Downloading ${type === 'mp3' ? 'audio' : 'video'}... please wait.` }, { quoted: msg });
 
-            const apiUrl = `https://omegatech-api.dixonomega.tech/api/download/all?url=${encodeURIComponent(url)}`;
-            const response = await axios.get(apiUrl, { timeout: 30000 });
+            const data = await fetchDownload(url, type);
+            const title = data.title || 'YouTube download';
+            const caption = [
+                title,
+                data.duration?.timestamp ? `Duration: ${data.duration.timestamp}` : '',
+                data.quality ? `Quality: ${data.quality}` : '',
+                data.fileSize ? `Size: ${data.fileSize}` : ''
+            ].filter(Boolean).join('\n');
 
-            if (!response.data?.success) {
-                await sock.sendMessage(chat, { text: 'Failed to download this YouTube link.' }, { quoted: msg });
-                await record('ytdl', chat, sender, 'error');
-                return;
-            }
-
-            const result = response.data.result || response.data;
-
-            if (type === 'audio') {
-                const audioFile = result.audio?.find(item => /opus \(159kb\/s\)/i.test(item.label || ''))
-                    || result.audio?.find(item => /m4a \(131kb\/s\)/i.test(item.label || ''))
-                    || result.audio?.[result.audio.length - 1];
-
-                if (!audioFile?.url) {
-                    await sock.sendMessage(chat, { text: 'No audio file was found for this video.' }, { quoted: msg });
-                    await record('ytdl', chat, sender, 'error');
-                    return;
-                }
-
+            if (type === 'mp3') {
                 await sock.sendMessage(chat, {
-                    audio: { url: audioFile.url },
-                    mimetype: audioFile.mimeType || 'audio/mpeg',
+                    audio: { url: data.downloadUrl },
+                    mimetype: 'audio/mpeg',
+                    fileName: `${title}.mp3`,
                     ptt: false
                 }, { quoted: msg });
-
-                await record('ytdl', chat, sender, 'success');
-                await sock.sendMessage(chat, {
-                    text: `Audio downloaded.\nQuality: ${audioFile.label || 'unknown'}`
-                }, { quoted: msg });
-                return;
-            }
-
-            const videoFile = result.video?.find(item => item.label === 'mp4 (360p)')
-                || result.video?.find(item => /360p/i.test(item.label || ''))
-                || result.video?.find(item => /mp4/i.test(item.label || ''))
-                || result.video?.[0];
-
-            if (!videoFile?.url) {
-                await sock.sendMessage(chat, { text: 'No video file was found for this link.' }, { quoted: msg });
-                await record('ytdl', chat, sender, 'error');
                 return;
             }
 
             await sock.sendMessage(chat, {
-                video: { url: videoFile.url },
-                mimetype: videoFile.mimeType || 'video/mp4',
-                caption: `Video downloaded.\nQuality: ${videoFile.label || 'unknown'}`
+                video: { url: data.downloadUrl },
+                mimetype: 'video/mp4',
+                fileName: `${title}.mp4`,
+                caption
             }, { quoted: msg });
-
-            await record('ytdl', chat, sender, 'success');
         } catch (error) {
             console.error('YTDL command error:', error);
-
-            let errorMessage = 'Error downloading video.';
-            if (error.code === 'ECONNABORTED') {
-                errorMessage = 'Download timeout. The video might be too long.';
-            } else if (error.response?.status === 404) {
-                errorMessage = 'Video not found.';
-            } else if (error.message) {
-                errorMessage = `Download failed: ${error.message}`;
-            }
-
-            await sock.sendMessage(chat, { text: errorMessage }, { quoted: msg });
-            await record('ytdl', chat, sender, 'error');
+            await sock.sendMessage(chat, {
+                text: friendlyApiError(error, 'YouTube Download API')
+            }, { quoted: msg });
         }
     }
 };

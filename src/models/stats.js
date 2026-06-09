@@ -44,9 +44,9 @@ class StatsManager {
         try {
             const sql = `
                 INSERT INTO command_stats (command_name, chat_id, user_id, execution_time, status, created_at)
-                VALUES (?, ?, ?, ?, ?, datetime('now'))
+                VALUES (?, ?, ?, ?, ?, ?)
             `;
-            await this.run(sql, [commandName, chatId, userId, executionTime, status]);
+            await this.run(sql, [commandName, chatId, userId, executionTime, status, new Date().toISOString()]);
         } catch (error) {
             console.error('Error recording command:', error);
         }
