@@ -3,6 +3,7 @@ const { requestJson, friendlyApiError } = require('../utils/apiClient');
 
 const PLAY_URL = config.apis?.mediaDownload || 'https://omegatech-api.dixonomega.tech/api/download/play';
 const ALL_URL = 'https://omegatech-api.dixonomega.tech/api/download/all';
+const OEMBED_URL = 'https://www.youtube.com/oembed';
 
 function isYouTubeUrl(value) {
     try {
@@ -89,6 +90,30 @@ async function fetchMetadataTitle(url) {
     return findTitle(data);
 }
 
+async function fetchOEmbedTitle(url) {
+    const endpoint = `${OEMBED_URL}?url=${encodeURIComponent(url)}&format=json`;
+    const data = await requestJson(endpoint, {
+        timeoutMs: 15000,
+        service: 'YouTube oEmbed'
+    });
+
+    return String(data?.title || '').trim();
+}
+
+async function tryPlayQuery(query, type, quality) {
+    const endpoint = `${PLAY_URL}?query=${encodeURIComponent(query)}&format=${encodeURIComponent(type)}&quality=${encodeURIComponent(quality)}`;
+    const data = await requestJson(endpoint, {
+        timeoutMs: config.media?.mediaDownloadTimeoutMs || 60000,
+        service: 'YouTube Download API'
+    });
+
+    if (!data?.downloadUrl) {
+        throw new Error('no download URL');
+    }
+
+    return data;
+}
+
 function parseArgs(args) {
     const typeWords = new Set(['video', 'mp4', 'audio', 'mp3', 'song']);
     const url = args.find(arg => isYouTubeUrl(arg)) || args[0] || '';
@@ -104,19 +129,8 @@ async function fetchDownload(url, type) {
     const queries = downloadQueries(url);
 
     for (const query of queries) {
-        const endpoint = `${PLAY_URL}?query=${encodeURIComponent(query)}&format=${encodeURIComponent(type)}&quality=${encodeURIComponent(quality)}`;
-
         try {
-            const data = await requestJson(endpoint, {
-                timeoutMs: config.media?.mediaDownloadTimeoutMs || 60000,
-                service: 'YouTube Download API'
-            });
-
-            if (data?.downloadUrl) {
-                return data;
-            }
-
-            attempts.push(`${query}: no download URL`);
+            return await tryPlayQuery(query, type, quality);
         } catch (error) {
             attempts.push(`${query}: ${error.message || error}`);
         }
@@ -125,22 +139,23 @@ async function fetchDownload(url, type) {
     try {
         const title = await fetchMetadataTitle(url);
         if (title && !queries.includes(title)) {
-            const endpoint = `${PLAY_URL}?query=${encodeURIComponent(title)}&format=${encodeURIComponent(type)}&quality=${encodeURIComponent(quality)}`;
-            const data = await requestJson(endpoint, {
-                timeoutMs: config.media?.mediaDownloadTimeoutMs || 60000,
-                service: 'YouTube Download API'
-            });
-
-            if (data?.downloadUrl) {
-                return data;
-            }
-
-            attempts.push(`${title}: no download URL`);
+            return await tryPlayQuery(title, type, quality);
         } else {
             attempts.push('metadata title: not found');
         }
     } catch (error) {
         attempts.push(`metadata title: ${error.message || error}`);
+    }
+
+    try {
+        const title = await fetchOEmbedTitle(url);
+        if (title && !queries.includes(title)) {
+            return await tryPlayQuery(title, type, quality);
+        }
+
+        attempts.push('oEmbed title: not found');
+    } catch (error) {
+        attempts.push(`oEmbed title: ${error.message || error}`);
     }
 
     throw new Error(`No ${type === 'mp3' ? 'audio' : 'video'} found. Tried: ${attempts.join(' | ')}`);
