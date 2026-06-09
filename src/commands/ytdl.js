@@ -26,6 +26,33 @@ function isYouTubeUrl(value) {
     }
 }
 
+function getYouTubeVideoId(value) {
+    try {
+        const url = new URL(value);
+        const host = url.hostname.replace(/^www\./, '').toLowerCase();
+        const parts = url.pathname.split('/').filter(Boolean);
+
+        if (host === 'youtu.be') return parts[0] || '';
+        if (url.searchParams.get('v')) return url.searchParams.get('v');
+        if (['shorts', 'live', 'embed'].includes(parts[0])) return parts[1] || '';
+        return '';
+    } catch {
+        return '';
+    }
+}
+
+function downloadQueries(value) {
+    const id = getYouTubeVideoId(value);
+    const queries = [value];
+
+    if (id) {
+        queries.push(`https://youtube.com/watch?v=${id}`);
+        queries.push(id);
+    }
+
+    return [...new Set(queries.filter(Boolean))];
+}
+
 function parseArgs(args) {
     const typeWords = new Set(['video', 'mp4', 'audio', 'mp3', 'song']);
     const url = args.find(arg => isYouTubeUrl(arg)) || args[0] || '';
@@ -37,17 +64,28 @@ function parseArgs(args) {
 
 async function fetchDownload(url, type) {
     const quality = config.media?.mediaDownloadQuality || '360p';
-    const endpoint = `${PLAY_URL}?query=${encodeURIComponent(url)}&format=${encodeURIComponent(type)}&quality=${encodeURIComponent(quality)}`;
-    const data = await requestJson(endpoint, {
-        timeoutMs: config.media?.mediaDownloadTimeoutMs || 60000,
-        service: 'YouTube Download API'
-    });
+    const attempts = [];
 
-    if (!data?.downloadUrl) {
-        throw new Error('No download URL returned.');
+    for (const query of downloadQueries(url)) {
+        const endpoint = `${PLAY_URL}?query=${encodeURIComponent(query)}&format=${encodeURIComponent(type)}&quality=${encodeURIComponent(quality)}`;
+
+        try {
+            const data = await requestJson(endpoint, {
+                timeoutMs: config.media?.mediaDownloadTimeoutMs || 60000,
+                service: 'YouTube Download API'
+            });
+
+            if (data?.downloadUrl) {
+                return data;
+            }
+
+            attempts.push(`${query}: no download URL`);
+        } catch (error) {
+            attempts.push(`${query}: ${error.message || error}`);
+        }
     }
 
-    return data;
+    throw new Error(`No ${type === 'mp3' ? 'audio' : 'video'} found. Tried: ${attempts.join(' | ')}`);
 }
 
 module.exports = {
