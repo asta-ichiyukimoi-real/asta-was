@@ -58,11 +58,14 @@ async function uploadImageToCatbox(buffer, mime = 'image/jpeg') {
     form.append('reqtype', 'fileupload');
     form.append('fileToUpload', new Blob([buffer], { type: mime }), `edit-${Date.now()}.jpg`);
 
-    const response = await fetch(CATBOX_UPLOAD_URL, {
-        method: 'POST',
-        body: form,
-        signal: AbortSignal.timeout(AI_EDIT_TIMEOUT_MS)
-    });
+   const response = await fetch(apiUrl, {
+    method: 'GET',
+    headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': 'https://nabees.online'
+    },
+    signal: AbortSignal.timeout(AI_EDIT_TIMEOUT_MS)
+});
 
     const text = (await response.text()).trim();
     if (!response.ok ||!/^https?:\/\//i.test(text)) {
@@ -114,8 +117,15 @@ module.exports = {
             const imageUrl = await uploadImageToCatbox(imageBuffer);
 
             const apiUrl = `${EDIT_API_URL}?prompt=${encodeURIComponent(prompt)}&image_url=${encodeURIComponent(imageUrl)}&ratio=auto`;
-            const data = await requestJson(apiUrl, { timeoutMs: AI_EDIT_TIMEOUT_MS, service: 'Edit API' });
-
+           const data = await requestJson(apiUrl, {
+    timeoutMs: AI_EDIT_TIMEOUT_MS,
+    service: 'Edit API',
+    headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+        'Referer': 'https://nabees.online'
+    }
+});
             if (data.status!== 200 ||!data.data?.image_url) {
                 throw new Error('API returned no image');
             }
