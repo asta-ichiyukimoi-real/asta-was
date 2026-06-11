@@ -1,9 +1,4 @@
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
-const config = require('../../config');
-const { requestJson, friendlyApiError, getErrorMessage, isTimeout } = require('../utils/apiClient');
-
-const EDIT_API_URL = 'https://api.nabees.online/api/ai/pti';
-const AI_EDIT_TIMEOUT_MS = config.ai?.editTimeoutMs || 60000;
 
 function unwrapMessage(message) {
     let current = message || {};
@@ -23,8 +18,6 @@ function getContextInfo(msg) {
     const message = unwrapMessage(msg.message);
     return message.extendedTextMessage?.contextInfo
         || message.imageMessage?.contextInfo
-        || message.videoMessage?.contextInfo
-        || message.documentMessage?.contextInfo
         || null;
 }
 
@@ -45,49 +38,23 @@ async function streamToBuffer(stream) {
     return Buffer.concat(chunks);
 }
 
-async function imageMessageToBuffer(imageMessage) {
-    if (!imageMessage) return null;
-    const stream = await downloadContentFromMessage(imageMessage, 'image');
-    const buffer = await streamToBuffer(stream);
-    return buffer;
-}
-
-async function uploadImageToCatbox(buffer, mime = 'image/jpeg') {
-    const CATBOX_UPLOAD_URL = config.apis?.catboxUpload || 'https://catbox.moe/user/api.php';
+async function uploadToTelegraph(buffer) {
     const form = new FormData();
-    form.append('reqtype', 'fileupload');
-    form.append('fileToUpload', new Blob([buffer], { type: mime }), `edit-${Date.now()}.jpg`);
+    form.append('file', new Blob([buffer], { type: 'image/jpeg' }), 'image.jpg');
 
-   const response = await fetch(apiUrl, {
-    method: 'GET',
-    headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Referer': 'https://nabees.online'
-    },
-    signal: AbortSignal.timeout(AI_EDIT_TIMEOUT_MS)
-});
-
-    const text = (await response.text()).trim();
-    if (!response.ok ||!/^https?:\/\//i.test(text)) {
-        throw new Error(`Image upload failed: ${text || response.status}`);
-    }
-    return text;
+    const res = await fetch('https://telegra.ph/upload', { method: 'POST', body: form });
+    const data = await res.json();
+    if (!data[0]?.src) throw new Error('Upload to telegra.ph failed');
+    return `https://telegra.ph${data[0].src}`;
 }
 
 module.exports = {
     config: {
         name: 'edit',
-        aliases: ['editimg', 'imgedit', 'photoedit'],
+        aliases: ['imgedit', 'photoedit'],
         version: '1.0.0',
         description: 'Edit images with AI. Reply to an image with your prompt.',
-        usage: '.edit <prompt>',
-        examples: [
-            '.edit make it anime style',
-            '.edit change background to space',
-            '.edit add cyberpunk neon effect'
-        ],
         permissions: 0,
-        cooldown: 10,
         category: 'ai'
     },
 
@@ -97,58 +64,57 @@ module.exports = {
 
         if (!imageMessage) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Reply to an image with `.edit <prompt>`.\nExample: `.edit make it anime style`'
+                text: 'Reply to an image with `.edit <prompt>`\nExample: `.edit make it anime style`'
             }, { quoted: msg });
             return;
         }
 
         if (!prompt) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Add a prompt. Example: `.edit make it anime style`'
+                text: 'Add a prompt. Example: `.edit turn it into cyberpunk`'
             }, { quoted: msg });
             return;
         }
 
         try {
-            await sock.sendPresenceUpdate('uploading', msg.key.remoteJid);
-            const imageBuffer = await imageMessageToBuffer(imageMessage);
-            if (!imageBuffer) throw new Error('Failed to download image');
+            await sock.sendMessage(msg.key.remoteJid, { react: { text: '⏳', key: msg.key } });
 
-            const imageUrl = await uploadImageToCatbox(imageBuffer);
+            // 1. Download image
+            const stream = await downloadContentFromMessage(imageMessage, 'image');
+            const buffer = await streamToBuffer(stream);
 
-            const apiUrl = `${EDIT_API_URL}?prompt=${encodeURIComponent(prompt)}&image_url=${encodeURIComponent(imageUrl)}&ratio=auto`;
-           const data = await requestJson(apiUrl, {
-    timeoutMs: AI_EDIT_TIMEOUT_MS,
-    service: 'Edit API',
-    headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
-        'Referer': 'https://nabees.online'
-    }
-});
+            // 2. Upload to telegra.ph
+            const imageUrl = await uploadToTelegraph(buffer);
+
+            // 3. Call Nabees API
+            const apiUrl = `https://api.nabees.online/api/ai/pti?prompt=${encodeURIComponent(prompt)}&image_url=${encodeURIComponent(imageUrl)}&ratio=auto`;
+
+            const res = await fetch(apiUrl, {
+                method: 'GET',
+                headers: { 'User-Agent': 'Mozilla/5.0' },
+                signal: AbortSignal.timeout(60000)
+            });
+
+            const data = await res.json();
+
             if (data.status!== 200 ||!data.data?.image_url) {
-                throw new Error('API returned no image');
+                throw new Error(`API returned status ${data.status}: ${JSON.stringify(data)}`);
             }
 
+            // 4. Send result
             await sock.sendMessage(msg.key.remoteJid, {
                 image: { url: data.data.image_url },
-                caption: `*Edited Image*\nPrompt: ${data.data.prompt}`
+                caption: `*Done*\nPrompt: ${data.data.prompt}`
             }, { quoted: msg });
 
-       } catch (error) {
-    console.error('Edit command error:', error);
+            await sock.sendMessage(msg.key.remoteJid, { react: { text: '✅', key: msg.key } });
 
-    const rawMsg = getErrorMessage(error);
-    const isTO = isTimeout(error);
-    
-    let text = '';
-    if (isTO) {
-        text = 'Edit request timed out. The API took too long to respond.';
-    } else {
-        text = `*Edit API Error*\n${rawMsg}\n\nThis helps debug. Remove this raw error in production.`;
-    }
-
-    await sock.sendMessage(msg.key.remoteJid, { text }, { quoted: msg });
-}
+        } catch (error) {
+            console.error('Edit error:', error);
+            await sock.sendMessage(msg.key.remoteJid, {
+                text: `*Error:* ${error.message}\n\nCheck logs for full details.`
+            }, { quoted: msg });
+            await sock.sendMessage(msg.key.remoteJid, { react: { text: '❌', key: msg.key } });
+        }
     }
 };
