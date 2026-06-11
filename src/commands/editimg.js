@@ -125,12 +125,20 @@ module.exports = {
                 caption: `*Edited Image*\nPrompt: ${data.data.prompt}`
             }, { quoted: msg });
 
-        } catch (error) {
-            console.error('Edit command error:', error);
-            const text = isTimeout(error)
-               ? 'Edit request timed out. Try again.'
-                : friendlyApiError(error, 'Edit API');
-            await sock.sendMessage(msg.key.remoteJid, { text }, { quoted: msg });
-        }
+       } catch (error) {
+    console.error('Edit command error:', error);
+
+    const rawMsg = getErrorMessage(error);
+    const isTO = isTimeout(error);
+    
+    let text = '';
+    if (isTO) {
+        text = 'Edit request timed out. The API took too long to respond.';
+    } else {
+        text = `*Edit API Error*\n${rawMsg}\n\nThis helps debug. Remove this raw error in production.`;
+    }
+
+    await sock.sendMessage(msg.key.remoteJid, { text }, { quoted: msg });
+}
     }
 };
