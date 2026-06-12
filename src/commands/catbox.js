@@ -101,7 +101,7 @@ module.exports = {
 `STATUS: ${response.status}
 
 URL:
-${response.result.url}`
+${response.data.result.url}`
                 },
                 { quoted: msg }
             );
