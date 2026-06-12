@@ -92,7 +92,7 @@ module.exports = {
     }
 );
 
-            const data = response.json();
+            const data = response.json;
 
             console.log('Upload response:', data);
             console.log(JSON.stringify(data, null, 2));
