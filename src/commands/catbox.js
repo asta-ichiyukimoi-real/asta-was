@@ -92,9 +92,10 @@ module.exports = {
     }
 );
 
-            const data = await response.json();
+            const data = response.json();
 
             console.log('Upload response:', data);
+            console.log(JSON.stringify(data, null, 2));
 
             if (data?.status && data?.result?.url) {
                 await sock.sendMessage(
