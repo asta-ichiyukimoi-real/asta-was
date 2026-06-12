@@ -16,10 +16,7 @@ function findImageMessage(msg) {
     const directImage = msg.message?.imageMessage;
     if (directImage) return directImage;
 
-    return (
-        msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
-        null
-    );
+    return msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || null;
 }
 
 module.exports = {
@@ -27,7 +24,7 @@ module.exports = {
         name: 'upimg2',
         aliases: ['imgurl', 'uploadimg'],
         version: '1.0.0',
-        description: 'Upload an image and get a permanent URL',
+        description: 'Upload an image and get a URL',
         permissions: 0,
         category: 'utility'
     },
@@ -41,18 +38,14 @@ module.exports = {
             if (!imageMessage) {
                 return await sock.sendMessage(
                     msg.key.remoteJid,
-                    {
-                        text: '❌ Please send or reply to an image.'
-                    },
+                    { text: '❌ Please send or reply to an image.' },
                     { quoted: msg }
                 );
             }
 
             await sock.sendMessage(
                 msg.key.remoteJid,
-                {
-                    text: '📤 Uploading image...'
-                },
+                { text: '📤 Uploading image...' },
                 { quoted: msg }
             );
 
@@ -62,10 +55,6 @@ module.exports = {
             );
 
             const buffer = await streamToBuffer(stream);
-
-            if (!buffer || buffer.length === 0) {
-                throw new Error('Failed to download image.');
-            }
 
             const tempDir = path.join(__dirname, '../../temp');
 
@@ -81,46 +70,44 @@ module.exports = {
             fs.writeFileSync(tempPath, buffer);
 
             const form = new FormData();
-            form.append('file', fs.createReadStream(tempPath));
 
-           const response = await axios.post(
-    'https://discardapi.dpdns.org/api/catbox?apikey=guru',
-    form,
-    {
-        headers: form.getHeaders(),
-        maxBodyLength: Infinity
-    }
-);
+            // Try "file" first
+            form.append(
+                'file',
+                fs.createReadStream(tempPath)
+            );
 
-            const data = response.json;
+            const response = await axios.post(
+                'https://discardapi.dpdns.org/api/catbox?apikey=guru',
+                form,
+                {
+                    headers: form.getHeaders(),
+                    maxBodyLength: Infinity,
+                    maxContentLength: Infinity,
+                    validateStatus: () => true
+                }
+            );
 
-            console.log('Upload response:', data);
-            console.log(JSON.stringify(data, null, 2));
+            console.log('========== RESPONSE ==========');
+            console.log('STATUS:', response.status);
+            console.log('HEADERS:', response.headers);
+            console.log('DATA:', response.data);
+            console.log('==============================');
 
-            if (data?.status && data?.result?.url) {
-                await sock.sendMessage(
-                    msg.key.remoteJid,
-                    {
-                        text:
-`✅ Image Uploaded Successfully
+            await sock.sendMessage(
+                msg.key.remoteJid,
+                {
+                    text:
+`STATUS: ${response.status}
 
-🔗 URL:
-${data.result.url}`
-                    },
-                    { quoted: msg }
-                );
-            } else {
-                await sock.sendMessage(
-                    msg.key.remoteJid,
-                    {
-                        text:
-`❌ Upload Failed
+RESPONSE:
+${typeof response.data === 'object'
+    ? JSON.stringify(response.data, null, 2)
+    : String(response.data)}`
+                },
+                { quoted: msg }
+            );
 
-${data?.message || 'Unknown error'}`
-                    },
-                    { quoted: msg }
-                );
-            }
         } catch (error) {
             console.error('upimg2 error:', error);
 
@@ -130,7 +117,11 @@ ${data?.message || 'Unknown error'}`
                     text:
 `❌ Error
 
-${error.message}`
+${error.message}
+
+${error.response?.data
+    ? JSON.stringify(error.response.data, null, 2)
+    : ''}`
                 },
                 { quoted: msg }
             );
@@ -139,7 +130,7 @@ ${error.message}`
                 try {
                     fs.unlinkSync(tempPath);
                 } catch (e) {
-                    console.error('Failed to delete temp file:', e);
+                    console.error(e);
                 }
             }
         }
