@@ -100,10 +100,8 @@ module.exports = {
                     text:
 `STATUS: ${response.status}
 
-RESPONSE:
-${typeof response.data === 'object'
-    ? JSON.stringify(response.data, null, 2)
-    : String(response.data)}`
+URL:
+${response.result.url}`
                 },
                 { quoted: msg }
             );
