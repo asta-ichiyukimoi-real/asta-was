@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+const axios = require('axios');
 const FormData = require('form-data');
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const fs = require('fs');
@@ -83,13 +83,14 @@ module.exports = {
             const form = new FormData();
             form.append('file', fs.createReadStream(tempPath));
 
-            const response = await fetch(
-                'https://discardapi.dpdns.org/api/catbox?apikey=guru',
-                {
-                    method: 'POST',
-                    body: form
-                }
-            );
+           const response = await axios.post(
+    'https://discardapi.dpdns.org/api/catbox?apikey=guru',
+    form,
+    {
+        headers: form.getHeaders(),
+        maxBodyLength: Infinity
+    }
+);
 
             const data = await response.json();
 
