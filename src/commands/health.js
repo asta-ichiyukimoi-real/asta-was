@@ -37,7 +37,7 @@ Reconnects: ${h.reconnects || 0}
 Last API Error: ${h.lastApiError || 'none'}
 Last Error: ${h.lastError || 'none'}
 
-Dashboard: http://127.0.0.1:${port}`;
+Dashboard: https://asta-was.onrender.com/`;
 
         await sock.sendMessage(msg.key.remoteJid, { text }, { quoted: msg });
     }
