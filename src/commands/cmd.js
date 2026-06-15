@@ -1,6 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-const srcc = path.dirname(__filename)
+const state = require('../../utils/stateManager');
+const config = require('../../config'); // add this
+
+const srcc = path.join(__dirname, '../commands');
 const addFile = (filee, script) => {
     const filePath = path.join(srcc, filee);
     const writeCode = fs.writeFileSync(filePath, script);
@@ -26,7 +29,7 @@ module.exports = {
         const prefix = state.getChatPrefix(chatId, configHandler?.getPrefix?.() || config.prefix);
         const option = args[0]?.toLowerCase();
         const filename = args[1]?.toLowerCase();
-        const text = args.slice(1).join(' ').trim();
+        const text = args.slice(2).join(' ').trim();
         const usage = `usage: \n${prefix}cmd add <filename>.js <code>\n${prefix}cmd del <filename>.js`
 
         try {
@@ -35,19 +38,25 @@ module.exports = {
              return;
         }
 
-        if(!fileName.endsWith('.js')) {
+        if(!filename.endsWith('.js')) {
             await sock.sendMessage(msg.key.remoteJid, { text: `your file name must end with .js` }, { quoted: msg })
             return;
         }
         if(option === 'add') {
             addFile(filename, text)
-            return sock.sendMessage(msg.key.remoteJid, { text: `added ${filename} successfully to commands` }, { quoted: msg })
+            await sock.sendMessage(msg.key.remoteJid, { text: `added ${filename} successfully to commands` }, { quoted: msg })
+            if (commandHandler?.loadCommands) {
+                    commandHandler.loadCommands();
+                }
         } else if(option === 'del') {
             if(!fs.existsSync(filename)) {
                 await sock.sendMessage(msg.key.remoteJid, { text: `that file does not exist` }, { quoted: msg })
             } else {
             delfi(filename)
-            return sock.sendMessage(msg.key.remoteJid, { text: `successfully deleted ${filename}` }, { quoted: msg })
+            await sock.sendMessage(msg.key.remoteJid, { text: `successfully deleted ${filename}` }, { quoted: msg })
+            if (commandHandler?.loadCommands) {
+                    commandHandler.loadCommands();
+                }
             }
         }
         } catch (error) {
