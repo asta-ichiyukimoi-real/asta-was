@@ -3,18 +3,6 @@ const path = require('path');
 const state = require('../../utils/stateManager');
 const config = require('../../config'); // add this
 
-const srcc = path.join(__dirname, '../commands');
-const addFile = (filee, script) => {
-    const filePath = path.join(srcc, filee);
-    const writeCode = fs.writeFileSync(filePath, script);
-    return writeCode;
-}
-
-const delFile = (filess) => {
-    const delfi = fs.unlinkSync(filess)
-}
-const commandHandler = global.commandHandler;
-
 
 module.exports = {
     config: {
@@ -26,13 +14,23 @@ module.exports = {
         category: 'general'
     },
     onRun: async (sock, msg, args) => {
+        try{
+        const srcc = path.join(__dirname, '../commands');
+const addFile = (filee, script) => {
+    const filePath = path.join(srcc, filee);
+    const writeCode = fs.writeFileSync(filePath, script);
+    return writeCode;
+}
+
+const delFile = (filess) => {
+    const delfi = fs.unlinkSync(filess)
+}
+const commandHandler = global.commandHandler;
         const prefix = state.getChatPrefix(chatId, configHandler?.getPrefix?.() || config.prefix);
         const option = args[0]?.toLowerCase();
         const filename = args[1]?.toLowerCase();
         const text = args.slice(2).join(' ').trim();
         const usage = `usage: \n${prefix}cmd add <filename>.js <code>\n${prefix}cmd del <filename>.js`
-
-        try {
         if(!option || !['add', 'del'].includes(option)) {
              await sock.sendMessage(msg.key.remoteJid, { text: usage }, { quoted: msg });
              return;
