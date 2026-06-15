@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const state = require('../../utils/stateManager');
-const config = require('../../config'); // add this
+const state = require('../utils/stateManager');
+const config = require('../../config');
 
 
 module.exports = {
