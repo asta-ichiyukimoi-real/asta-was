@@ -25,7 +25,7 @@ const addFile = (filee, script) => {
 const delFile = (filess) => {
     const delfi = fs.unlinkSync(filess)
 }
-const chatId = msg.key.remoteJid;s
+const chatId = msg.key.remoteJid;
 const commandHandler = global.commandHandler;
         const prefix = state.getChatPrefix(chatId, configHandler?.getPrefix?.() || config.prefix);
         const option = args[0]?.toLowerCase();
