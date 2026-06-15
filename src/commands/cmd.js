@@ -27,6 +27,7 @@ const delFile = (filess) => {
 }
 const chatId = msg.key.remoteJid;
 const commandHandler = global.commandHandler;
+const configHandler = global.configCommandHandler;
         const prefix = state.getChatPrefix(chatId, configHandler?.getPrefix?.() || config.prefix);
         const option = args[0]?.toLowerCase();
         const filename = args[1]?.toLowerCase();
