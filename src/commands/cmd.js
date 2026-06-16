@@ -52,6 +52,10 @@ const usage = `usage: \n${prefix}cmd add <filename>.js <code>\n${prefix}cmd del 
         return;
     }
     if(option === 'add') {
+        if(!text) {
+            await sock.sendMessage(msg.key.remoteJid, { text: `you must provide code to add` }, { quoted: msg })
+            return;
+        }
         addFile(filename, text)
         await sock.sendMessage(msg.key.remoteJid, { text: `added ${filename} successfully to commands` }, { quoted: msg })
         if (commandHandler?.loadCommands) {
