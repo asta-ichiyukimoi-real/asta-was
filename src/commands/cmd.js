@@ -1,8 +1,25 @@
 const fs = require('fs');
+const acorn = require('acorn')
 const path = require('path');
 const state = require('../utils/stateManager');
 const config = require('../../config');
 const srcc = path.join(__dirname, '../commands');
+
+const validateCode = (codeSnippet) => {
+    try {
+    acorn.parse(codeSnippet, { 
+      ecmaVersion: 5, 
+      sourceType: "script" 
+    });
+    
+    return { isValid: true, error: null };
+  } catch (err) {
+    return { 
+      isValid: false, 
+      error: `Syntax Error: ${err.message}` 
+    };
+  }
+}
 
 const addFile = (filee, script) => {
     const filePath = path.join(srcc, filee);
@@ -15,8 +32,8 @@ const delFile = (filess) => {
 }
 
 const validation = (nameFile) => {
-    if (!nameFile.includes('config.name')) return 'command does not include nname';
-    if (!nameFile.includes('config.name')) return 'add permisiion to your command';
+    if (!nameFile.includes('config.name')) await sock.sendMessage(msg.key.remoteJid, { text: 'command does not include name' }, { quoted: msg });
+    if (!nameFile.includes('config.permission')) await sock.sendMessage(msg.key.remoteJid, { text: 'command does not include permission' }, { quoted: msg });
 }
 
 const checkCode = (codee) => {
@@ -56,11 +73,15 @@ const usage = `usage: \n${prefix}cmd add <filename>.js <code>\n${prefix}cmd del 
             await sock.sendMessage(msg.key.remoteJid, { text: `you must provide code to add` }, { quoted: msg })
             return;
         }
-        addFile(filename, text)
+        if(validateCode(text).isValid === true) {
+            addFile(filename, text)
         await sock.sendMessage(msg.key.remoteJid, { text: `added ${filename} successfully to commands` }, { quoted: msg })
         if (commandHandler?.loadCommands) {
                 commandHandler.loadCommands();
             }
+        } else {
+            await sock.sendMessage(msg.key.remoteJid, { text: `code is not valid: ${validateCode(text).error}` }, { quoted: msg })
+        }
     } else if(option === 'del') {
         if(!filename) {
             await sock.sendMessage(msg.key.remoteJid, { text: usage }, { quoted: msg })
