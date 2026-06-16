@@ -47,11 +47,11 @@ const usage = `usage: \n${prefix}cmd add <filename>.js <code>\n${prefix}cmd del 
             return;
     }
 
-    if(!filename.endsWith('.js')) {
-        await sock.sendMessage(msg.key.remoteJid, { text: `your file name must end with .js` }, { quoted: msg })
-        return;
-    }
     if(option === 'add') {
+        if(!filename) {
+            await sock.sendMessage(msg.key.remoteJid, { text: usage }, { quoted: msg })
+            return;
+        }
         if(!text) {
             await sock.sendMessage(msg.key.remoteJid, { text: `you must provide code to add` }, { quoted: msg })
             return;
@@ -62,6 +62,10 @@ const usage = `usage: \n${prefix}cmd add <filename>.js <code>\n${prefix}cmd del 
                 commandHandler.loadCommands();
             }
     } else if(option === 'del') {
+        if(!filename) {
+            await sock.sendMessage(msg.key.remoteJid, { text: usage }, { quoted: msg })
+            return;
+        }
         if(!fs.existsSync(filename)) {
             await sock.sendMessage(msg.key.remoteJid, { text: `that file does not exist` }, { quoted: msg })
         } else {
