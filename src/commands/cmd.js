@@ -32,8 +32,8 @@ const delFile = (filess) => {
 }
 
 const validation = (nameFile) => {
-    if (!nameFile.includes('config.name')) await sock.sendMessage(msg.key.remoteJid, { text: 'command does not include name' }, { quoted: msg });
-    if (!nameFile.includes('config.permission')) await sock.sendMessage(msg.key.remoteJid, { text: 'command does not include permission' }, { quoted: msg });
+    if (!nameFile.includes('config.name')) return sock.sendMessage(msg.key.remoteJid, { text: 'command does not include name' }, { quoted: msg });
+    if (!nameFile.includes('config.permission')) return sock.sendMessage(msg.key.remoteJid, { text: 'command does not include permission' }, { quoted: msg });
 }
 
 const checkCode = (codee) => {
