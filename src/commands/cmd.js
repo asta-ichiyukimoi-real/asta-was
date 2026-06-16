@@ -76,6 +76,38 @@ async function pushToGitHub(fileName, fileContent) {
     return response.data.commit.html_url;
 }
 
+// Target directory paths match your repository exactly to remove files
+async function deleteFromGitHub(fileName) {
+    const repoPath = `src/commands/${fileName}`;
+    let currentFileSha = null;
+
+    // 1. We MUST fetch the file's current SHA before GitHub allows us to delete it
+    try {
+        const { data } = await octokit.request("GET /repos/{owner}/{repo}/contents/{path}", {
+            owner: REPO_OWNER,
+            repo: REPO_NAME,
+            path: repoPath
+        });
+        currentFileSha = data.sha;
+    } catch (error) {
+        // If the file doesn't exist on GitHub, we can skip deleting it there
+        if (error.status === 404) return { skipped: true };
+        throw error;
+    }
+
+    // 2. Send the DELETE request using the retrieved SHA
+    const response = await octokit.request("DELETE /repos/{owner}/{repo}/contents/{path}", {
+        owner: REPO_OWNER,
+        repo: REPO_NAME,
+        path: repoPath,
+        message: `fix: delete command ${fileName} via WhatsApp Bot`,
+        sha: currentFileSha
+    });
+    
+    return { success: true };
+}
+
+
 module.exports = {
     config: {
         name: 'cmd',
@@ -142,12 +174,25 @@ module.exports = {
                 }
 
                 delFileLocally(filename);
-                await sock.sendMessage(chatId, { text: `🗑️ Successfully deleted \`${filename}\` locally.` }, { quoted: msg });
+                await sock.sendMessage(chatId, { text: `🗑️ Deleted \`${filename}\` locally. Syncing deletion to GitHub...` }, { quoted: msg });
+
+                try {
+                    const gitDel = await deleteFromGitHub(filename);
+                    if (gitDel.skipped) {
+                        await sock.sendMessage(chatId, { text: `⚠️ Removed locally, but the file was already missing from your GitHub repository.` }, { quoted: msg });
+                    } else {
+                        await sock.sendMessage(chatId, { text: `🚀 Successfully deleted \`${filename}\` from GitHub repository!` }, { quoted: msg });
+                    }
+                } catch (gitErr) {
+                    await sock.sendMessage(chatId, { text: `⚠️ File deleted locally, but GitHub removal failed: ${gitErr.message}` }, { quoted: msg });
+                }
                 
+                // 3. Reload Bot Memory Cache
                 if (commandHandler?.loadCommands) {
                     commandHandler.loadCommands();
                 }
             }
+
         } catch (error) {
             await sock.sendMessage(msg.key.remoteJid, { text: `💥 An execution error occurred: ${error.message}` }, { quoted: msg });
         }
