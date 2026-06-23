@@ -1,3 +1,5 @@
+const axios = require('axios');
+
 module.exports = {
     config: {
         name: 'tts',
@@ -18,9 +20,9 @@ module.exports = {
             return;
         }
 
-        const fullUrl = `https://omegatech-api.dixonomega.tech/api/ai/text2speech-v3?text=${encodeURIComponent}&voice=man1&language=en`;
+        const fullUrl = await axios.get(`https://omegatech-api.dixonomega.tech/api/ai/text2speech-v3?text=${encodeURIComponent}&voice=man1&language=en`)
         await sock.sendMessage(chatId, {
-                            audio: { url: ttsData.audio },
+                            audio: { url: fullUrl.audio },
                             mimetype: 'audio/mpeg',
                             ptt: false
                         });
