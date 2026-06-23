@@ -3,7 +3,7 @@ const AdmZip = require('adm-zip');
 
 const BASE = 'https://omegatech-api.dixonomega.tech/api/Novel/novel';
 const TTS_BASE = 'https://omegatech-api.dixonomega.tech/api/ai/text2speech-v3';
-const CHUNK_SIZE = 800; // chars per TTS request
+const CHUNK_SIZE = 800;
 const MAX_ZIP_CHAPTERS = 150;
 
 function wait(ms) {
