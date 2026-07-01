@@ -10,7 +10,7 @@
   "dependencies": {
     "@hapi/boom": "^10.0.1",
     "@heyputer/puter.js": "^2.4.2",
-    "@whiskeysockets/baileys": "npm:@zentrix/baileys@latest",
+    "@whiskeysockets/baileys": "npm:@zentrix/baileys@4.2.5",
     "acorn": "8.17.0",
     "adm-zip": "^0.5.17",
     "archiver": "^8.0.0",
