@@ -68,16 +68,17 @@ module.exports = {
 35. ${prefix}backup - Backup bot state
 36. ${prefix}ownertest - Debug owner permission
 37. ${prefix}reload - Reload commands
+38. ${prefix}update check - Check GitHub updates
 
 *Developer*
-38. ${prefix}logs 20 - Show recent logs
-39. ${prefix}shell git status --short - Run shell command
-40. ${prefix}file list src/commands - Manage files
-41. ${prefix}analytics - Bot metrics
-42. ${prefix}apistatus - Check API health
-43. ${prefix}env - Check allowed env vars
-44. ${prefix}eval commands.size - Evaluate JS
-45. ${prefix}restart - Restart bot
+39. ${prefix}logs 20 - Show recent logs
+40. ${prefix}shell git status --short - Run shell command
+41. ${prefix}file list src/commands - Manage files
+42. ${prefix}analytics - Bot metrics
+43. ${prefix}apistatus - Check API health
+44. ${prefix}env - Check allowed env vars
+45. ${prefix}eval commands.size - Evaluate JS
+46. ${prefix}restart - Restart bot
 
 Reply with one of the commands above to continue.`;
 
