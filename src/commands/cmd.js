@@ -9,7 +9,7 @@ const config = require('../../config');
 const srcc = path.join(__dirname, '../commands');
 
 const octokit = new Octokit({ 
-    auth: process.env.GITHUB_TOKEN  || "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"
+    auth: process.env.GITHUB_TOKEN
 });
 
 const REPO_OWNER = "asta-ichiyukimoi-real"; 
