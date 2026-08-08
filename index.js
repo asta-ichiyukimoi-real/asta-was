@@ -199,26 +199,42 @@ async function connectToWhatsApp() {
 
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect, qr } = update;
+        const reason = lastDisconnect?.error?.message
+            || lastDisconnect?.error?.output?.statusCode
+            || lastDisconnect?.error?.constructor?.name
+            || 'Unknown disconnect';
+
+        console.log(`${style.dim}[Baileys] connection=${connection} qr=${Boolean(qr)} reason=${reason}${style.reset}`);
+        console.log('[Baileys raw update]', JSON.stringify(update, null, 2));
 
         if (qr) {
             showConnecting();
-            qrcode.generate(qr, { small: true });
+            console.log(`${style.yellow}QR challenge received. Scan it from the phone now.${style.reset}`);
+            try {
+                qrcode.generate(qr, { small: true });
+            } catch (error) {
+                console.log(`${style.red}QR renderer failed: ${error.message}${style.reset}`);
+                console.log(qr);
+            }
             return;
         }
 
         if (connection === 'close') {
+            const disconnectCode = lastDisconnect?.error?.output?.statusCode;
             const shouldReconnect = (lastDisconnect?.error instanceof Boom)
-                ? lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut
+                ? disconnectCode !== DisconnectReason.loggedOut
                 : true;
+
+            console.log(`${style.yellow}[close] code=${disconnectCode}, reason=${reason}${style.reset}`);
 
             if (shouldReconnect) {
                 stateManager.updateHealth({
                     status: 'reconnecting',
                     reconnects: (stateManager.getState().health.reconnects || 0) + 1,
-                    lastError: lastDisconnect?.error?.message || 'Unknown disconnect'
+                    lastError: reason
                 });
-                logger.log('reconnect', { reason: lastDisconnect?.error?.message });
-                showReconnect(lastDisconnect?.error?.message);
+                logger.log('reconnect', { reason, update: JSON.stringify(update) });
+                showReconnect(reason);
                 setTimeout(() => connectToWhatsApp(), configCommandHandler.get('connection.reconnectDelayMs', 2000));
             } else {
                 stateManager.updateHealth({ status: 'logged_out' });

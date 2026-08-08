@@ -430,12 +430,24 @@ function startDashboard(port = process.env.PORT || 3030) {
         }
     });
 
-    server.listen(port, '0.0.0.0', () => {
+    server.on('error', (error) => {
+        if (error?.code === 'EADDRINUSE') {
+            console.log(`[Dashboard] Port ${port} is already in use. Dashboard disabled for this run.`);
+            serverInstance = null;
+            return;
+        }
+
+        console.log('[Dashboard] Server error:', error?.message || error);
+        serverInstance = null;
+    });
+
+    const listenResult = server.listen(port, '0.0.0.0', () => {
         console.log(`✨ Dashboard running at http://0.0.0.0:${port}`);
         console.log(`📊 API endpoint available at http://0.0.0.0:${port}/api/stats`);
     });
 
     serverInstance = server;
+    return listenResult;
 }
 
 module.exports = {

@@ -84,13 +84,521 @@
   },
   "health": {
     "status": "starting",
-    "startedAt": null,
+    "startedAt": "2026-08-08T12:02:57.094Z",
     "lastConnectedAt": null,
-    "lastError": null,
-    "reconnects": 0,
-    "commandsRun": 0
+    "lastError": "Connection Failure",
+    "reconnects": 129,
+    "commandsRun": 0,
+    "pid": 3052,
+    "node": "v24.12.0",
+    "uptimeSeconds": 302,
+    "memoryMb": 72,
+    "heapMb": 40,
+    "loadAverage": 0,
+    "commandEntries": 215
   },
   "logs": {
-    "recent": []
+    "recent": [
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:02:07.371Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:02:00.879Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:01:54.109Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:01:50.312Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:01:46.925Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:01:43.292Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:01:39.585Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:01:33.105Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:01:26.109Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:01:19.802Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:01:12.962Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:01:05.310Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:00:59.385Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:00:52.775Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:00:47.290Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:00:41.633Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:00:37.329Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:00:33.304Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:00:27.578Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:00:24.380Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:00:20.153Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:00:12.912Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:00:08.157Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T12:00:02.306Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:59:57.496Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:59:51.977Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:59:45.240Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:59:37.907Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:59:34.902Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:59:30.385Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:59:24.558Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:59:17.782Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:59:13.738Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:59:07.217Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:59:02.592Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:58:55.967Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:58:50.881Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:58:46.072Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:58:42.944Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:58:39.480Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:58:35.049Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:58:31.594Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:58:25.269Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:58:17.887Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:58:14.320Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:58:10.521Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:58:05.226Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:58:00.479Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:57:56.342Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:57:49.071Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:57:41.500Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:57:35.538Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:57:30.885Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:57:25.421Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:57:17.632Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:57:12.823Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:57:09.264Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:54:51.726Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:54:45.013Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:47:25.223Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:47:19.385Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:47:13.799Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:47:09.675Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:47:02.917Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:46:55.959Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:46:51.075Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:46:43.602Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:46:38.577Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:46:34.723Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:46:29.295Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:46:26.386Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:46:20.608Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:46:15.452Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:46:10.550Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:46:05.097Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:46:02.067Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:45:59.268Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:45:52.003Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:45:46.171Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:45:42.136Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:45:38.286Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:45:34.806Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:45:29.443Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:45:23.334Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:45:19.164Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:45:14.204Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:45:06.998Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:45:04.021Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:44:56.311Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:44:50.442Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:44:29.847Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:44:25.604Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:44:19.207Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:44:13.223Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:44:07.717Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:44:02.590Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:43:57.790Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:43:54.795Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:43:51.364Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection Failure",
+        "at": "2026-08-08T11:43:48.466Z"
+      }
+    ]
   }
 }
