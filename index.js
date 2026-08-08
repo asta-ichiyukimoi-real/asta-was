@@ -218,6 +218,21 @@ async function connectToWhatsApp() {
         }
     });
 
+    sock.ev.on('groups.upsert', async (event) => {
+        try {
+            logger.log('groups_upsert_received', {
+                rawEvent: JSON.stringify(event || {}),
+                groupId: event?.id || event?.jid || null,
+                subject: event?.subject || null
+            });
+        } catch (error) {
+            logger.log('groups_upsert_error', {
+                error: error.message,
+                code: error.data || error.output?.statusCode
+            });
+        }
+    });
+
     sock.ev.on('groups.update', async ([event]) => {
         try {
             logger.log('groups_update_received', {
@@ -316,6 +331,12 @@ async function connectToWhatsApp() {
                 lastConnectedAt: new Date().toISOString()
             });
             logger.log('connected');
+            logger.log('connected_socket_user', {
+                jid: sock?.user?.id || null,
+                lid: sock?.user?.lid || null,
+                phone: sock?.user?.phone || null,
+                name: sock?.user?.name || null
+            });
             reminders.startReminderService(sock);
             showConnected();
         }
