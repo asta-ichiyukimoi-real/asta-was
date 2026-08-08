@@ -342,6 +342,20 @@ async function connectToWhatsApp() {
         }
     });
 
+    sock.ev.on('ws.close', (args) => {
+        logger.log('ws_close_event_test', {
+            payload: JSON.stringify(args || {}),
+            timestamp: new Date().toISOString()
+        });
+    });
+
+    sock.ev.on('ws.open', (args) => {
+        logger.log('ws_open_event_test', {
+            payload: JSON.stringify(args || {}),
+            timestamp: new Date().toISOString()
+        });
+    });
+
     sock.ev.on('creds.update', saveCreds);
     require('./src/events/message')(sock, commandHandler, chatCommandHandler, replyCommandHandler, {
         startupTimeMs: STARTED_AT,
