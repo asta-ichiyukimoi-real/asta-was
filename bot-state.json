@@ -83,22 +83,466 @@
     "chats": {}
   },
   "health": {
-    "status": "online",
-    "startedAt": "2026-08-08T15:32:59.529Z",
-    "lastConnectedAt": "2026-08-08T15:33:43.871Z",
-    "lastError": "Stream Errored (restart required)",
-    "reconnects": 192,
+    "status": "reconnecting",
+    "startedAt": "2026-08-08T18:05:31.369Z",
+    "lastConnectedAt": "2026-08-08T18:17:03.298Z",
+    "lastError": "Stream Errored (conflict)",
+    "reconnects": 206,
     "commandsRun": 0,
-    "pid": 17140,
+    "pid": 23008,
     "node": "v24.12.0",
-    "uptimeSeconds": 122,
-    "memoryMb": 112,
+    "uptimeSeconds": 662,
+    "memoryMb": 83,
     "heapMb": 37,
     "loadAverage": 0,
     "commandEntries": 215
   },
   "logs": {
     "recent": [
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (conflict)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"conflict\",\"attrs\":{\"type\":\"replaced\"}},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":440,\"payload\":{\"statusCode\":440,\"error\":\"Unknown\",\"message\":\"Stream Errored (conflict)\"},\"headers\":{}}},\"date\":\"2026-08-08T18:17:05.613Z\"}}",
+        "at": "2026-08-08T18:17:05.620Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:17:03.621Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:17:03.614Z"
+      },
+      {
+        "type": "connected_socket_user",
+        "jid": "2347059797535:2@s.whatsapp.net",
+        "lid": "142473443672263:2@lid",
+        "phone": null,
+        "name": "Asta bot",
+        "at": "2026-08-08T18:17:03.307Z"
+      },
+      {
+        "type": "connected",
+        "at": "2026-08-08T18:17:03.302Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (conflict)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"conflict\",\"attrs\":{\"type\":\"replaced\"}},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":440,\"payload\":{\"statusCode\":440,\"error\":\"Unknown\",\"message\":\"Stream Errored (conflict)\"},\"headers\":{}}},\"date\":\"2026-08-08T18:16:59.662Z\"}}",
+        "at": "2026-08-08T18:16:59.669Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:57.654Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:57.648Z"
+      },
+      {
+        "type": "connected_socket_user",
+        "jid": "2347059797535:2@s.whatsapp.net",
+        "lid": "142473443672263:2@lid",
+        "phone": null,
+        "name": "Asta bot",
+        "at": "2026-08-08T18:16:57.304Z"
+      },
+      {
+        "type": "connected",
+        "at": "2026-08-08T18:16:57.300Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (conflict)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"conflict\",\"attrs\":{\"type\":\"replaced\"}},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":440,\"payload\":{\"statusCode\":440,\"error\":\"Unknown\",\"message\":\"Stream Errored (conflict)\"},\"headers\":{}}},\"date\":\"2026-08-08T18:16:53.480Z\"}}",
+        "at": "2026-08-08T18:16:53.487Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:51.695Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:51.629Z"
+      },
+      {
+        "type": "connected_socket_user",
+        "jid": "2347059797535:2@s.whatsapp.net",
+        "lid": "142473443672263:2@lid",
+        "phone": null,
+        "name": "Asta bot",
+        "at": "2026-08-08T18:16:51.280Z"
+      },
+      {
+        "type": "connected",
+        "at": "2026-08-08T18:16:51.275Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (conflict)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"conflict\",\"attrs\":{\"type\":\"replaced\"}},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":440,\"payload\":{\"statusCode\":440,\"error\":\"Unknown\",\"message\":\"Stream Errored (conflict)\"},\"headers\":{}}},\"date\":\"2026-08-08T18:16:47.455Z\"}}",
+        "at": "2026-08-08T18:16:47.487Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:45.887Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:45.747Z"
+      },
+      {
+        "type": "connected_socket_user",
+        "jid": "2347059797535:2@s.whatsapp.net",
+        "lid": "142473443672263:2@lid",
+        "phone": null,
+        "name": "Asta bot",
+        "at": "2026-08-08T18:16:45.434Z"
+      },
+      {
+        "type": "connected",
+        "at": "2026-08-08T18:16:45.430Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (conflict)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"conflict\",\"attrs\":{\"type\":\"replaced\"}},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":440,\"payload\":{\"statusCode\":440,\"error\":\"Unknown\",\"message\":\"Stream Errored (conflict)\"},\"headers\":{}}},\"date\":\"2026-08-08T18:16:41.328Z\"}}",
+        "at": "2026-08-08T18:16:41.333Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:39.143Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:39.137Z"
+      },
+      {
+        "type": "connected_socket_user",
+        "jid": "2347059797535:2@s.whatsapp.net",
+        "lid": "142473443672263:2@lid",
+        "phone": null,
+        "name": "Asta bot",
+        "at": "2026-08-08T18:16:38.916Z"
+      },
+      {
+        "type": "connected",
+        "at": "2026-08-08T18:16:38.913Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (conflict)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"conflict\",\"attrs\":{\"type\":\"replaced\"}},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":440,\"payload\":{\"statusCode\":440,\"error\":\"Unknown\",\"message\":\"Stream Errored (conflict)\"},\"headers\":{}}},\"date\":\"2026-08-08T18:16:34.968Z\"}}",
+        "at": "2026-08-08T18:16:34.976Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:33.112Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:33.071Z"
+      },
+      {
+        "type": "connected_socket_user",
+        "jid": "2347059797535:2@s.whatsapp.net",
+        "lid": "142473443672263:2@lid",
+        "phone": null,
+        "name": "Asta bot",
+        "at": "2026-08-08T18:16:32.697Z"
+      },
+      {
+        "type": "connected",
+        "at": "2026-08-08T18:16:32.693Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (conflict)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"conflict\",\"attrs\":{\"type\":\"replaced\"}},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":440,\"payload\":{\"statusCode\":440,\"error\":\"Unknown\",\"message\":\"Stream Errored (conflict)\"},\"headers\":{}}},\"date\":\"2026-08-08T18:16:28.857Z\"}}",
+        "at": "2026-08-08T18:16:28.862Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:27.208Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:27.139Z"
+      },
+      {
+        "type": "connected_socket_user",
+        "jid": "2347059797535:2@s.whatsapp.net",
+        "lid": "142473443672263:2@lid",
+        "phone": null,
+        "name": "Asta bot",
+        "at": "2026-08-08T18:16:26.667Z"
+      },
+      {
+        "type": "connected",
+        "at": "2026-08-08T18:16:26.664Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (conflict)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"conflict\",\"attrs\":{\"type\":\"replaced\"}},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":440,\"payload\":{\"statusCode\":440,\"error\":\"Unknown\",\"message\":\"Stream Errored (conflict)\"},\"headers\":{}}},\"date\":\"2026-08-08T18:16:22.488Z\"}}",
+        "at": "2026-08-08T18:16:22.493Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:21.151Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:21.136Z"
+      },
+      {
+        "type": "connected_socket_user",
+        "jid": "2347059797535:2@s.whatsapp.net",
+        "lid": "142473443672263:2@lid",
+        "phone": null,
+        "name": "Asta bot",
+        "at": "2026-08-08T18:16:20.426Z"
+      },
+      {
+        "type": "connected",
+        "at": "2026-08-08T18:16:20.423Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (conflict)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"conflict\",\"attrs\":{\"type\":\"replaced\"}},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":440,\"payload\":{\"statusCode\":440,\"error\":\"Unknown\",\"message\":\"Stream Errored (conflict)\"},\"headers\":{}}},\"date\":\"2026-08-08T18:16:16.260Z\"}}",
+        "at": "2026-08-08T18:16:16.276Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:14.254Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:14.237Z"
+      },
+      {
+        "type": "connected_socket_user",
+        "jid": "2347059797535:2@s.whatsapp.net",
+        "lid": "142473443672263:2@lid",
+        "phone": null,
+        "name": "Asta bot",
+        "at": "2026-08-08T18:16:13.868Z"
+      },
+      {
+        "type": "connected",
+        "at": "2026-08-08T18:16:13.865Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (conflict)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"conflict\",\"attrs\":{\"type\":\"replaced\"}},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":440,\"payload\":{\"statusCode\":440,\"error\":\"Unknown\",\"message\":\"Stream Errored (conflict)\"},\"headers\":{}}},\"date\":\"2026-08-08T18:16:10.021Z\"}}",
+        "at": "2026-08-08T18:16:10.029Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:07.812Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:07.796Z"
+      },
+      {
+        "type": "connected_socket_user",
+        "jid": "2347059797535:2@s.whatsapp.net",
+        "lid": "142473443672263:2@lid",
+        "phone": null,
+        "name": "Asta bot",
+        "at": "2026-08-08T18:16:07.455Z"
+      },
+      {
+        "type": "connected",
+        "at": "2026-08-08T18:16:07.450Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (conflict)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"conflict\",\"attrs\":{\"type\":\"replaced\"}},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":440,\"payload\":{\"statusCode\":440,\"error\":\"Unknown\",\"message\":\"Stream Errored (conflict)\"},\"headers\":{}}},\"date\":\"2026-08-08T18:16:03.635Z\"}}",
+        "at": "2026-08-08T18:16:03.641Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:01.383Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:16:01.374Z"
+      },
+      {
+        "type": "connected_socket_user",
+        "jid": "2347059797535:2@s.whatsapp.net",
+        "lid": "142473443672263:2@lid",
+        "phone": null,
+        "name": "Asta bot",
+        "at": "2026-08-08T18:16:01.129Z"
+      },
+      {
+        "type": "connected",
+        "at": "2026-08-08T18:16:01.125Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (conflict)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"conflict\",\"attrs\":{\"type\":\"replaced\"}},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":440,\"payload\":{\"statusCode\":440,\"error\":\"Unknown\",\"message\":\"Stream Errored (conflict)\"},\"headers\":{}}},\"date\":\"2026-08-08T18:15:57.538Z\"}}",
+        "at": "2026-08-08T18:15:57.543Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:09:59.725Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-08T18:09:59.648Z"
+      },
+      {
+        "type": "connected_socket_user",
+        "jid": "2347059797535:2@s.whatsapp.net",
+        "lid": "142473443672263:2@lid",
+        "phone": null,
+        "name": "Asta bot",
+        "at": "2026-08-08T18:09:59.201Z"
+      },
+      {
+        "type": "connected",
+        "at": "2026-08-08T18:09:59.197Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (restart required)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"stream:error\",\"attrs\":{\"code\":\"515\"}},\"isBoom\":true,\"isServer\":true,\"output\":{\"statusCode\":515,\"payload\":{\"statusCode\":515,\"error\":\"Unknown\",\"message\":\"Stream Errored (restart required)\"},\"headers\":{}}},\"date\":\"2026-08-08T18:09:53.060Z\"}}",
+        "at": "2026-08-08T18:09:53.074Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T18:08:12.993Z\"}}",
+        "at": "2026-08-08T18:08:12.999Z"
+      },
       {
         "type": "connected",
         "at": "2026-08-08T15:33:43.875Z"
@@ -324,342 +768,6 @@
         "reason": "WebSocket Error (Opening handshake has timed out)",
         "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:02:20.541Z\"}}",
         "at": "2026-08-08T13:02:20.546Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "WebSocket Error (Opening handshake has timed out)",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:01:58.475Z\"}}",
-        "at": "2026-08-08T13:01:58.479Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "WebSocket Error (Opening handshake has timed out)",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:01:36.425Z\"}}",
-        "at": "2026-08-08T13:01:36.430Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "WebSocket Error (Opening handshake has timed out)",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:01:14.370Z\"}}",
-        "at": "2026-08-08T13:01:14.373Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "WebSocket Error (Opening handshake has timed out)",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:00:52.304Z\"}}",
-        "at": "2026-08-08T13:00:52.307Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "WebSocket Error (Opening handshake has timed out)",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:00:30.252Z\"}}",
-        "at": "2026-08-08T13:00:30.256Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T13:00:08.063Z\"}}",
-        "at": "2026-08-08T13:00:08.066Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:57:24.814Z\"}}",
-        "at": "2026-08-08T12:57:24.818Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:54:41.444Z\"}}",
-        "at": "2026-08-08T12:54:41.448Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:51:58.123Z\"}}",
-        "at": "2026-08-08T12:51:58.126Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:49:14.708Z\"}}",
-        "at": "2026-08-08T12:49:14.712Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:46:30.317Z\"}}",
-        "at": "2026-08-08T12:46:30.322Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:43:47.059Z\"}}",
-        "at": "2026-08-08T12:43:47.062Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:41:03.913Z\"}}",
-        "at": "2026-08-08T12:41:03.916Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:38:20.509Z\"}}",
-        "at": "2026-08-08T12:38:20.513Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:35:36.716Z\"}}",
-        "at": "2026-08-08T12:35:36.719Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:32:53.152Z\"}}",
-        "at": "2026-08-08T12:32:53.156Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:30:09.479Z\"}}",
-        "at": "2026-08-08T12:30:09.483Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:27:26.224Z\"}}",
-        "at": "2026-08-08T12:27:26.228Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:24:42.631Z\"}}",
-        "at": "2026-08-08T12:24:42.635Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:21:59.424Z\"}}",
-        "at": "2026-08-08T12:21:59.427Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:19:15.964Z\"}}",
-        "at": "2026-08-08T12:19:15.968Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:16:32.503Z\"}}",
-        "at": "2026-08-08T12:16:32.507Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:13:49.293Z\"}}",
-        "at": "2026-08-08T12:13:49.296Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:11:05.740Z\"}}",
-        "at": "2026-08-08T12:11:05.743Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:08:22.235Z\"}}",
-        "at": "2026-08-08T12:08:22.240Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "QR refs attempts ended",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:05:38.849Z\"}}",
-        "at": "2026-08-08T12:05:38.854Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:02:07.371Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:02:00.879Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:01:54.109Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:01:50.312Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:01:46.925Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:01:43.292Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:01:39.585Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:01:33.105Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:01:26.109Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:01:19.802Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:01:12.962Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:01:05.310Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:00:59.385Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:00:52.775Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:00:47.290Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:00:41.633Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:00:37.329Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:00:33.304Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:00:27.578Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:00:24.380Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:00:20.153Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:00:12.912Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:00:08.157Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T12:00:02.306Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:59:57.496Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:59:51.977Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:59:45.240Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:59:37.907Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:59:34.902Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:59:30.385Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:59:24.558Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:59:17.782Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:59:13.738Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:59:07.217Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:59:02.592Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:58:55.967Z"
       }
     ]
   }

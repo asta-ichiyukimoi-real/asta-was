@@ -2,6 +2,23 @@ const config = require('../../config');
 const state = require('../utils/stateManager');
 const logger = require('../utils/logger');
 
+function normalizeJid(value) {
+    if (!value || typeof value !== 'string') return '';
+
+    const raw = value.trim().toLowerCase();
+    if (!raw) return '';
+
+    const atIndex = raw.indexOf('@');
+    if (atIndex >= 0) {
+        const local = raw.slice(0, atIndex);
+        const domain = raw.slice(atIndex + 1);
+        const normalizedLocal = local.replace(/:\d+$/, '');
+        return `${normalizedLocal}@${domain}`;
+    }
+
+    return raw.replace(/:\d+$/, '');
+}
+
 function getParticipantIds(participant) {
     if (!participant) return [];
     if (typeof participant === 'string') return [participant];
@@ -154,23 +171,32 @@ module.exports = (sock, options = {}) => {
             const chatSettings = state.getChatSettings(groupId);
             const participants = update.participants || [];
             const botJid = sock?.user?.id || null;
+            const botLid = sock?.user?.lid || null;
+            const botPhone = sock?.user?.phone || null;
+            const botJids = new Set([
+                normalizeJid(botJid),
+                normalizeJid(botLid),
+                normalizeJid(botPhone)
+            ].filter(Boolean));
 
             logger.log('group_participants_update_received', {
                 groupId,
                 action: update.action,
                 botJid,
+                botLid,
+                botPhone,
                 participants: participants.map((participant) => getParticipantIds(participant)),
                 raw: JSON.stringify(update || {})
             });
 
             const botWasAdded = participants.some((participant) => {
-                const ids = getParticipantIds(participant);
-                return ids.includes(botJid);
+                const ids = getParticipantIds(participant).map(normalizeJid);
+                return ids.some(id => botJids.has(id));
             });
 
             const botWasRemoved = participants.some((participant) => {
-                const ids = getParticipantIds(participant);
-                return ids.includes(botJid);
+                const ids = getParticipantIds(participant).map(normalizeJid);
+                return ids.some(id => botJids.has(id));
             }) && update.action === 'remove';
 
             logger.log('group_participants_update_classification', {
@@ -179,6 +205,7 @@ module.exports = (sock, options = {}) => {
                 botWasAdded,
                 botWasRemoved,
                 botJid,
+                normalizedBotJids: [...botJids],
                 participantCount: participants.length
             });
 
