@@ -77,7 +77,7 @@ async function reloadHandlers() {
 }
 
 async function getUpdateInfo() {
-    const branch = await runGit(['main', 'rev-parse', '--abbrev-ref', 'HEAD']);
+    const branch = await runGit(['rev-parse', '--abbrev-ref', 'HEAD']);
     if (!branch.ok) throw new Error(`Not a git repository or branch is unavailable:\n${outputOf(branch)}`);
 
     const remote = await runGit(['remote', 'get-url', 'origin']);
