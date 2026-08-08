@@ -357,6 +357,11 @@ async function connectToWhatsApp() {
     });
 
     sock.ev.on('creds.update', saveCreds);
+    require('./src/events/groupLifecycle')(sock, {
+        startupTimeMs: STARTED_AT,
+        startupTimeSeconds: STARTED_AT_SECONDS,
+        configCommandHandler
+    });
     require('./src/events/message')(sock, commandHandler, chatCommandHandler, replyCommandHandler, {
         startupTimeMs: STARTED_AT,
         startupTimeSeconds: STARTED_AT_SECONDS,
