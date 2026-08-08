@@ -189,15 +189,15 @@ module.exports = (sock, options = {}) => {
                 raw: JSON.stringify(update || {})
             });
 
-            const botWasAdded = participants.some((participant) => {
+            const botWasAdded = update.action === 'add' && participants.some((participant) => {
                 const ids = getParticipantIds(participant).map(normalizeJid);
                 return ids.some(id => botJids.has(id));
             });
 
-            const botWasRemoved = participants.some((participant) => {
+            const botWasRemoved = update.action === 'remove' && participants.some((participant) => {
                 const ids = getParticipantIds(participant).map(normalizeJid);
                 return ids.some(id => botJids.has(id));
-            }) && update.action === 'remove';
+            });
 
             logger.log('group_participants_update_classification', {
                 groupId,
@@ -209,7 +209,7 @@ module.exports = (sock, options = {}) => {
                 participantCount: participants.length
             });
 
-            if (botWasAdded && update.action === 'add') {
+            if (botWasAdded) {
                 await handleBotGroupLifecycle(sock, configCommandHandler, groupId, 'added', {
                     addedBy: 'unknown (WhatsApp does not expose inviter on this event)'
                 });
