@@ -105,6 +105,77 @@ async function safeSendMessage(sock, jid, content, options, logType = 'send_mess
     }
 }
 
+async function getGroupMetadata(sock, groupId) {
+    try {
+        const meta = await sock.groupMetadata(groupId);
+        return meta || null;
+    } catch (error) {
+        logger.log('group_metadata_lookup_error', {
+            groupId,
+            error: error.message,
+            code: error.data || error.output?.statusCode
+        });
+        return null;
+    }
+}
+
+async function notifyOwnerAndAdmins(sock, configCommandHandler, payload) {
+    const ownerIds = configCommandHandler?.getOwnerIds?.() || [config.owner]
+    const adminIds = configCommandHandler?.getAdminIds?.() || (config.admins || []);
+    const targets = [...new Set([...ownerIds, ...adminIds].filter(Boolean))];
+
+    if (!targets.length) return;
+
+    const message = payload.text;
+    for (const target of targets) {
+        await safeSendMessage(sock, target, { text: message }, undefined, 'group_lifecycle_owner_notice_error');
+    }
+}
+
+async function handleBotGroupLifecycle(sock, configCommandHandler, groupId, eventType, update = {}) {
+    const isGroup = String(groupId || '').endsWith('@g.us');
+    if (!isGroup) return;
+
+    const meta = await getGroupMetadata(sock, groupId);
+    const groupName = meta?.subject || groupId.split('@')[0] || 'Unknown group';
+    const participantCount = meta?.participants?.length || 0;
+    const botJid = sock?.user?.id || null;
+    const addedBy = update?.addedBy || 'unknown (not exposed by WhatsApp event)';
+
+    if (eventType === 'added') {
+        await safeSendMessage(sock, groupId, {
+            text: `Thanks for adding me to this group, ${groupName}. I’m ready to help whenever you need me.`
+        }, undefined, 'bot_added_welcome_error');
+
+        const payload = {
+            text: `Asta Bot joined a group\n` +
+                `Event: Bot Added\n` +
+                `Group Name: ${groupName}\n` +
+                `Group ID: ${groupId}\n` +
+                `Bot ID: ${botJid || 'unknown'}\n` +
+                `Participants: ${participantCount}\n` +
+                `Added By: ${addedBy}\n` +
+                `Time: ${new Date().toISOString()}`
+        };
+
+        await notifyOwnerAndAdmins(sock, configCommandHandler, payload);
+    }
+
+    if (eventType === 'removed') {
+        const payload = {
+            text: `Asta Bot was removed from a group\n` +
+                `Event: Bot Removed / Kicked / Left\n` +
+                `Group Name: ${groupName}\n` +
+                `Group ID: ${groupId}\n` +
+                `Bot ID: ${botJid || 'unknown'}\n` +
+                `Participants: ${participantCount}\n` +
+                `Time: ${new Date().toISOString()}`
+        };
+
+        await notifyOwnerAndAdmins(sock, configCommandHandler, payload);
+    }
+}
+
 async function createStartupGroupSnapshot(sock) {
     const membersByGroup = new Map();
 
@@ -333,10 +404,35 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
             const groupId = update.id;
             const chatSettings = state.getChatSettings(groupId);
             const participants = update.participants || [];
+            const botJid = sock?.user?.id || null;
+
+            const botWasAdded = participants.some((participant) => {
+                const ids = getParticipantIds(participant);
+                return ids.includes(botJid);
+            });
+
+            const botWasRemoved = participants.some((participant) => {
+                const ids = getParticipantIds(participant);
+                return ids.includes(botJid);
+            }) && update.action === 'remove';
+
+            if (botWasAdded && update.action === 'add') {
+                await handleBotGroupLifecycle(sock, configCommandHandler, groupId, 'added', {
+                    addedBy: 'unknown (WhatsApp does not expose inviter on this event)'
+                });
+            }
+
+            if (botWasRemoved) {
+                await handleBotGroupLifecycle(sock, configCommandHandler, groupId, 'removed');
+            }
 
             for (const participant of participants) {
                 const participantId = getParticipantIds(participant)[0];
                 if (!participantId) continue;
+
+                if (participantId === botJid) {
+                    continue;
+                }
 
                 const displayName = participantId.split('@')[0];
                 const groupName = groupId.split('@')[0];

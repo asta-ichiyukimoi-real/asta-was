@@ -83,22 +83,404 @@
     "chats": {}
   },
   "health": {
-    "status": "starting",
-    "startedAt": "2026-08-08T12:02:57.094Z",
-    "lastConnectedAt": null,
-    "lastError": "Connection Failure",
-    "reconnects": 129,
+    "status": "online",
+    "startedAt": "2026-08-08T15:32:59.529Z",
+    "lastConnectedAt": "2026-08-08T15:33:43.871Z",
+    "lastError": "Stream Errored (restart required)",
+    "reconnects": 192,
     "commandsRun": 0,
-    "pid": 3052,
+    "pid": 17140,
     "node": "v24.12.0",
-    "uptimeSeconds": 62,
-    "memoryMb": 84,
-    "heapMb": 32,
+    "uptimeSeconds": 122,
+    "memoryMb": 112,
+    "heapMb": 37,
     "loadAverage": 0,
     "commandEntries": 215
   },
   "logs": {
     "recent": [
+      {
+        "type": "connected",
+        "at": "2026-08-08T15:33:43.875Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (restart required)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"stream:error\",\"attrs\":{\"code\":\"515\"}},\"isBoom\":true,\"isServer\":true,\"output\":{\"statusCode\":515,\"payload\":{\"statusCode\":515,\"error\":\"Unknown\",\"message\":\"Stream Errored (restart required)\"},\"headers\":{}}},\"date\":\"2026-08-08T15:33:38.036Z\"}}",
+        "at": "2026-08-08T15:33:38.041Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T15:29:05.232Z\"}}",
+        "at": "2026-08-08T15:29:05.237Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Connection was lost",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"Connection was lost\"},\"headers\":{}}},\"date\":\"2026-08-08T15:26:20.953Z\"}}",
+        "at": "2026-08-08T15:26:21.183Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T13:33:20.058Z\"}}",
+        "at": "2026-08-08T13:33:20.063Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T13:30:36.641Z\"}}",
+        "at": "2026-08-08T13:30:36.645Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T13:27:53.291Z\"}}",
+        "at": "2026-08-08T13:27:53.296Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T13:25:09.397Z\"}}",
+        "at": "2026-08-08T13:25:09.400Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T13:22:26.244Z\"}}",
+        "at": "2026-08-08T13:22:26.247Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T13:19:42.694Z\"}}",
+        "at": "2026-08-08T13:19:42.699Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:16:59.367Z\"}}",
+        "at": "2026-08-08T13:16:59.371Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:16:37.304Z\"}}",
+        "at": "2026-08-08T13:16:37.308Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:16:15.245Z\"}}",
+        "at": "2026-08-08T13:16:15.248Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T13:15:53.082Z\"}}",
+        "at": "2026-08-08T13:15:53.086Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T13:13:09.607Z\"}}",
+        "at": "2026-08-08T13:13:09.610Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:10:26.178Z\"}}",
+        "at": "2026-08-08T13:10:26.182Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:10:04.120Z\"}}",
+        "at": "2026-08-08T13:10:04.125Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:09:42.062Z\"}}",
+        "at": "2026-08-08T13:09:42.068Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:09:20.003Z\"}}",
+        "at": "2026-08-08T13:09:20.008Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:08:57.822Z\"}}",
+        "at": "2026-08-08T13:08:57.825Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:08:35.767Z\"}}",
+        "at": "2026-08-08T13:08:35.773Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:08:13.708Z\"}}",
+        "at": "2026-08-08T13:08:13.712Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:07:51.641Z\"}}",
+        "at": "2026-08-08T13:07:51.646Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:07:29.563Z\"}}",
+        "at": "2026-08-08T13:07:29.568Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:07:07.503Z\"}}",
+        "at": "2026-08-08T13:07:07.507Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:06:45.453Z\"}}",
+        "at": "2026-08-08T13:06:45.457Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:06:23.383Z\"}}",
+        "at": "2026-08-08T13:06:23.387Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:06:01.332Z\"}}",
+        "at": "2026-08-08T13:06:01.335Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:05:39.255Z\"}}",
+        "at": "2026-08-08T13:05:39.260Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:05:17.000Z\"}}",
+        "at": "2026-08-08T13:05:17.016Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:04:54.942Z\"}}",
+        "at": "2026-08-08T13:04:54.947Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:04:32.890Z\"}}",
+        "at": "2026-08-08T13:04:32.893Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:04:10.831Z\"}}",
+        "at": "2026-08-08T13:04:10.834Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:03:48.774Z\"}}",
+        "at": "2026-08-08T13:03:48.778Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:03:26.717Z\"}}",
+        "at": "2026-08-08T13:03:26.720Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:03:04.663Z\"}}",
+        "at": "2026-08-08T13:03:04.666Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:02:42.603Z\"}}",
+        "at": "2026-08-08T13:02:42.607Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:02:20.541Z\"}}",
+        "at": "2026-08-08T13:02:20.546Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:01:58.475Z\"}}",
+        "at": "2026-08-08T13:01:58.479Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:01:36.425Z\"}}",
+        "at": "2026-08-08T13:01:36.430Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:01:14.370Z\"}}",
+        "at": "2026-08-08T13:01:14.373Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:00:52.304Z\"}}",
+        "at": "2026-08-08T13:00:52.307Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "WebSocket Error (Opening handshake has timed out)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:00:30.252Z\"}}",
+        "at": "2026-08-08T13:00:30.256Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T13:00:08.063Z\"}}",
+        "at": "2026-08-08T13:00:08.066Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:57:24.814Z\"}}",
+        "at": "2026-08-08T12:57:24.818Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:54:41.444Z\"}}",
+        "at": "2026-08-08T12:54:41.448Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:51:58.123Z\"}}",
+        "at": "2026-08-08T12:51:58.126Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:49:14.708Z\"}}",
+        "at": "2026-08-08T12:49:14.712Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:46:30.317Z\"}}",
+        "at": "2026-08-08T12:46:30.322Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:43:47.059Z\"}}",
+        "at": "2026-08-08T12:43:47.062Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:41:03.913Z\"}}",
+        "at": "2026-08-08T12:41:03.916Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:38:20.509Z\"}}",
+        "at": "2026-08-08T12:38:20.513Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:35:36.716Z\"}}",
+        "at": "2026-08-08T12:35:36.719Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:32:53.152Z\"}}",
+        "at": "2026-08-08T12:32:53.156Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:30:09.479Z\"}}",
+        "at": "2026-08-08T12:30:09.483Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:27:26.224Z\"}}",
+        "at": "2026-08-08T12:27:26.228Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:24:42.631Z\"}}",
+        "at": "2026-08-08T12:24:42.635Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:21:59.424Z\"}}",
+        "at": "2026-08-08T12:21:59.427Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:19:15.964Z\"}}",
+        "at": "2026-08-08T12:19:15.968Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:16:32.503Z\"}}",
+        "at": "2026-08-08T12:16:32.507Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:13:49.293Z\"}}",
+        "at": "2026-08-08T12:13:49.296Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:11:05.740Z\"}}",
+        "at": "2026-08-08T12:11:05.743Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:08:22.235Z\"}}",
+        "at": "2026-08-08T12:08:22.240Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "QR refs attempts ended",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":null,\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"QR refs attempts ended\"},\"headers\":{}}},\"date\":\"2026-08-08T12:05:38.849Z\"}}",
+        "at": "2026-08-08T12:05:38.854Z"
+      },
       {
         "type": "reconnect",
         "reason": "Connection Failure",
@@ -278,326 +660,6 @@
         "type": "reconnect",
         "reason": "Connection Failure",
         "at": "2026-08-08T11:58:55.967Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:58:50.881Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:58:46.072Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:58:42.944Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:58:39.480Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:58:35.049Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:58:31.594Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:58:25.269Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:58:17.887Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:58:14.320Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:58:10.521Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:58:05.226Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:58:00.479Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:57:56.342Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:57:49.071Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:57:41.500Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:57:35.538Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:57:30.885Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:57:25.421Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:57:17.632Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:57:12.823Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:57:09.264Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:54:51.726Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:54:45.013Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:47:25.223Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:47:19.385Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:47:13.799Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:47:09.675Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:47:02.917Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:46:55.959Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:46:51.075Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:46:43.602Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:46:38.577Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:46:34.723Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:46:29.295Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:46:26.386Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:46:20.608Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:46:15.452Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:46:10.550Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:46:05.097Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:46:02.067Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:45:59.268Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:45:52.003Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:45:46.171Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:45:42.136Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:45:38.286Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:45:34.806Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:45:29.443Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:45:23.334Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:45:19.164Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:45:14.204Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:45:06.998Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:45:04.021Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:44:56.311Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:44:50.442Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:44:29.847Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:44:25.604Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:44:19.207Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:44:13.223Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:44:07.717Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:44:02.590Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:43:57.790Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:43:54.795Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:43:51.364Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "Connection Failure",
-        "at": "2026-08-08T11:43:48.466Z"
       }
     ]
   }

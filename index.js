@@ -189,12 +189,63 @@ async function connectToWhatsApp() {
     const uniqueCommands = Array.from(new Set(commandHandler.commands.values())).length;
     showStartup(uniqueCommands);
 
+    const groupMetadataCache = new Map();
+
     const sock = makeWASocket({
         auth: state,
         logger: quietLogger,
         markOnlineOnConnect: configCommandHandler.get('connection.markOnlineOnConnect', false),
         syncFullHistory: configCommandHandler.get('connection.syncFullHistory', false),
-        shouldSyncHistoryMessage: () => false
+        shouldSyncHistoryMessage: () => false,
+        cachedGroupMetadata: async (jid) => {
+            const cached = groupMetadataCache.get(jid);
+            if (cached) return cached;
+
+            try {
+                const metadata = await sock.groupMetadata(jid);
+                if (metadata) {
+                    groupMetadataCache.set(jid, metadata);
+                }
+                return metadata;
+            } catch (error) {
+                logger.log('cached_group_metadata_error', {
+                    jid,
+                    error: error.message,
+                    code: error.data || error.output?.statusCode
+                });
+                return null;
+            }
+        }
+    });
+
+    sock.ev.on('groups.update', async ([event]) => {
+        try {
+            if (!event?.id) return;
+            const metadata = await sock.groupMetadata(event.id);
+            if (metadata) {
+                groupMetadataCache.set(event.id, metadata);
+            }
+        } catch (error) {
+            logger.log('groups_update_group_metadata_error', {
+                error: error.message,
+                code: error.data || error.output?.statusCode
+            });
+        }
+    });
+
+    sock.ev.on('group-participants.update', async (event) => {
+        try {
+            if (!event?.id) return;
+            const metadata = await sock.groupMetadata(event.id);
+            if (metadata) {
+                groupMetadataCache.set(event.id, metadata);
+            }
+        } catch (error) {
+            logger.log('group_participants_update_group_metadata_error', {
+                error: error.message,
+                code: error.data || error.output?.statusCode
+            });
+        }
     });
 
     sock.ev.on('connection.update', (update) => {
