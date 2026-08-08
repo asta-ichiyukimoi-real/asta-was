@@ -430,10 +430,15 @@ function startDashboard(port = process.env.PORT || 3030) {
         }
     });
 
-    server.on('error', (error) => {
+    server.once('error', (error) => {
         if (error?.code === 'EADDRINUSE') {
             console.log(`[Dashboard] Port ${port} is already in use. Dashboard disabled for this run.`);
             serverInstance = null;
+            try {
+                server.close(() => {});
+            } catch (closeError) {
+                console.log('[Dashboard] close-on-bind-failure failed:', closeError?.message || closeError);
+            }
             return;
         }
 
@@ -441,13 +446,21 @@ function startDashboard(port = process.env.PORT || 3030) {
         serverInstance = null;
     });
 
-    const listenResult = server.listen(port, '0.0.0.0', () => {
-        console.log(`✨ Dashboard running at http://0.0.0.0:${port}`);
-        console.log(`📊 API endpoint available at http://0.0.0.0:${port}/api/stats`);
-    });
-
-    serverInstance = server;
-    return listenResult;
+    try {
+        const listenResult = server.listen(port, '0.0.0.0', () => {
+            serverInstance = server;
+            console.log(`✨ Dashboard running at http://0.0.0.0:${port}`);
+            console.log(`📊 API endpoint available at http://0.0.0.0:${port}/api/stats`);
+        });
+        return listenResult;
+    } catch (error) {
+        if (error?.code === 'EADDRINUSE') {
+            console.log(`[Dashboard] Port ${port} is already in use before listen completed. Dashboard disabled for this run.`);
+            serverInstance = null;
+            return null;
+        }
+        throw error;
+    }
 }
 
 module.exports = {
