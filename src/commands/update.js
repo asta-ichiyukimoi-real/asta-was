@@ -5,6 +5,18 @@ const { execFile } = require('child_process');
 
 const DEFAULT_REMOTE_URL = 'https://github.com/asta-ichiyukimoi-real/asta-was.git';
 const DEFAULT_BRANCH = 'main';
+const PROTECTED_REMOTE_NAMES = new Set([
+    'config.js',
+    'bot-state.json',
+    'cookies.txt',
+    'auth_info_baileys',
+    'data',
+    'logs'
+]);
+
+function isProtectedRemotePath(name) {
+    return PROTECTED_REMOTE_NAMES.has(name);
+}
 
 function runGit(args, options = {}) {
     return new Promise((resolve) => {
@@ -33,7 +45,7 @@ function outputOf(result) {
     return [result.stdout, result.stderr, result.error].filter(Boolean).join('\n').trim();
 }
 
-async function syncRemoteRepoToWorkspace() {
+async function compareRemoteRepoToWorkspace() {
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'asta-update-'));
     const cloneDir = path.join(tempRoot, 'repo');
 
@@ -43,31 +55,141 @@ async function syncRemoteRepoToWorkspace() {
     });
 
     if (!clone.ok) {
+        fs.rmSync(tempRoot, { recursive: true, force: true });
+        throw new Error(`Remote clone failed:\n${outputOf(clone)}`);
+    }
+
+    const missing = [];
+    const changed = [];
+    const protectedFiles = [];
+
+    function walkRemoteTree(remoteDir, relativePrefix = '') {
+        const entries = fs.readdirSync(remoteDir, { withFileTypes: true });
+        for (const entry of entries) {
+            if (entry.name === '.git') continue;
+            if (entry.name === 'node_modules') continue;
+
+            const remotePath = path.join(remoteDir, entry.name);
+            const relativePath = path.join(relativePrefix, entry.name).split(path.sep).join('/');
+
+            if (isProtectedRemotePath(entry.name)) {
+                protectedFiles.push(relativePath);
+                continue;
+            }
+
+            const localPath = path.join(process.cwd(), relativePath);
+
+            if (entry.isDirectory()) {
+                walkRemoteTree(remotePath, relativePath);
+            } else if (entry.isFile()) {
+                if (!fs.existsSync(localPath)) {
+                    missing.push(relativePath);
+                    continue;
+                }
+
+                const remoteData = fs.readFileSync(remotePath);
+                const localData = fs.readFileSync(localPath);
+                if (!Buffer.compare(remoteData, localData)) {
+                    // identical on bytes
+                } else {
+                    changed.push(relativePath);
+                }
+            }
+        }
+    }
+
+    walkRemoteTree(cloneDir);
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+
+    return {
+        branch: DEFAULT_BRANCH,
+        remote: DEFAULT_REMOTE_URL,
+        missing,
+        changed,
+        protectedFiles,
+        remoteRevision: 'main'
+    };
+}
+
+async function syncRemoteRepoToWorkspace() {
+    const diff = await compareRemoteRepoToWorkspace();
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'asta-update-'));
+    const cloneDir = path.join(tempRoot, 'repo');
+
+    const clone = await runGit(['clone', '--depth', '1', '--branch', DEFAULT_BRANCH, DEFAULT_REMOTE_URL, cloneDir], {
+        cwd: tempRoot,
+        timeoutMs: 240000
+    });
+
+    if (!clone.ok) {
+        fs.rmSync(tempRoot, { recursive: true, force: true });
         throw new Error(`Remote clone failed:\n${outputOf(clone)}`);
     }
 
     const sourceRoot = cloneDir;
     const entries = fs.readdirSync(sourceRoot, { withFileTypes: true });
+    const copied = [];
 
     for (const entry of entries) {
         if (entry.name === '.git') continue;
         if (entry.name === 'node_modules') continue;
+        if (isProtectedRemotePath(entry.name)) continue;
 
         const source = path.join(sourceRoot, entry.name);
         const target = path.join(process.cwd(), entry.name);
 
-        if (fs.existsSync(target) && fs.lstatSync(target).isDirectory()) {
-            fs.rmSync(target, { recursive: true, force: true });
+        if (!fs.existsSync(target)) {
+            fs.cpSync(source, target, { recursive: true, force: true });
+            copied.push(entry.name);
+            continue;
         }
 
-        fs.cpSync(source, target, { recursive: true, force: true });
+        if (fs.lstatSync(target).isDirectory() && fs.lstatSync(source).isDirectory()) {
+            const sourceChildren = fs.readdirSync(source, { withFileTypes: true });
+            for (const child of sourceChildren) {
+                const childName = child.name;
+                if (isProtectedRemotePath(childName)) continue;
+
+                const childSrc = path.join(source, childName);
+                const childTarget = path.join(target, childName);
+
+                if (!fs.existsSync(childTarget)) {
+                    fs.cpSync(childSrc, childTarget, { recursive: true, force: true });
+                    copied.push(path.join(entry.name, childName));
+                } else if (fs.lstatSync(childTarget).isFile() && fs.lstatSync(childSrc).isFile()) {
+                    const remoteData = fs.readFileSync(childSrc);
+                    const localData = fs.readFileSync(childTarget);
+                    if (Buffer.compare(remoteData, localData) !== 0) {
+                        // Only allow an update when the file is safe to override.
+                        const safeUpdate = ['src', 'handlers', 'scripts'].some(prefix => path.relative(process.cwd(), childTarget).startsWith(prefix));
+                        if (safeUpdate) {
+                            fs.copyFileSync(childSrc, childTarget);
+                            copied.push(path.join(entry.name, childName));
+                        }
+                    }
+                }
+            }
+        } else if (fs.lstatSync(source).isFile()) {
+            const sourceContent = fs.readFileSync(source);
+            const targetContent = fs.existsSync(target) ? fs.readFileSync(target) : null;
+
+            if (!targetContent || Buffer.compare(sourceContent, targetContent) !== 0) {
+                const safeOverride = !isProtectedRemotePath(path.basename(target));
+                if (safeOverride) {
+                    fs.copyFileSync(source, target);
+                    copied.push(entry.name);
+                }
+            }
+        }
     }
 
     fs.rmSync(tempRoot, { recursive: true, force: true });
 
     return {
         branch: DEFAULT_BRANCH,
-        remote: DEFAULT_REMOTE_URL
+        remote: DEFAULT_REMOTE_URL,
+        copied,
+        diff
     };
 }
 
@@ -199,6 +321,26 @@ module.exports = {
             const info = await getUpdateInfo();
 
             if (mode === 'check' || mode === 'preview') {
+                if (info.repoState === 'not-git') {
+                    const remoteDiff = await compareRemoteRepoToWorkspace();
+                    await sock.sendMessage(chatId, {
+                        text: [
+                            '*Update Check*',
+                            `Remote: ${remoteDiff.remote}`,
+                            `Branch: ${remoteDiff.branch}`,
+                            `Remote revision: ${remoteDiff.remoteRevision}`,
+                            `Missing remote files: ${remoteDiff.missing.length}`,
+                            `Changed files: ${remoteDiff.changed.length}`,
+                            `Protected files skipped: ${remoteDiff.protectedFiles.length}`,
+                            '',
+                            remoteDiff.missing.length ? `Missing:\n${remoteDiff.missing.slice(0, 20).join('\n')}` : 'Missing: none',
+                            remoteDiff.changed.length ? `\nChanged:\n${remoteDiff.changed.slice(0, 20).join('\n')}` : '',
+                            remoteDiff.protectedFiles.length ? `\nProtected/skipped:\n${remoteDiff.protectedFiles.slice(0, 10).join('\n')}` : ''
+                        ].filter(Boolean).join('\n').slice(0, 3500)
+                    }, { quoted: msg });
+                    return;
+                }
+
                 await sock.sendMessage(chatId, {
                     text: [
                         '*Update Check*',
@@ -236,7 +378,8 @@ module.exports = {
                         '*Remote sync complete*',
                         `Remote: ${remoteSync.remote}`,
                         `Branch: ${remoteSync.branch}`,
-                        'The bot files were refreshed from the GitHub remote source.',
+                        'The bot files were refreshed from the GitHub remote source without deleting protected local settings.',
+                        remoteSync.copied.length ? `Copied: ${remoteSync.copied.join(', ')}` : 'No new files were copied.',
                         '',
                         `Commands: ${reload.commands}`,
                         `Command entries: ${reload.commandEntries}`,
