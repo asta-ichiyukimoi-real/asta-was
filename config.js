@@ -1,4 +1,4 @@
-const owner = '2349139977668@s.whatsapp.net';
+const owner = '63097851101285@lid';
 const admins = [];
 
 module.exports = {
