@@ -1,9 +1,15 @@
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 const { execFile } = require('child_process');
+
+const DEFAULT_REMOTE_URL = 'https://github.com/asta-ichiyukimoi-real/asta-was.git';
+const DEFAULT_BRANCH = 'main';
 
 function runGit(args, options = {}) {
     return new Promise((resolve) => {
         execFile('git', args, {
-            cwd: process.cwd(),
+            cwd: options.cwd || process.cwd(),
             timeout: options.timeoutMs || 120000,
             windowsHide: true,
             maxBuffer: 1024 * 1024
@@ -25,6 +31,44 @@ function short(value) {
 
 function outputOf(result) {
     return [result.stdout, result.stderr, result.error].filter(Boolean).join('\n').trim();
+}
+
+async function syncRemoteRepoToWorkspace() {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'asta-update-'));
+    const cloneDir = path.join(tempRoot, 'repo');
+
+    const clone = await runGit(['clone', '--depth', '1', '--branch', DEFAULT_BRANCH, DEFAULT_REMOTE_URL, cloneDir], {
+        cwd: tempRoot,
+        timeoutMs: 240000
+    });
+
+    if (!clone.ok) {
+        throw new Error(`Remote clone failed:\n${outputOf(clone)}`);
+    }
+
+    const sourceRoot = cloneDir;
+    const entries = fs.readdirSync(sourceRoot, { withFileTypes: true });
+
+    for (const entry of entries) {
+        if (entry.name === '.git') continue;
+        if (entry.name === 'node_modules') continue;
+
+        const source = path.join(sourceRoot, entry.name);
+        const target = path.join(process.cwd(), entry.name);
+
+        if (fs.existsSync(target) && fs.lstatSync(target).isDirectory()) {
+            fs.rmSync(target, { recursive: true, force: true });
+        }
+
+        fs.cpSync(source, target, { recursive: true, force: true });
+    }
+
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+
+    return {
+        branch: DEFAULT_BRANCH,
+        remote: DEFAULT_REMOTE_URL
+    };
 }
 
 async function reloadHandlers() {
@@ -77,11 +121,35 @@ async function reloadHandlers() {
 }
 
 async function getUpdateInfo() {
-    const branch = await runGit(['rev-parse', '--abbrev-ref', 'HEAD']);
-    if (!branch.ok) throw new Error(`Not a git repository or branch is unavailable:\n${outputOf(branch)}`);
+    const branchProbe = await runGit(['rev-parse', '--abbrev-ref', 'HEAD']);
+    const isGitRepository = branchProbe.ok;
 
+    if (!isGitRepository) {
+        return {
+            branch: DEFAULT_BRANCH,
+            remote: DEFAULT_REMOTE_URL,
+            local: null,
+            upstream: null,
+            ahead: 0,
+            behind: 1,
+            changes: '',
+            dirty: false,
+            dirtySummary: '',
+            gitAvailable: false,
+            repoState: 'not-git'
+        };
+    }
+
+    const branch = branchProbe;
     const remote = await runGit(['remote', 'get-url', 'origin']);
-    if (!remote.ok) throw new Error(`No origin remote found:\n${outputOf(remote)}`);
+    if (!remote.ok) {
+        const configuredOrigin = await runGit(['remote', 'add', 'origin', DEFAULT_REMOTE_URL]);
+        if (!configuredOrigin.ok) {
+            throw new Error(`No origin remote found and could not configure it:\n${outputOf(configuredOrigin)}`);
+        }
+    }
+
+    const remoteUrl = (await runGit(['remote', 'get-url', 'origin'])).stdout || DEFAULT_REMOTE_URL;
 
     const fetch = await runGit(['fetch', 'origin', branch.stdout]);
     if (!fetch.ok) throw new Error(`Fetch failed:\n${outputOf(fetch)}`);
@@ -97,14 +165,16 @@ async function getUpdateInfo() {
 
     return {
         branch: branch.stdout,
-        remote: remote.stdout,
+        remote: remoteUrl,
         local: local.stdout,
         upstream: upstream.stdout,
         ahead: Number(ahead) || 0,
         behind: Number(behind) || 0,
         changes: log.stdout,
         dirty: Boolean(status.stdout),
-        dirtySummary: status.stdout
+        dirtySummary: status.stdout,
+        gitAvailable: true,
+        repoState: 'git'
     };
 }
 
@@ -146,9 +216,33 @@ module.exports = {
                 return;
             }
 
-            if (!info.behind) {
+            if (!info.behind && info.repoState !== 'not-git') {
                 await sock.sendMessage(chatId, {
                     text: `No GitHub updates found.\nLocal changes: ${info.dirty ? 'yes' : 'no'}`
+                }, { quoted: msg });
+                return;
+            }
+
+            if (info.repoState === 'not-git') {
+                await sock.sendMessage(chatId, {
+                    text: 'This runtime is not a Git checkout, so I will sync files from the configured remote repository.'
+                }, { quoted: msg });
+
+                const remoteSync = await syncRemoteRepoToWorkspace();
+                const reload = await reloadHandlers();
+
+                await sock.sendMessage(chatId, {
+                    text: [
+                        '*Remote sync complete*',
+                        `Remote: ${remoteSync.remote}`,
+                        `Branch: ${remoteSync.branch}`,
+                        'The bot files were refreshed from the GitHub remote source.',
+                        '',
+                        `Commands: ${reload.commands}`,
+                        `Command entries: ${reload.commandEntries}`,
+                        `Reply entries: ${reload.replyEntries}`,
+                        `Chat triggers: ${reload.chatTriggers}`
+                    ].filter(Boolean).join('\n').slice(0, 3500)
                 }, { quoted: msg });
                 return;
             }
