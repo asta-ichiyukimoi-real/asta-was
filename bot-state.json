@@ -91,9 +91,9 @@
     "commandsRun": 0,
     "pid": 3052,
     "node": "v24.12.0",
-    "uptimeSeconds": 302,
-    "memoryMb": 72,
-    "heapMb": 40,
+    "uptimeSeconds": 62,
+    "memoryMb": 84,
+    "heapMb": 32,
     "loadAverage": 0,
     "commandEntries": 215
   },
