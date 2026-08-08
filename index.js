@@ -220,6 +220,14 @@ async function connectToWhatsApp() {
 
     sock.ev.on('groups.update', async ([event]) => {
         try {
+            logger.log('groups_update_received', {
+                rawEvent: JSON.stringify(event || {}),
+                groupId: event?.id || null,
+                subject: event?.subject || null,
+                announce: event?.announce || null,
+                restrict: event?.restrict || null
+            });
+
             if (!event?.id) return;
             const metadata = await sock.groupMetadata(event.id);
             if (metadata) {
@@ -235,6 +243,16 @@ async function connectToWhatsApp() {
 
     sock.ev.on('group-participants.update', async (event) => {
         try {
+            logger.log('group_participants_update_received_from_index', {
+                rawEvent: JSON.stringify(event || {}),
+                groupId: event?.id || null,
+                action: event?.action || null,
+                participants: (event?.participants || []).map((participant) => {
+                    if (typeof participant === 'string') return participant;
+                    return participant?.id || participant?.lid || participant?.phoneNumber || null;
+                })
+            });
+
             if (!event?.id) return;
             const metadata = await sock.groupMetadata(event.id);
             if (metadata) {

@@ -142,6 +142,16 @@ async function handleBotGroupLifecycle(sock, configCommandHandler, groupId, even
     const botJid = sock?.user?.id || null;
     const addedBy = update?.addedBy || 'unknown (not exposed by WhatsApp event)';
 
+    logger.log('group_lifecycle_debug', {
+        groupId,
+        eventType,
+        computedGroupName: groupName,
+        participantCount,
+        botJid,
+        addedBy,
+        updateSummary: JSON.stringify(update || {})
+    });
+
     if (eventType === 'added') {
         await safeSendMessage(sock, groupId, {
             text: `Thanks for adding me to this group, ${groupName}. I’m ready to help whenever you need me.`
@@ -406,6 +416,14 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
             const participants = update.participants || [];
             const botJid = sock?.user?.id || null;
 
+            logger.log('group_participants_update_received', {
+                groupId,
+                action: update.action,
+                botJid,
+                participants: participants.map((participant) => getParticipantIds(participant)),
+                raw: JSON.stringify(update || {})
+            });
+
             const botWasAdded = participants.some((participant) => {
                 const ids = getParticipantIds(participant);
                 return ids.includes(botJid);
@@ -415,6 +433,15 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
                 const ids = getParticipantIds(participant);
                 return ids.includes(botJid);
             }) && update.action === 'remove';
+
+            logger.log('group_participants_update_classification', {
+                groupId,
+                action: update.action,
+                botWasAdded,
+                botWasRemoved,
+                botJid,
+                participantCount: participants.length
+            });
 
             if (botWasAdded && update.action === 'add') {
                 await handleBotGroupLifecycle(sock, configCommandHandler, groupId, 'added', {
