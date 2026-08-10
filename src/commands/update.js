@@ -45,6 +45,43 @@ function outputOf(result) {
     return [result.stdout, result.stderr, result.error].filter(Boolean).join('\n').trim();
 }
 
+function describeRemoteDiff(diff) {
+    const lines = [];
+    lines.push('Remote update analysis:');
+    lines.push(`Repository: ${diff.remote}`);
+    lines.push(`Branch: ${diff.branch}`);
+    lines.push(`Remote revision: ${diff.remoteRevision || 'main'}`);
+    lines.push(`Remote files scanned: ${diff.remoteFiles || 0}`);
+    lines.push(`Missing local files: ${diff.missing?.length || 0}`);
+    lines.push(`Changed local files: ${diff.changed?.length || 0}`);
+    lines.push(`Protected files skipped: ${diff.protectedFiles?.length || 0}`);
+
+    if (diff.missing?.length) {
+        lines.push('Missing files would be created if the remote source is applied:');
+        lines.push(diff.missing.slice(0, 20).map(file => `  - ${file}`).join('\n'));
+    } else {
+        lines.push('Missing files: none');
+    }
+
+    if (diff.changed?.length) {
+        lines.push('Changed files differ from the remote checkout:');
+        lines.push(diff.changed.slice(0, 20).map(file => `  - ${file}`).join('\n'));
+    } else {
+        lines.push('Changed files: none');
+    }
+
+    if (diff.protectedFiles?.length) {
+        lines.push('Protected files are not touched by the remote sync path:');
+        lines.push(diff.protectedFiles.map(file => `  - ${file}`).join('\n'));
+    }
+
+    const safeUpdateSize = Math.max(0, (diff.changed || []).length + (diff.missing || []).length);
+    lines.push('');
+    lines.push(`Description: the remote source currently reports ${safeUpdateSize} candidate drift item(s) that should be reviewed before applying. Missing files are local runtime additions, changed files are byte-different candidates, and protected files are blocked from remote replacement.`);
+
+    return lines.join('\n');
+}
+
 async function compareRemoteRepoToWorkspace() {
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'asta-update-'));
     const cloneDir = path.join(tempRoot, 'repo');
@@ -62,6 +99,7 @@ async function compareRemoteRepoToWorkspace() {
     const missing = [];
     const changed = [];
     const protectedFiles = [];
+    const remoteFiles = [];
 
     function walkRemoteTree(remoteDir, relativePrefix = '') {
         const entries = fs.readdirSync(remoteDir, { withFileTypes: true });
@@ -71,6 +109,8 @@ async function compareRemoteRepoToWorkspace() {
 
             const remotePath = path.join(remoteDir, entry.name);
             const relativePath = path.join(relativePrefix, entry.name).split(path.sep).join('/');
+
+            remoteFiles.push(relativePath);
 
             if (isProtectedRemotePath(entry.name)) {
                 protectedFiles.push(relativePath);
@@ -107,7 +147,17 @@ async function compareRemoteRepoToWorkspace() {
         missing,
         changed,
         protectedFiles,
-        remoteRevision: 'main'
+        remoteFiles: remoteFiles.length,
+        remoteRevision: 'main',
+        description: describeRemoteDiff({
+            remote: DEFAULT_REMOTE_URL,
+            branch: DEFAULT_BRANCH,
+            remoteRevision: 'main',
+            remoteFiles: remoteFiles.length,
+            missing,
+            changed,
+            protectedFiles
+        })
     };
 }
 
@@ -329,14 +379,18 @@ module.exports = {
                             `Remote: ${remoteDiff.remote}`,
                             `Branch: ${remoteDiff.branch}`,
                             `Remote revision: ${remoteDiff.remoteRevision}`,
+                            `Remote files scanned: ${remoteDiff.remoteFiles}`,
                             `Missing remote files: ${remoteDiff.missing.length}`,
                             `Changed files: ${remoteDiff.changed.length}`,
                             `Protected files skipped: ${remoteDiff.protectedFiles.length}`,
                             '',
-                            remoteDiff.missing.length ? `Missing:\n${remoteDiff.missing.slice(0, 20).join('\n')}` : 'Missing: none',
-                            remoteDiff.changed.length ? `\nChanged:\n${remoteDiff.changed.slice(0, 20).join('\n')}` : '',
-                            remoteDiff.protectedFiles.length ? `\nProtected/skipped:\n${remoteDiff.protectedFiles.slice(0, 10).join('\n')}` : ''
-                        ].filter(Boolean).join('\n').slice(0, 3500)
+                            `*Full remote drift report*`,
+                            remoteDiff.description,
+                            '',
+                            remoteDiff.missing.length ? `Missing:\n${remoteDiff.missing.slice(0, 40).join('\n')}` : 'Missing: none',
+                            remoteDiff.changed.length ? `\nChanged:\n${remoteDiff.changed.slice(0, 40).join('\n')}` : '',
+                            remoteDiff.protectedFiles.length ? `\nProtected/skipped:\n${remoteDiff.protectedFiles.slice(0, 15).join('\n')}` : ''
+                        ].filter(Boolean).join('\n').slice(0, 7000)
                     }, { quoted: msg });
                     return;
                 }
@@ -352,8 +406,11 @@ module.exports = {
                         `Behind: ${info.behind}`,
                         `Local changes: ${info.dirty ? 'yes' : 'no'}`,
                         '',
-                        info.behind ? `*Incoming*\n${info.changes || 'No commit summary.'}` : 'No GitHub updates found.'
-                    ].join('\n').slice(0, 3500)
+                        `*Full remote commit description*`,
+                        info.behind ? `Incoming commits:\n${info.changes || 'No commit summary.'}` : 'No GitHub updates found.',
+                        '',
+                        info.behind ? `Description: the Git remote is ahead by ${info.behind} commit(s) and the local checkout will merge the remote branch using the existing branch-base policy.` : 'Description: no remote commit drift was detected for this checkout.'
+                    ].join('\n').slice(0, 7000)
                 }, { quoted: msg });
                 return;
             }
