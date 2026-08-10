@@ -6,10 +6,10 @@ const contextResolver = require('../utils/contextResolver');
 
 const AI_CHAT_URL = config.apis?.aiChat || 'https://omegatech-api.dixonomega.tech/api/ai/Chatbot';
 const VISION_URL = config.apis?.aiVision || 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini';
-const PINTEREST_URL = config.apis?.pinterest || 'https://omegatech-api.dixonomega.tech/api/ai/Aicli';
+const IMAGE_URL = config.apis?. || 'https://omegatech-api.dixonomega.tech/api/ai/Aicli';
 const CATBOX_UPLOAD_URL = config.apis?.catboxUpload || 'https://catbox.moe/user/api.php';
 const LOCAL_TIME_ZONE = process.env.BOT_TIMEZONE || config.ai?.timezone || config.bot?.timezone || 'Africa/Lagos';
-const MAX_PINTEREST_IMAGES = config.ai?.maxPinterestImages || config.media?.pinterestMaxImages || 8;
+const MAX__IMAGES = config.ai?.maxImages || config.media?.MaxImages || 8;
 const AI_REQUEST_TIMEOUT_MS = config.ai?.requestTimeoutMs || 45000;
 const AI_VISION_TIMEOUT_MS = config.ai?.visionTimeoutMs || 60000;
 const AI_CONTEXT_MESSAGES = config.ai?.contextMessages || 8;
@@ -80,7 +80,7 @@ function parseImageCount(text) {
     const count = match ? Number(match[1]) : 1;
 
     if (!Number.isInteger(count) || count < 1) return 1;
-    return Math.min(count, MAX_PINTEREST_IMAGES);
+    return Math.min(count, MAX__IMAGES);
 }
 
 function stripImageCount(text) {
@@ -144,7 +144,7 @@ function answerCapabilities() {
     return [
         'I can chat with you and keep track of the conversation, so follow-up words like him, her, it, and that can refer to what we were already discussing.',
         'I can answer questions about images when you send one, reply to one, or give me an image URL.',
-        'I can send Pinterest images from natural requests like "send 3 images of Goku in Super Saiyan mode".',
+        'I can send  images from natural requests like "send 3 images of Goku in Super Saiyan mode".',
         'I can research current topics, explain things, answer date/time questions, and continue from replies.'
     ].join('\n');
 }
@@ -278,7 +278,7 @@ async function fetchJson(url, timeoutMs = 45000) {
 async function askOmegaChat(message, sessionId) {
     const url = `${AI_CHAT_URL}?action=chat&message=${encodeURIComponent(message)}&sessionId=${encodeURIComponent(sessionId)}&needSearch=true`;
     const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
-    const text = data.answer || data.result || data.response || data.message || data.image;
+    const text = data.answer || data.result || data.response || data.message;
 
     if (!text) {
         throw new Error('No answer returned from AI.');
@@ -330,19 +330,19 @@ async function uploadImageForVision(image) {
     return text;
 }
 
-async function searchPinterestImages(query, count = 1) {
-    const limit = Math.min(Math.max(Number(count) || 1, 1), MAX_PINTEREST_IMAGES);
-    const url = `${PINTEREST_URL}?action=image&model=flux?query=${encodeURIComponent(query)}`;
-    const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
-    const images = (Array.isArray(data) ? data : [])
-        .map(item => item.image || item.thumb)
-        .filter(value => /^https?:\/\//i.test(value || ''))
-        .slice(0, limit);
-
-    if (!images.length) {
-        throw new Error('No Pinterest images found.');
+async function searchImages(query, count = 1) {
+    const limit = Math.min(Math.max(Number(count) || 1, 1), MAX__IMAGES);
+    const baseUrl = `${IMAGE_URL}?action=image&model=flux&query=${encodeURIComponent(query)}`;
+    
+    const images = [];
+    for(let i = 0; i < limit; i++) {
+        const res = await fetch(`${baseUrl}&seed=${Date.now() + i}`, { 
+            redirect: 'follow',
+            signal: AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS)
+        });
+        if(!res.ok) throw new Error(`API failed: ${res.status}`);
+        images.push(res.url); // final redirected image url
     }
-
     return images;
 }
 
@@ -499,16 +499,16 @@ async function runIntelligent(sock, msg, request) {
 
     if (request.type === 'image') {
         const imagePrompt = buildImagePrompt(msg, request.prompt);
-        const images = await searchPinterestImages(imagePrompt, request.count || 1);
+        const images = await searchImages(imagePrompt, request.count || 1);
 
         for (let i = 0; i < images.length; i += 1) {
             await sock.sendMessage(msg.key.remoteJid, {
                 image: { url: images[i] },
-                caption: `*Pinterest Image${images.length > 1 ? ` ${i + 1}/${images.length}` : ''}*\n${imagePrompt.slice(0, 500)}${i === images.length - 1 ? '\n\n_Reply to continue._\n[REPLY_ID:intelligent]' : ''}`
+                caption: `*Image${images.length > 1 ? ` ${i + 1}/${images.length}` : ''}*\n${imagePrompt.slice(0, 500)}${i === images.length - 1 ? '\n\n_Reply to continue._\n[REPLY_ID:intelligent]' : ''}`
             }, { quoted: i === 0 ? msg : undefined });
         }
 
-        remember(msg, request.prompt || 'send an image', `[Pinterest images] ${imagePrompt} (${images.length})`);
+        remember(msg, request.prompt || 'send an image', `[ images] ${imagePrompt} (${images.length})`);
         return;
     }
 
@@ -569,7 +569,7 @@ module.exports = {
         name: 'intelligent',
         aliases: ['ai', 'asta', 'brain', 'genius'],
         version: '1.2.0',
-        description: 'Smart AI command using Omegatech chat, vision, and Pinterest images',
+        description: 'Smart AI command using Omegatech chat, vision, and  images',
         usage: 'ai <message|draw|vision>',
         examples: [
             'ai what is today date',
