@@ -4,7 +4,7 @@ const state = require('../utils/stateManager');
 const { requestJson, friendlyApiError, getErrorMessage, isTimeout } = require('../utils/apiClient');
 const contextResolver = require('../utils/contextResolver');
 
-const AI_CHAT_URL = config.apis?.aiChat || ' https://omegatech-api.dixonomega.tech/api/ai/Aicli?action=chat';
+const AI_CHAT_URL = config.apis?.aiChat || 'https://omegatech-api.dixonomega.tech/api/ai/Chatbot?action=chat';
 const VISION_URL = config.apis?.aiVision || 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini';
 const PINTEREST_URL = config.apis?.pinterest || 'https://omegatech-api.dixonomega.tech/api/ai/Aicli';
 const CATBOX_UPLOAD_URL = config.apis?.catboxUpload || 'https://catbox.moe/user/api.php';
