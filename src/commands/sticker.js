@@ -55,7 +55,7 @@ async function uploadToCatbox(buffer, mime) {
 
 module.exports = {
     config: {
-        name: 'pti',
+        name: 'nano',
         aliases: ['anime', 'img2img', 'toon'],
         version: '1.0.0',
         description: 'Transform images with AI',

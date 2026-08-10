@@ -4,16 +4,14 @@ const state = require('../utils/stateManager');
 const { requestJson, friendlyApiError, getErrorMessage, isTimeout } = require('../utils/apiClient');
 const contextResolver = require('../utils/contextResolver');
 
-const AI_CHAT_URL = config.apis?.aiChat || 'https://vision-scrape-2ex8.onrender.com/ai/chat';
-const AI_RESEARCH_URL = config.apis?.aiResearch || 'https://omegatech-api.dixonomega.tech/api/ai/Ai-research';
+const AI_CHAT_URL = config.apis?.aiChat || ' https://omegatech-api.dixonomega.tech/api/ai/Aicli?action=chat&model=gpt';
 const VISION_URL = config.apis?.aiVision || 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini';
-const PINTEREST_URL = config.apis?.pinterest || 'https://omegatech-api.dixonomega.tech/api/Search/pinterest';
+const PINTEREST_URL = config.apis?.pinterest || 'https://omegatech-api.dixonomega.tech/api/ai/Aicli';
 const CATBOX_UPLOAD_URL = config.apis?.catboxUpload || 'https://catbox.moe/user/api.php';
 const LOCAL_TIME_ZONE = process.env.BOT_TIMEZONE || config.ai?.timezone || config.bot?.timezone || 'Africa/Lagos';
 const MAX_PINTEREST_IMAGES = config.ai?.maxPinterestImages || config.media?.pinterestMaxImages || 8;
 const AI_REQUEST_TIMEOUT_MS = config.ai?.requestTimeoutMs || 45000;
 const AI_VISION_TIMEOUT_MS = config.ai?.visionTimeoutMs || 60000;
-const AI_RESEARCH_TIMEOUT_MS = config.ai?.researchTimeoutMs || 60000;
 const AI_CONTEXT_MESSAGES = config.ai?.contextMessages || 8;
 const PRONOUN_REFERENCE_PATTERN = contextResolver.PRONOUN_REFERENCE_PATTERN;
 
@@ -112,19 +110,10 @@ function looksLikeDateTimeRequest(text) {
     return /\b(today'?s date|date today|what date|current date|what day|day today|current time|time now|what time)\b/i.test(text || '');
 }
 
-function looksLikeResearchRequest(text) {
-    return /\b(research|details|detailed|deep|latest|current|recent|news|search|web|google|source|sources|facts|fact-check|explain in detail)\b/i.test(text || '');
-}
-
 function looksLikeCapabilityRequest(text) {
     return /\b(what can you do|your features|your abilities|what are you able to do|what do you do)\b/i.test(text || '');
 }
 
-function stripResearchIntent(text) {
-    return String(text || '')
-        .replace(/^(research|details|detail|detailed|deep|search|web|google)\s+/i, '')
-        .trim();
-}
 
 function answerDateTime(text) {
     const now = new Date();
@@ -273,14 +262,6 @@ function parseRequest(args) {
         };
     }
 
-    if (looksLikeResearchRequest(fullText)) {
-        return {
-            type: 'research',
-            prompt: fullText,
-            query: stripResearchIntent(fullText) || fullText
-        };
-    }
-
     return {
         type: 'chat',
         prompt: fullText
@@ -294,21 +275,8 @@ function isNetworkTimeout(error, message) {
 async function fetchJson(url, timeoutMs = 45000) {
     return requestJson(url, { timeoutMs, service: 'AI API' });
 }
-
-async function askOmegaResearch(message) {
-    const url = `${AI_RESEARCH_URL}?message=${encodeURIComponent(message)}`;
-    const data = await fetchJson(url, AI_RESEARCH_TIMEOUT_MS);
-    const text = data.result || data.answer || data.message;
-
-    if (!text) {
-        throw new Error('No answer returned from AI.');
-    }
-
-    return String(text).trim();
-}
-
 async function askOmegaChat(message, sessionId) {
-    const url = `${AI_CHAT_URL}?message=${encodeURIComponent(message)}&session_id=${encodeURIComponent(sessionId)}`;
+    const url = `${AI_CHAT_URL}?action=chat&message=${encodeURIComponent(message)}&sessionId=${encodeURIComponent(sessionId)}&needSearch=true`;
     const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
     const text = data.answer || data.result || data.response || data.message;
 
@@ -364,7 +332,7 @@ async function uploadImageForVision(image) {
 
 async function searchPinterestImages(query, count = 1) {
     const limit = Math.min(Math.max(Number(count) || 1, 1), MAX_PINTEREST_IMAGES);
-    const url = `${PINTEREST_URL}?query=${encodeURIComponent(query)}&scope=pins&limit=${limit}`;
+    const url = `${PINTEREST_URL}?action=image&model=flux?query=${encodeURIComponent(query)}`;
     const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
     const images = (Array.isArray(data.results) ? data.results : [])
         .map(item => item.image || item.thumb)
@@ -572,13 +540,7 @@ async function runIntelligent(sock, msg, request) {
         return;
     }
 
-    if (request.type === 'research') {
-        const prompt = buildPromptWithMemory(msg, request.query || request.prompt);
-        const text = await askOmegaResearch(prompt);
-        remember(msg, request.prompt, text);
-        await sendText(sock, msg, 'AI Research', text);
-        return;
-    }
+
 
     const prompt = buildPromptWithMemory(msg, request.prompt);
     const text = await askOmegaChat(prompt, sessionId);
@@ -612,7 +574,6 @@ module.exports = {
         examples: [
             'ai what is today date',
             'ai explain photosynthesis simply',
-            'ai research latest AI news',
             'ai vision https://i.pinimg.com/236x/f5/6a/87/f56a87d1d56b3e44233eae545a5f8651.jpg what is here?',
             'ai send 2 images of akaza',
             'ai memory',
@@ -631,7 +592,6 @@ module.exports = {
                     'Ask me something:',
                     '.ai what is today date',
                     '.ai explain photosynthesis simply',
-                    '.ai research latest AI news',
                     '.ai vision <imageUrl> what is here?',
                     '.ai send 2 images of akaza',
                     '.ai memory'
