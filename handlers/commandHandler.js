@@ -228,7 +228,7 @@ class CommandHandler {
                 command: command.config.name,
                 error: error.message
             });
-            await this.safeSendMessage(sock, msg.key.remoteJid, { text: `There was an error executing that command.${error.message}`});
+            await this.safeSendMessage(sock, msg.key.remoteJid, { text: `There was an error executing that command.here${error.message}`});
         }
     }
 }
