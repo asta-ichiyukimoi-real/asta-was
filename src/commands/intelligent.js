@@ -278,7 +278,7 @@ async function fetchJson(url, timeoutMs = 45000) {
 async function askOmegaChat(message, sessionId) {
     const url = `${AI_CHAT_URL}?action=chat&message=${encodeURIComponent(message)}&sessionId=${encodeURIComponent(sessionId)}&needSearch=true`;
     const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
-    const text = data.answer || data.result || data.response || data.message;
+    const text = data.answer || data.result || data.response || data.message || data.image;
 
     if (!text) {
         throw new Error('No answer returned from AI.');
@@ -334,7 +334,8 @@ async function searchPinterestImages(query, count = 1) {
     const limit = Math.min(Math.max(Number(count) || 1, 1), MAX_PINTEREST_IMAGES);
     const url = `${PINTEREST_URL}?action=image&model=flux?query=${encodeURIComponent(query)}`;
     const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
-    const images = (Array.isArray(data.results) ? data.results : [])
+    const tess = data.answer || data.result || data.response || data.message || data.image;
+    const images = (Array.isArray(tess) ? tess : [])
         .map(item => item.image || item.thumb)
         .filter(value => /^https?:\/\//i.test(value || ''))
         .slice(0, limit);
