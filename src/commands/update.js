@@ -105,6 +105,17 @@ function parseIncomingCommitLog(rawLog) {
     for (const line of lines) {
         const trimmed = line.trim();
 
+        if (trimmed.startsWith('__ASTA_COMMIT__')) {
+            const [sha, ...subjectParts] = trimmed.replace('__ASTA_COMMIT__', '').split('\t');
+            current = {
+                sha: String(sha || '').trim(),
+                subject: subjectParts.join('\t').trim() || 'No commit message',
+                files: []
+            };
+            if (current.sha) commits.push(current);
+            continue;
+        }
+
         if (/^[0-9a-f]{7,40}\b/.test(trimmed)) {
             const match = trimmed.match(/^([0-9a-f]{7,40})\s(.+)$/i);
             if (match) {
@@ -178,10 +189,28 @@ function formatCommitList(commits) {
 
         return [
             `${index + 1}. ${inferCommitType(commit)} - ${commit.subject}`,
-            `   Commit: ${commit.sha}`,
+            `   Commit: ${short(commit.sha)}`,
             files.length ? `   Files: ${shownFiles}${extraFiles}` : ''
         ].filter(Boolean).join('\n');
     });
+}
+
+function commitsFromOnelineLog(rawLog) {
+    return String(rawLog || '')
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+            const match = line.match(/^([0-9a-f]{7,40})\s+(.+)$/i);
+            if (!match) return null;
+
+            return {
+                sha: match[1],
+                subject: match[2].replace(/\s+\(.+\)$/, '').trim() || 'No commit message',
+                files: []
+            };
+        })
+        .filter(Boolean);
 }
 
 function rememberUpdateApproval(chatId, sender, info) {
@@ -529,8 +558,15 @@ async function getUpdateInfo() {
     const aheadBehind = await runGit(['rev-list', '--left-right', '--count', `HEAD...origin/${branch.stdout}`]);
     const [ahead = '0', behind = '0'] = aheadBehind.stdout.split(/\s+/);
     const log = await runGit(['log', '--oneline', '--decorate', '--max-count=8', `HEAD..origin/${branch.stdout}`]);
-    const remoteNameStatus = await runGit(['log', '--name-status', '--oneline', '--max-count=20', `HEAD..origin/${branch.stdout}`]);
+    const remoteNameStatus = await runGit([
+        'log',
+        '--name-status',
+        '--format=__ASTA_COMMIT__%H%x09%s',
+        '--max-count=20',
+        `HEAD..origin/${branch.stdout}`
+    ]);
     const parsedCommits = parseIncomingCommitLog(remoteNameStatus.stdout);
+    const incomingCommits = parsedCommits.length ? parsedCommits : commitsFromOnelineLog(log.stdout);
     const status = await runGit(['status', '--porcelain']);
 
     return {
@@ -541,8 +577,8 @@ async function getUpdateInfo() {
         ahead: Number(ahead) || 0,
         behind: Number(behind) || 0,
         changes: log.stdout,
-        incomingCommitDetails: parsedCommits,
-        incomingCommitDescription: describeIncomingCommits(parsedCommits),
+        incomingCommitDetails: incomingCommits,
+        incomingCommitDescription: describeIncomingCommits(incomingCommits),
         dirty: Boolean(status.stdout),
         dirtySummary: status.stdout,
         gitAvailable: true,
