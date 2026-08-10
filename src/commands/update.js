@@ -5,17 +5,26 @@ const { execFile } = require('child_process');
 
 const DEFAULT_REMOTE_URL = 'https://github.com/asta-ichiyukimoi-real/asta-was.git';
 const DEFAULT_BRANCH = 'main';
+const UPDATE_APPROVAL_TTL_MS = 15 * 60 * 1000;
+const pendingUpdateApprovals = new Map();
 const PROTECTED_REMOTE_NAMES = new Set([
+    '.env',
     'config.js',
     'bot-state.json',
     'cookies.txt',
     'auth_info_baileys',
+    'backups',
     'data',
     'logs'
 ]);
 
-function isProtectedRemotePath(name) {
-    return PROTECTED_REMOTE_NAMES.has(name);
+function normalizeRemotePath(filePath) {
+    return String(filePath || '').replace(/\\/g, '/').replace(/^\/+/, '');
+}
+
+function isProtectedRemotePath(filePath) {
+    const [topLevelName] = normalizeRemotePath(filePath).split('/');
+    return PROTECTED_REMOTE_NAMES.has(topLevelName);
 }
 
 function runGit(args, options = {}) {
@@ -41,8 +50,167 @@ function short(value) {
     return String(value || '').trim().slice(0, 10);
 }
 
+function createApprovalToken() {
+    return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
+
 function outputOf(result) {
     return [result.stdout, result.stderr, result.error].filter(Boolean).join('\n').trim();
+}
+
+function unwrapMessage(message) {
+    let current = message || {};
+
+    for (let i = 0; i < 5; i += 1) {
+        const next = current.ephemeralMessage?.message
+            || current.viewOnceMessage?.message
+            || current.viewOnceMessageV2?.message
+            || current.viewOnceMessageV2Extension?.message
+            || current.documentWithCaptionMessage?.message;
+
+        if (!next) break;
+        current = next;
+    }
+
+    return current;
+}
+
+function getQuotedText(msg) {
+    const message = unwrapMessage(msg.message);
+    const contextInfo = message.extendedTextMessage?.contextInfo
+        || message.imageMessage?.contextInfo
+        || message.videoMessage?.contextInfo
+        || message.documentMessage?.contextInfo
+        || null;
+    const quoted = unwrapMessage(contextInfo?.quotedMessage);
+
+    return quoted.conversation
+        || quoted.extendedTextMessage?.text
+        || quoted.imageMessage?.caption
+        || quoted.videoMessage?.caption
+        || quoted.documentMessage?.caption
+        || '';
+}
+
+function isOwnerMessage(msg) {
+    const sender = msg.key.participant || msg.key.remoteJid;
+    return Boolean(global.configCommandHandler?.isOwner?.(sender, msg));
+}
+
+function parseIncomingCommitLog(rawLog) {
+    const commits = [];
+    const lines = String(rawLog || '').split(/\r?\n/).filter(Boolean);
+    let current = null;
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        if (/^[0-9a-f]{7,40}\b/.test(trimmed)) {
+            const match = trimmed.match(/^([0-9a-f]{7,40})\s(.+)$/i);
+            if (match) {
+                current = {
+                    sha: match[1],
+                    subject: match[2],
+                    files: []
+                };
+                commits.push(current);
+            }
+            continue;
+        }
+
+        const fileStatus = trimmed.match(/^([A-Z])\d*\s+(.+)$/);
+        if (fileStatus && current) {
+            const [, status, filePath] = fileStatus;
+            const normalizedPath = String(filePath || '').trim().replace(/\t/g, ' -> ');
+            if (normalizedPath) {
+                current.files.push({
+                    status,
+                    path: normalizedPath
+                });
+            }
+        }
+    }
+
+    return commits;
+}
+
+function describeIncomingCommits(incomingCommits) {
+    if (!incomingCommits?.length) {
+        return 'Incoming commits: none';
+    }
+
+    const lines = ['Incoming commits from GitHub:', ''];
+    for (const commit of incomingCommits) {
+        const visibleFiles = commit.files?.slice(0, 12) || [];
+        const files = visibleFiles.length ? visibleFiles.map(f => `${f.status} ${f.path}`).join(', ') : 'No file status supplied';
+        const extra = commit.files?.length > visibleFiles.length ? `, +${commit.files.length - visibleFiles.length} more` : '';
+        lines.push(`- ${commit.sha} ${commit.subject}`);
+        lines.push(`  Files: ${files}${extra}`);
+    }
+    return lines.join('\n');
+}
+
+function inferCommitType(commit) {
+    const subject = String(commit.subject || '').toLowerCase();
+    const statuses = new Set((commit.files || []).map(file => file.status));
+
+    if (/fix|bug|error|crash|patch|repair/.test(subject)) return 'Fix';
+    if (/security|vulnerability|auth|permission/.test(subject)) return 'Security';
+    if (/config|setting|env/.test(subject)) return 'Config';
+    if (/command|cmd/.test(subject)) return 'Command';
+    if (/feature|add|new/.test(subject) || statuses.has('A')) return 'Feature';
+    if (/remove|delete|drop/.test(subject) || statuses.has('D')) return 'Removal';
+    if (/refactor|clean|rename/.test(subject) || statuses.has('R')) return 'Refactor';
+    if (/doc|readme/.test(subject)) return 'Docs';
+    if (statuses.has('M')) return 'Change';
+    return 'Update';
+}
+
+function formatCommitList(commits) {
+    if (!commits?.length) {
+        return ['No commit details were returned by GitHub.'];
+    }
+
+    return commits.slice(0, 12).map((commit, index) => {
+        const files = commit.files || [];
+        const shownFiles = files.slice(0, 5).map(file => `${file.status} ${file.path}`).join(', ');
+        const extraFiles = files.length > 5 ? `, +${files.length - 5} more` : '';
+
+        return [
+            `${index + 1}. ${inferCommitType(commit)} - ${commit.subject}`,
+            `   Commit: ${commit.sha}`,
+            files.length ? `   Files: ${shownFiles}${extraFiles}` : ''
+        ].filter(Boolean).join('\n');
+    });
+}
+
+function rememberUpdateApproval(chatId, sender, info) {
+    const token = createApprovalToken();
+    pendingUpdateApprovals.set(token, {
+        chatId,
+        sender,
+        branch: info.branch,
+        local: info.local,
+        upstream: info.upstream,
+        createdAt: Date.now()
+    });
+    return token;
+}
+
+function getApprovalFromQuotedMessage(msg) {
+    const quotedText = getQuotedText(msg);
+    const token = quotedText.match(/\[UPDATE_TOKEN:([a-z0-9]+)\]/i)?.[1];
+    if (!token) return null;
+
+    const approval = pendingUpdateApprovals.get(token);
+    if (!approval) return { token, expired: true };
+
+    if (Date.now() - approval.createdAt > UPDATE_APPROVAL_TTL_MS) {
+        pendingUpdateApprovals.delete(token);
+        return { token, expired: true };
+    }
+
+    return { token, approval };
 }
 
 function describeRemoteDiff(diff) {
@@ -86,79 +254,84 @@ async function compareRemoteRepoToWorkspace() {
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'asta-update-'));
     const cloneDir = path.join(tempRoot, 'repo');
 
-    const clone = await runGit(['clone', '--depth', '1', '--branch', DEFAULT_BRANCH, DEFAULT_REMOTE_URL, cloneDir], {
-        cwd: tempRoot,
-        timeoutMs: 240000
-    });
+    try {
+        const clone = await runGit(['clone', '--depth', '1', '--branch', DEFAULT_BRANCH, DEFAULT_REMOTE_URL, cloneDir], {
+            cwd: tempRoot,
+            timeoutMs: 240000
+        });
 
-    if (!clone.ok) {
-        fs.rmSync(tempRoot, { recursive: true, force: true });
-        throw new Error(`Remote clone failed:\n${outputOf(clone)}`);
-    }
+        if (!clone.ok) {
+            throw new Error(`Remote clone failed:\n${outputOf(clone)}`);
+        }
 
-    const missing = [];
-    const changed = [];
-    const protectedFiles = [];
-    const remoteFiles = [];
+        const missing = [];
+        const changed = [];
+        const protectedFiles = [];
+        const remoteFiles = [];
 
-    function walkRemoteTree(remoteDir, relativePrefix = '') {
-        const entries = fs.readdirSync(remoteDir, { withFileTypes: true });
-        for (const entry of entries) {
-            if (entry.name === '.git') continue;
-            if (entry.name === 'node_modules') continue;
+        function walkRemoteTree(remoteDir, relativePrefix = '') {
+            const entries = fs.readdirSync(remoteDir, { withFileTypes: true });
+            for (const entry of entries) {
+                if (entry.name === '.git') continue;
+                if (entry.name === 'node_modules') continue;
 
-            const remotePath = path.join(remoteDir, entry.name);
-            const relativePath = path.join(relativePrefix, entry.name).split(path.sep).join('/');
+                const remotePath = path.join(remoteDir, entry.name);
+                const relativePath = normalizeRemotePath(path.join(relativePrefix, entry.name));
 
-            remoteFiles.push(relativePath);
+                remoteFiles.push(relativePath);
 
-            if (isProtectedRemotePath(entry.name)) {
-                protectedFiles.push(relativePath);
-                continue;
-            }
-
-            const localPath = path.join(process.cwd(), relativePath);
-
-            if (entry.isDirectory()) {
-                walkRemoteTree(remotePath, relativePath);
-            } else if (entry.isFile()) {
-                if (!fs.existsSync(localPath)) {
-                    missing.push(relativePath);
+                if (isProtectedRemotePath(relativePath)) {
+                    protectedFiles.push(relativePath);
                     continue;
                 }
 
-                const remoteData = fs.readFileSync(remotePath);
-                const localData = fs.readFileSync(localPath);
-                if (!Buffer.compare(remoteData, localData)) {
-                    // identical on bytes
-                } else {
-                    changed.push(relativePath);
+                const localPath = path.join(process.cwd(), relativePath);
+
+                if (entry.isDirectory()) {
+                    walkRemoteTree(remotePath, relativePath);
+                } else if (entry.isFile()) {
+                    if (!fs.existsSync(localPath)) {
+                        missing.push(relativePath);
+                        continue;
+                    }
+
+                    if (!fs.lstatSync(localPath).isFile()) {
+                        changed.push(relativePath);
+                        continue;
+                    }
+
+                    const remoteData = fs.readFileSync(remotePath);
+                    const localData = fs.readFileSync(localPath);
+                    if (Buffer.compare(remoteData, localData) !== 0) {
+                        changed.push(relativePath);
+                    }
                 }
             }
         }
-    }
 
-    walkRemoteTree(cloneDir);
-    fs.rmSync(tempRoot, { recursive: true, force: true });
+        walkRemoteTree(cloneDir);
 
-    return {
-        branch: DEFAULT_BRANCH,
-        remote: DEFAULT_REMOTE_URL,
-        missing,
-        changed,
-        protectedFiles,
-        remoteFiles: remoteFiles.length,
-        remoteRevision: 'main',
-        description: describeRemoteDiff({
-            remote: DEFAULT_REMOTE_URL,
+        return {
             branch: DEFAULT_BRANCH,
-            remoteRevision: 'main',
-            remoteFiles: remoteFiles.length,
+            remote: DEFAULT_REMOTE_URL,
             missing,
             changed,
-            protectedFiles
-        })
-    };
+            protectedFiles,
+            remoteFiles: remoteFiles.length,
+            remoteRevision: 'main',
+            description: describeRemoteDiff({
+                remote: DEFAULT_REMOTE_URL,
+                branch: DEFAULT_BRANCH,
+                remoteRevision: 'main',
+                remoteFiles: remoteFiles.length,
+                missing,
+                changed,
+                protectedFiles
+            })
+        };
+    } finally {
+        fs.rmSync(tempRoot, { recursive: true, force: true });
+    }
 }
 
 async function syncRemoteRepoToWorkspace() {
@@ -166,81 +339,68 @@ async function syncRemoteRepoToWorkspace() {
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'asta-update-'));
     const cloneDir = path.join(tempRoot, 'repo');
 
-    const clone = await runGit(['clone', '--depth', '1', '--branch', DEFAULT_BRANCH, DEFAULT_REMOTE_URL, cloneDir], {
-        cwd: tempRoot,
-        timeoutMs: 240000
-    });
+    try {
+        const clone = await runGit(['clone', '--depth', '1', '--branch', DEFAULT_BRANCH, DEFAULT_REMOTE_URL, cloneDir], {
+            cwd: tempRoot,
+            timeoutMs: 240000
+        });
 
-    if (!clone.ok) {
-        fs.rmSync(tempRoot, { recursive: true, force: true });
-        throw new Error(`Remote clone failed:\n${outputOf(clone)}`);
-    }
-
-    const sourceRoot = cloneDir;
-    const entries = fs.readdirSync(sourceRoot, { withFileTypes: true });
-    const copied = [];
-
-    for (const entry of entries) {
-        if (entry.name === '.git') continue;
-        if (entry.name === 'node_modules') continue;
-        if (isProtectedRemotePath(entry.name)) continue;
-
-        const source = path.join(sourceRoot, entry.name);
-        const target = path.join(process.cwd(), entry.name);
-
-        if (!fs.existsSync(target)) {
-            fs.cpSync(source, target, { recursive: true, force: true });
-            copied.push(entry.name);
-            continue;
+        if (!clone.ok) {
+            throw new Error(`Remote clone failed:\n${outputOf(clone)}`);
         }
 
-        if (fs.lstatSync(target).isDirectory() && fs.lstatSync(source).isDirectory()) {
-            const sourceChildren = fs.readdirSync(source, { withFileTypes: true });
-            for (const child of sourceChildren) {
-                const childName = child.name;
-                if (isProtectedRemotePath(childName)) continue;
+        const copied = [];
+        const skipped = [];
 
-                const childSrc = path.join(source, childName);
-                const childTarget = path.join(target, childName);
+        function copyTree(sourceDir, relativePrefix = '') {
+            const entries = fs.readdirSync(sourceDir, { withFileTypes: true });
+            for (const entry of entries) {
+                if (entry.name === '.git') continue;
+                if (entry.name === 'node_modules') continue;
 
-                if (!fs.existsSync(childTarget)) {
-                    fs.cpSync(childSrc, childTarget, { recursive: true, force: true });
-                    copied.push(path.join(entry.name, childName));
-                } else if (fs.lstatSync(childTarget).isFile() && fs.lstatSync(childSrc).isFile()) {
-                    const remoteData = fs.readFileSync(childSrc);
-                    const localData = fs.readFileSync(childTarget);
-                    if (Buffer.compare(remoteData, localData) !== 0) {
-                        // Only allow an update when the file is safe to override.
-                        const safeUpdate = ['src', 'handlers', 'scripts'].some(prefix => path.relative(process.cwd(), childTarget).startsWith(prefix));
-                        if (safeUpdate) {
-                            fs.copyFileSync(childSrc, childTarget);
-                            copied.push(path.join(entry.name, childName));
-                        }
-                    }
+                const source = path.join(sourceDir, entry.name);
+                const relativePath = normalizeRemotePath(path.join(relativePrefix, entry.name));
+
+                if (isProtectedRemotePath(relativePath)) continue;
+
+                if (entry.isDirectory()) {
+                    copyTree(source, relativePath);
+                    continue;
                 }
-            }
-        } else if (fs.lstatSync(source).isFile()) {
-            const sourceContent = fs.readFileSync(source);
-            const targetContent = fs.existsSync(target) ? fs.readFileSync(target) : null;
 
-            if (!targetContent || Buffer.compare(sourceContent, targetContent) !== 0) {
-                const safeOverride = !isProtectedRemotePath(path.basename(target));
-                if (safeOverride) {
+                if (!entry.isFile()) continue;
+
+                const target = path.join(process.cwd(), relativePath);
+                const sourceContent = fs.readFileSync(source);
+                const targetExists = fs.existsSync(target);
+
+                if (targetExists && !fs.lstatSync(target).isFile()) {
+                    skipped.push(`${relativePath}: local path is not a file`);
+                    continue;
+                }
+
+                const targetContent = targetExists ? fs.readFileSync(target) : null;
+
+                if (!targetContent || Buffer.compare(sourceContent, targetContent) !== 0) {
+                    fs.mkdirSync(path.dirname(target), { recursive: true });
                     fs.copyFileSync(source, target);
-                    copied.push(entry.name);
+                    copied.push(relativePath);
                 }
             }
         }
+
+        copyTree(cloneDir);
+
+        return {
+            branch: DEFAULT_BRANCH,
+            remote: DEFAULT_REMOTE_URL,
+            copied,
+            skipped,
+            diff
+        };
+    } finally {
+        fs.rmSync(tempRoot, { recursive: true, force: true });
     }
-
-    fs.rmSync(tempRoot, { recursive: true, force: true });
-
-    return {
-        branch: DEFAULT_BRANCH,
-        remote: DEFAULT_REMOTE_URL,
-        copied,
-        diff
-    };
 }
 
 async function reloadHandlers() {
@@ -333,6 +493,8 @@ async function getUpdateInfo() {
     const aheadBehind = await runGit(['rev-list', '--left-right', '--count', `HEAD...origin/${branch.stdout}`]);
     const [ahead = '0', behind = '0'] = aheadBehind.stdout.split(/\s+/);
     const log = await runGit(['log', '--oneline', '--decorate', '--max-count=8', `HEAD..origin/${branch.stdout}`]);
+    const remoteNameStatus = await runGit(['log', '--name-status', '--oneline', '--max-count=20', `HEAD..origin/${branch.stdout}`]);
+    const parsedCommits = parseIncomingCommitLog(remoteNameStatus.stdout);
     const status = await runGit(['status', '--porcelain']);
 
     return {
@@ -343,11 +505,175 @@ async function getUpdateInfo() {
         ahead: Number(ahead) || 0,
         behind: Number(behind) || 0,
         changes: log.stdout,
+        incomingCommitDetails: parsedCommits,
+        incomingCommitDescription: describeIncomingCommits(parsedCommits),
         dirty: Boolean(status.stdout),
         dirtySummary: status.stdout,
         gitAvailable: true,
         repoState: 'git'
     };
+}
+
+async function sendUpdatePreview(sock, msg, info) {
+    const chatId = msg.key.remoteJid;
+    const sender = msg.key.participant || msg.key.remoteJid;
+
+    if (info.repoState === 'not-git') {
+        const remoteDiff = await compareRemoteRepoToWorkspace();
+        const hasDrift = remoteDiff.missing.length || remoteDiff.changed.length;
+        const token = hasDrift ? rememberUpdateApproval(chatId, sender, info) : null;
+
+        await sock.sendMessage(chatId, {
+            text: [
+                '*Updates Available*',
+                `Remote: ${remoteDiff.remote}`,
+                `Branch: ${remoteDiff.branch}`,
+                'Type: Remote file sync',
+                `Missing files: ${remoteDiff.missing.length}`,
+                `Changed files: ${remoteDiff.changed.length}`,
+                `Protected files skipped: ${remoteDiff.protectedFiles.length}`,
+                '',
+                remoteDiff.missing.length ? `Files to create:\n${remoteDiff.missing.slice(0, 20).join('\n')}` : '',
+                remoteDiff.changed.length ? `Files to update:\n${remoteDiff.changed.slice(0, 20).join('\n')}` : '',
+                '',
+                hasDrift ? 'Reply to this message with yes, apply, or update to install these updates.' : 'No remote file updates found.',
+                token ? `[UPDATE_TOKEN:${token}]` : '',
+                hasDrift ? '[REPLY_ID:update]' : ''
+            ].filter(Boolean).join('\n').slice(0, 7000)
+        }, { quoted: msg });
+        return;
+    }
+
+    if (!info.behind) {
+        await sock.sendMessage(chatId, {
+            text: `No GitHub updates found.\nLocal changes: ${info.dirty ? 'yes' : 'no'}`
+        }, { quoted: msg });
+        return;
+    }
+
+    const token = rememberUpdateApproval(chatId, sender, info);
+    await sock.sendMessage(chatId, {
+        text: [
+            '*Updates Available*',
+            `Remote: ${info.remote}`,
+            `Branch: ${info.branch}`,
+            `Local: ${short(info.local)}`,
+            `Remote HEAD: ${short(info.upstream)}`,
+            `Updates: ${info.behind} commit(s)`,
+            `Local changes: ${info.dirty ? 'yes - they will be stashed and restored' : 'no'}`,
+            '',
+            '*Update list*',
+            ...formatCommitList(info.incomingCommitDetails),
+            '',
+            'Reply to this message with yes, apply, or update to install these updates.',
+            `[UPDATE_TOKEN:${token}]`,
+            '[REPLY_ID:update]'
+        ].filter(Boolean).join('\n').slice(0, 7000)
+    }, { quoted: msg });
+}
+
+async function applyUpdate(sock, msg, expectedApproval = null) {
+    const chatId = msg.key.remoteJid;
+    const info = await getUpdateInfo();
+
+    if (expectedApproval && info.repoState !== 'not-git') {
+        const remoteChanged = expectedApproval.branch !== info.branch
+            || expectedApproval.local !== info.local
+            || expectedApproval.upstream !== info.upstream;
+
+        if (remoteChanged) {
+            await sock.sendMessage(chatId, {
+                text: 'The available update changed since that preview was sent. Run .update again and approve the fresh list.'
+            }, { quoted: msg });
+            return;
+        }
+    }
+
+    if (!info.behind && info.repoState !== 'not-git') {
+        await sock.sendMessage(chatId, {
+            text: `No GitHub updates found.\nLocal changes: ${info.dirty ? 'yes' : 'no'}`
+        }, { quoted: msg });
+        return;
+    }
+
+    if (info.repoState === 'not-git') {
+        await sock.sendMessage(chatId, {
+            text: 'Applying approved remote file sync...'
+        }, { quoted: msg });
+
+        const remoteSync = await syncRemoteRepoToWorkspace();
+        const reload = await reloadHandlers();
+
+        await sock.sendMessage(chatId, {
+            text: [
+                '*Remote Sync Complete*',
+                `Remote: ${remoteSync.remote}`,
+                `Branch: ${remoteSync.branch}`,
+                'The bot files were refreshed from the GitHub remote source without deleting protected local settings.',
+                remoteSync.copied.length ? `Copied: ${remoteSync.copied.join(', ')}` : 'No new files were copied.',
+                remoteSync.skipped.length ? `Skipped: ${remoteSync.skipped.join(', ')}` : '',
+                '',
+                `Commands: ${reload.commands}`,
+                `Command entries: ${reload.commandEntries}`,
+                `Reply entries: ${reload.replyEntries}`,
+                `Chat triggers: ${reload.chatTriggers}`
+            ].filter(Boolean).join('\n').slice(0, 3500)
+        }, { quoted: msg });
+        return;
+    }
+
+    if (info.ahead) {
+        await sock.sendMessage(chatId, {
+            text: [
+                'Update stopped because this host has local commits that are not on GitHub.',
+                `Ahead: ${info.ahead}`,
+                `Behind: ${info.behind}`,
+                'Run .update to review the remote list, then decide whether to push, reset manually, or merge from shell.'
+            ].join('\n')
+        }, { quoted: msg });
+        return;
+    }
+
+    let stashed = false;
+    if (info.dirty) {
+        const stash = await runGit(['stash', 'push', '--include-untracked', '-m', `asta-update-${Date.now()}`]);
+        if (!stash.ok) throw new Error(`Could not preserve local changes with git stash:\n${outputOf(stash)}`);
+        stashed = !/No local changes/i.test(outputOf(stash));
+    }
+
+    const merge = await runGit(['merge', '--ff-only', `origin/${info.branch}`]);
+    if (!merge.ok) {
+        if (stashed) {
+            await runGit(['stash', 'pop']);
+        }
+        throw new Error(`Update failed during merge:\n${outputOf(merge)}`);
+    }
+
+    let stashMessage = 'No local changes needed re-applying.';
+    if (stashed) {
+        const pop = await runGit(['stash', 'pop']);
+        stashMessage = pop.ok
+            ? 'Local changes re-applied.'
+            : `Update applied, but local changes have conflicts. Resolve manually:\n${outputOf(pop)}`;
+    }
+
+    const reload = await reloadHandlers();
+    await sock.sendMessage(chatId, {
+        text: [
+            '*Update Complete*',
+            `Branch: ${info.branch}`,
+            `Old: ${short(info.local)}`,
+            `New: ${short(info.upstream)}`,
+            stashMessage,
+            '',
+            `Commands: ${reload.commands}`,
+            `Command entries: ${reload.commandEntries}`,
+            `Reply entries: ${reload.replyEntries}`,
+            `Chat triggers: ${reload.chatTriggers}`,
+            '',
+            info.changes ? `*Applied commits*\n${info.changes}` : ''
+        ].filter(Boolean).join('\n').slice(0, 3500)
+    }, { quoted: msg });
 }
 
 module.exports = {
@@ -363,144 +689,85 @@ module.exports = {
         category: 'admin'
     },
     onRun: async (sock, msg, args) => {
-        const mode = (args[0] || 'apply').toLowerCase();
+        const mode = (args[0] || 'preview').toLowerCase();
         const chatId = msg.key.remoteJid;
 
         try {
             await sock.sendMessage(chatId, { text: 'Checking GitHub for updates...' }, { quoted: msg });
             const info = await getUpdateInfo();
 
-            if (mode === 'check' || mode === 'preview') {
-                if (info.repoState === 'not-git') {
-                    const remoteDiff = await compareRemoteRepoToWorkspace();
-                    await sock.sendMessage(chatId, {
-                        text: [
-                            '*Update Check*',
-                            `Remote: ${remoteDiff.remote}`,
-                            `Branch: ${remoteDiff.branch}`,
-                            `Remote revision: ${remoteDiff.remoteRevision}`,
-                            `Remote files scanned: ${remoteDiff.remoteFiles}`,
-                            `Missing remote files: ${remoteDiff.missing.length}`,
-                            `Changed files: ${remoteDiff.changed.length}`,
-                            `Protected files skipped: ${remoteDiff.protectedFiles.length}`,
-                            '',
-                            `*Full remote drift report*`,
-                            remoteDiff.description,
-                            '',
-                            remoteDiff.missing.length ? `Missing:\n${remoteDiff.missing.slice(0, 40).join('\n')}` : 'Missing: none',
-                            remoteDiff.changed.length ? `\nChanged:\n${remoteDiff.changed.slice(0, 40).join('\n')}` : '',
-                            remoteDiff.protectedFiles.length ? `\nProtected/skipped:\n${remoteDiff.protectedFiles.slice(0, 15).join('\n')}` : ''
-                        ].filter(Boolean).join('\n').slice(0, 7000)
-                    }, { quoted: msg });
-                    return;
-                }
-
-                await sock.sendMessage(chatId, {
-                    text: [
-                        '*Update Check*',
-                        `Remote: ${info.remote}`,
-                        `Branch: ${info.branch}`,
-                        `Local: ${short(info.local)}`,
-                        `Remote HEAD: ${short(info.upstream)}`,
-                        `Ahead: ${info.ahead}`,
-                        `Behind: ${info.behind}`,
-                        `Local changes: ${info.dirty ? 'yes' : 'no'}`,
-                        '',
-                        `*Full remote commit description*`,
-                        info.behind ? `Incoming commits:\n${info.changes || 'No commit summary.'}` : 'No GitHub updates found.',
-                        '',
-                        info.behind ? `Description: the Git remote is ahead by ${info.behind} commit(s) and the local checkout will merge the remote branch using the existing branch-base policy.` : 'Description: no remote commit drift was detected for this checkout.'
-                    ].join('\n').slice(0, 7000)
-                }, { quoted: msg });
+            if (mode === 'apply' || mode === 'force') {
+                await applyUpdate(sock, msg);
                 return;
             }
 
-            if (!info.behind && info.repoState !== 'not-git') {
-                await sock.sendMessage(chatId, {
-                    text: `No GitHub updates found.\nLocal changes: ${info.dirty ? 'yes' : 'no'}`
-                }, { quoted: msg });
+            if (mode === 'check' || mode === 'preview' || mode === 'list') {
+                await sendUpdatePreview(sock, msg, info);
                 return;
             }
 
-            if (info.repoState === 'not-git') {
-                await sock.sendMessage(chatId, {
-                    text: 'This runtime is not a Git checkout, so I will sync files from the configured remote repository.'
-                }, { quoted: msg });
-
-                const remoteSync = await syncRemoteRepoToWorkspace();
-                const reload = await reloadHandlers();
-
-                await sock.sendMessage(chatId, {
-                    text: [
-                        '*Remote sync complete*',
-                        `Remote: ${remoteSync.remote}`,
-                        `Branch: ${remoteSync.branch}`,
-                        'The bot files were refreshed from the GitHub remote source without deleting protected local settings.',
-                        remoteSync.copied.length ? `Copied: ${remoteSync.copied.join(', ')}` : 'No new files were copied.',
-                        '',
-                        `Commands: ${reload.commands}`,
-                        `Command entries: ${reload.commandEntries}`,
-                        `Reply entries: ${reload.replyEntries}`,
-                        `Chat triggers: ${reload.chatTriggers}`
-                    ].filter(Boolean).join('\n').slice(0, 3500)
-                }, { quoted: msg });
-                return;
-            }
-
-            if (info.ahead) {
-                await sock.sendMessage(chatId, {
-                    text: [
-                        'Update stopped because this host has local commits that are not on GitHub.',
-                        `Ahead: ${info.ahead}`,
-                        `Behind: ${info.behind}`,
-                        'Use .update check, then decide whether to push, reset manually, or merge from shell.'
-                    ].join('\n')
-                }, { quoted: msg });
-                return;
-            }
-
-            let stashed = false;
-            if (info.dirty) {
-                const stash = await runGit(['stash', 'push', '--include-untracked', '-m', `asta-update-${Date.now()}`]);
-                if (!stash.ok) throw new Error(`Could not preserve local changes with git stash:\n${outputOf(stash)}`);
-                stashed = !/No local changes/i.test(outputOf(stash));
-            }
-
-            const merge = await runGit(['merge', '--ff-only', `origin/${info.branch}`]);
-            if (!merge.ok) {
-                if (stashed) {
-                    await runGit(['stash', 'pop']);
-                }
-                throw new Error(`Update failed during merge:\n${outputOf(merge)}`);
-            }
-
-            let stashMessage = 'No local changes needed re-applying.';
-            if (stashed) {
-                const pop = await runGit(['stash', 'pop']);
-                stashMessage = pop.ok
-                    ? 'Local changes re-applied.'
-                    : `Update applied, but local changes have conflicts. Resolve manually:\n${outputOf(pop)}`;
-            }
-
-            const reload = await reloadHandlers();
             await sock.sendMessage(chatId, {
-                text: [
-                    '*Update Complete*',
-                    `Branch: ${info.branch}`,
-                    `Old: ${short(info.local)}`,
-                    `New: ${short(info.upstream)}`,
-                    stashMessage,
-                    '',
-                    `Commands: ${reload.commands}`,
-                    `Command entries: ${reload.commandEntries}`,
-                    `Reply entries: ${reload.replyEntries}`,
-                    `Chat triggers: ${reload.chatTriggers}`,
-                    '',
-                    info.changes ? `*Applied commits*\n${info.changes}` : ''
-                ].filter(Boolean).join('\n').slice(0, 3500)
+                text: 'Use .update to list updates, then reply yes/apply/update to the preview. Use .update apply to apply immediately.'
             }, { quoted: msg });
         } catch (error) {
             console.error('Update command error:', error);
+            await sock.sendMessage(chatId, {
+                text: `Update failed:\n${String(error.message || error).slice(0, 3000)}`
+            }, { quoted: msg });
+        }
+    },
+    onReply: async (sock, msg, replyText) => {
+        const chatId = msg.key.remoteJid;
+        const answer = String(replyText || '').trim().toLowerCase();
+
+        try {
+            if (!isOwnerMessage(msg)) {
+                await sock.sendMessage(chatId, {
+                    text: 'Only the owner can approve updates.'
+                }, { quoted: msg });
+                return;
+            }
+
+            const approvalResult = getApprovalFromQuotedMessage(msg);
+            if (!approvalResult?.approval) {
+                await sock.sendMessage(chatId, {
+                    text: approvalResult?.expired
+                        ? 'That update approval expired. Run .update again to get a fresh list.'
+                        : 'Reply to a valid update preview message to approve an update.'
+                }, { quoted: msg });
+                return;
+            }
+
+            if (/^(no|n|cancel|stop)$/i.test(answer)) {
+                pendingUpdateApprovals.delete(approvalResult.token);
+                await sock.sendMessage(chatId, {
+                    text: 'Update cancelled.'
+                }, { quoted: msg });
+                return;
+            }
+
+            if (!/^(yes|y|apply|update|install|go)$/i.test(answer)) {
+                await sock.sendMessage(chatId, {
+                    text: 'Reply yes, apply, or update to install. Reply no to cancel.'
+                }, { quoted: msg });
+                return;
+            }
+
+            const sender = msg.key.participant || msg.key.remoteJid;
+            if (approvalResult.approval.chatId !== chatId || approvalResult.approval.sender !== sender) {
+                await sock.sendMessage(chatId, {
+                    text: 'Only the same owner who requested this update preview can approve it.'
+                }, { quoted: msg });
+                return;
+            }
+
+            pendingUpdateApprovals.delete(approvalResult.token);
+            await sock.sendMessage(chatId, {
+                text: 'Approval received. Applying update now...'
+            }, { quoted: msg });
+            await applyUpdate(sock, msg, approvalResult.approval);
+        } catch (error) {
+            console.error('Update reply error:', error);
             await sock.sendMessage(chatId, {
                 text: `Update failed:\n${String(error.message || error).slice(0, 3000)}`
             }, { quoted: msg });
