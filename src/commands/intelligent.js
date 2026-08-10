@@ -334,8 +334,7 @@ async function searchPinterestImages(query, count = 1) {
     const limit = Math.min(Math.max(Number(count) || 1, 1), MAX_PINTEREST_IMAGES);
     const url = `${PINTEREST_URL}?action=image&model=flux?query=${encodeURIComponent(query)}`;
     const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
-    const tess = data.answer || data.result || data.response || data.message || data.image;
-    const images = (Array.isArray(tess) ? tess : [])
+    const images = (Array.isArray(data) ? data : [])
         .map(item => item.image || item.thumb)
         .filter(value => /^https?:\/\//i.test(value || ''))
         .slice(0, limit);
