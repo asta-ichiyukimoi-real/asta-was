@@ -24,7 +24,7 @@ You can reply with:
 
 You replied with: "${replyText}"
 
-This proves the reply system is working! 🎉`;
+This proves the reply system is working!,adding update too 🎉`;
 
         await sock.sendMessage(msg.key.remoteJid, { text: response }, { quoted: msg });
     }
