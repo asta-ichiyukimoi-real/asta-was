@@ -4,7 +4,7 @@ const state = require('../utils/stateManager');
 const { requestJson, friendlyApiError, getErrorMessage, isTimeout } = require('../utils/apiClient');
 const contextResolver = require('../utils/contextResolver');
 
-const AI_CHAT_URL = config.apis?.aiChat || 'https://omegatech-api.dixonomega.tech/api/ai/Chatbot?action=chat';
+const AI_CHAT_URL = config.apis?.aiChat || 'https://omegatech-api.dixonomega.tech/api/ai/Chatbot';
 const VISION_URL = config.apis?.aiVision || 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini';
 const PINTEREST_URL = config.apis?.pinterest || 'https://omegatech-api.dixonomega.tech/api/ai/Aicli';
 const CATBOX_UPLOAD_URL = config.apis?.catboxUpload || 'https://catbox.moe/user/api.php';
@@ -276,7 +276,7 @@ async function fetchJson(url, timeoutMs = 45000) {
     return requestJson(url, { timeoutMs, service: 'AI API' });
 }
 async function askOmegaChat(message, sessionId) {
-    const url = `${AI_CHAT_URL}&message=${encodeURIComponent(message)}&sessionId=${encodeURIComponent(sessionId)}&needSearch=true`;
+    const url = `${AI_CHAT_URL}?action=chat&message=${encodeURIComponent(message)}&sessionId=${encodeURIComponent(sessionId)}&needSearch=true`;
     const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
     const text = data.answer || data.result || data.response || data.message;
 
