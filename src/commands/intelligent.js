@@ -276,7 +276,7 @@ async function fetchJson(url, timeoutMs = 45000) {
     return requestJson(url, { timeoutMs, service: 'AI API' });
 }
 async function askOmegaChat(message, sessionId) {
-    const url = `${AI_CHAT_URL}?action=chat&message=${encodeURIComponent(message)}&sessionId=${encodeURIComponent(sessionId)}&needSearch=true`;
+    const url = `${AI_CHAT_URL}&message=${encodeURIComponent(message)}&sessionId=${encodeURIComponent(sessionId)}&needSearch=true`;
     const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
     const text = data.answer || data.result || data.response || data.message;
 
