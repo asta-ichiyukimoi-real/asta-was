@@ -163,8 +163,15 @@ function describeIncomingCommits(incomingCommits) {
 
 function inferCommitType(commit) {
     const subject = String(commit.subject || '').toLowerCase();
-    const statuses = new Set((commit.files || []).map(file => file.status));
+    const files = commit.files || [];
+    const statuses = new Set(files.map(file => file.status));
+    const paths = files.map(file => String(file.path || '').toLowerCase());
 
+    if (paths.some(file => /package(-lock)?\.json|node_modules|dependencies/.test(file))) return 'Dependency';
+    if (paths.some(file => /database|sqlite|models|migration|schema/.test(file))) return 'Database';
+    if (paths.some(file => /src\/commands|\\src\\commands/.test(file))) return 'Command';
+    if (paths.some(file => /media|sticker|image|video|audio/.test(file))) return 'Media';
+    if (paths.some(file => /config|\.env|settings/.test(file))) return 'Config';
     if (/fix|bug|error|crash|patch|repair/.test(subject)) return 'Fix';
     if (/security|vulnerability|auth|permission/.test(subject)) return 'Security';
     if (/config|setting|env/.test(subject)) return 'Config';
@@ -175,6 +182,21 @@ function inferCommitType(commit) {
     if (/doc|readme/.test(subject)) return 'Docs';
     if (statuses.has('M')) return 'Change';
     return 'Update';
+}
+
+function summarizeCommitTypes(commits) {
+    const counts = new Map();
+    for (const commit of commits || []) {
+        const type = inferCommitType(commit);
+        counts.set(type, (counts.get(type) || 0) + 1);
+    }
+
+    if (!counts.size) return 'Unknown';
+
+    return [...counts.entries()]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        .map(([type, count]) => `${type}: ${count}`)
+        .join(', ');
 }
 
 function formatCommitList(commits) {
@@ -634,6 +656,7 @@ async function sendUpdatePreview(sock, msg, info) {
             `Local: ${short(info.local)}`,
             `Remote HEAD: ${short(info.upstream)}`,
             `Updates: ${info.behind} commit(s)`,
+            `Types: ${summarizeCommitTypes(info.incomingCommitDetails)}`,
             `Local changes: ${info.dirty ? 'yes - they will be stashed and restored' : 'no'}`,
             '',
             '*Update list*',

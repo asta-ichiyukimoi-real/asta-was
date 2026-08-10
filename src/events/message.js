@@ -16,6 +16,8 @@ function getStats() {
 }
 
 const STARTUP_MESSAGE_GRACE_SECONDS = 300;
+const RECENT_MESSAGE_CACHE_LIMIT = 500;
+const recentMessages = new Map();
 
 function unwrapMessage(message) {
     let current = message || {};
@@ -52,9 +54,38 @@ function getReaction(msg) {
     return message.reactionMessage || null;
 }
 
+function messageCacheKey(key = {}) {
+    return [key.remoteJid || '', key.id || '', key.participant || ''].join('|');
+}
+
+function rememberMessage(msg) {
+    if (!msg?.key?.remoteJid || !msg.key.id) return;
+
+    const keys = [
+        messageCacheKey(msg.key),
+        messageCacheKey({ ...msg.key, participant: '' })
+    ];
+
+    keys.forEach((key) => {
+        recentMessages.set(key, msg);
+    });
+
+    while (recentMessages.size > RECENT_MESSAGE_CACHE_LIMIT) {
+        const oldestKey = recentMessages.keys().next().value;
+        recentMessages.delete(oldestKey);
+    }
+}
+
+function getRememberedMessage(key = {}) {
+    return recentMessages.get(messageCacheKey(key))
+        || recentMessages.get(messageCacheKey({ ...key, participant: '' }))
+        || null;
+}
+
 function normalizeReactionEvent(item) {
     const reaction = item?.reaction || item?.reactionMessage || item;
     if (!reaction?.key) return null;
+    const targetMessage = getRememberedMessage(reaction.key);
 
     const actorKey = item?.key || {
         remoteJid: reaction.key.remoteJid,
@@ -70,7 +101,8 @@ function normalizeReactionEvent(item) {
             },
             messageTimestamp: item?.messageTimestamp || item?.timestamp || Date.now()
         },
-        reaction
+        reaction,
+        targetMessage
     };
 }
 
@@ -368,10 +400,12 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
         try {
             const msg = m.messages[0];
             if (!msg || !isFreshMessage(msg, startupTimeSeconds)) return;
+            rememberMessage(msg);
 
             if (m.type === 'notify') {
                 const reaction = getReaction(msg);
                 if (reaction) {
+                    reaction.targetMessage = getRememberedMessage(reaction.key);
                     await dispatchReaction(sock, msg, reaction, commandHandler);
                     return;
                 }
@@ -472,9 +506,11 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
                     chatId: normalized.reaction.key?.remoteJid || normalized.msg.key?.remoteJid || null,
                     targetId: normalized.reaction.key?.id || null,
                     text: normalized.reaction.text || '',
-                    actor: normalized.msg.key?.participant || normalized.msg.key?.remoteJid || null
+                    actor: normalized.msg.key?.participant || normalized.msg.key?.remoteJid || null,
+                    targetCached: Boolean(normalized.targetMessage)
                 });
 
+                normalized.reaction.targetMessage = normalized.targetMessage;
                 await dispatchReaction(sock, normalized.msg, normalized.reaction, commandHandler);
             }
         } catch (error) {

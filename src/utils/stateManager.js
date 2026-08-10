@@ -57,6 +57,9 @@ const DEFAULT_STATE = {
     },
     logs: {
         recent: []
+    },
+    savedMessages: {
+        items: {}
     }
 };
 
@@ -456,6 +459,21 @@ function addRecentLog(entry) {
     return saveState(state).logs.recent[0];
 }
 
+function addSavedMessage(entry) {
+    const state = loadState();
+    state.savedMessages = state.savedMessages || { items: {} };
+    state.savedMessages.items = state.savedMessages.items || {};
+
+    const id = entry.id || `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    state.savedMessages.items[id] = {
+        ...entry,
+        id,
+        savedAt: entry.savedAt || new Date().toISOString()
+    };
+
+    return saveState(state).savedMessages.items[id];
+}
+
 module.exports = {
     getState,
     incrementCommandUsage,
@@ -493,5 +511,6 @@ module.exports = {
     setUserRole,
     hasRole,
     updateHealth,
-    addRecentLog
+    addRecentLog,
+    addSavedMessage
 };

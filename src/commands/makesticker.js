@@ -1,4 +1,5 @@
 const { findMediaMessage, downloadMediaToBuffer } = require('../utils/media');
+const { imageToStickerBuffer } = require('../utils/sticker');
 
 module.exports = {
     config: {
@@ -30,9 +31,10 @@ module.exports = {
             }, { quoted: msg });
 
             const imageBuffer = await downloadMediaToBuffer(media.message, media.kind);
+            const stickerBuffer = await imageToStickerBuffer(imageBuffer);
 
             await sock.sendMessage(chatId, {
-                sticker: imageBuffer
+                sticker: stickerBuffer
             }, { quoted: msg });
         } catch (error) {
             console.error('Sticker command error:', error);
