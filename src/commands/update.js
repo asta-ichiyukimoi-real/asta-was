@@ -849,7 +849,7 @@ module.exports = {
         }
     },
     onReaction: async (sock, msg, reaction) => {
-        const chatId = msg.key.remoteJid;
+        const chatId = reaction.key?.remoteJid || msg.key.remoteJid;
         const reactionText = String(reaction.text || '').trim();
         const approvalResult = getApprovalFromReaction(reaction);
 

@@ -52,6 +52,28 @@ function getReaction(msg) {
     return message.reactionMessage || null;
 }
 
+function normalizeReactionEvent(item) {
+    const reaction = item?.reaction || item?.reactionMessage || item;
+    if (!reaction?.key) return null;
+
+    const actorKey = item?.key || {
+        remoteJid: reaction.key.remoteJid,
+        participant: reaction.sender || reaction.participant || null,
+        fromMe: false
+    };
+
+    return {
+        msg: {
+            key: actorKey,
+            message: {
+                reactionMessage: reaction
+            },
+            messageTimestamp: item?.messageTimestamp || item?.timestamp || Date.now()
+        },
+        reaction
+    };
+}
+
 function getContextInfo(msg) {
     const message = unwrapMessage(msg.message);
     return message.extendedTextMessage?.contextInfo
@@ -435,6 +457,31 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
             }
         } catch (error) {
             logger.log('messages_upsert_error', { error: error.message, code: error.data || error.output?.statusCode });
+        }
+    });
+
+    sock.ev.on('messages.reaction', async (reactions) => {
+        try {
+            const items = Array.isArray(reactions) ? reactions : [reactions];
+
+            for (const item of items) {
+                const normalized = normalizeReactionEvent(item);
+                if (!normalized) continue;
+
+                logger.log('reaction_received', {
+                    chatId: normalized.reaction.key?.remoteJid || normalized.msg.key?.remoteJid || null,
+                    targetId: normalized.reaction.key?.id || null,
+                    text: normalized.reaction.text || '',
+                    actor: normalized.msg.key?.participant || normalized.msg.key?.remoteJid || null
+                });
+
+                await dispatchReaction(sock, normalized.msg, normalized.reaction, commandHandler);
+            }
+        } catch (error) {
+            logger.log('messages_reaction_error', {
+                error: error.message,
+                code: error.data || error.output?.statusCode
+            });
         }
     });
 
