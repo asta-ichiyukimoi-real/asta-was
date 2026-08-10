@@ -189,12 +189,21 @@ function rememberUpdateApproval(chatId, sender, info) {
     pendingUpdateApprovals.set(token, {
         chatId,
         sender,
+        messageId: null,
         branch: info.branch,
         local: info.local,
         upstream: info.upstream,
         createdAt: Date.now()
     });
     return token;
+}
+
+function registerApprovalMessage(token, sentMessage) {
+    const approval = pendingUpdateApprovals.get(token);
+    if (!approval) return;
+
+    approval.messageId = sentMessage?.key?.id || null;
+    pendingUpdateApprovals.set(token, approval);
 }
 
 function getApprovalFromQuotedMessage(msg) {
@@ -211,6 +220,33 @@ function getApprovalFromQuotedMessage(msg) {
     }
 
     return { token, approval };
+}
+
+function getApprovalFromReaction(reaction) {
+    const reactionMessageId = reaction?.key?.id;
+    const reactionChatId = reaction?.key?.remoteJid;
+    if (!reactionMessageId) return null;
+
+    for (const [token, approval] of pendingUpdateApprovals.entries()) {
+        if (Date.now() - approval.createdAt > UPDATE_APPROVAL_TTL_MS) {
+            pendingUpdateApprovals.delete(token);
+            continue;
+        }
+
+        if (approval.messageId === reactionMessageId && approval.chatId === reactionChatId) {
+            return { token, approval };
+        }
+    }
+
+    return null;
+}
+
+function isPositiveUpdateReaction(value) {
+    return ['✅', '👍', '☑️', '✔️', '🆙'].includes(String(value || '').trim());
+}
+
+function isCancelUpdateReaction(value) {
+    return ['❌', '👎', '✖️'].includes(String(value || '').trim());
 }
 
 function describeRemoteDiff(diff) {
@@ -523,7 +559,7 @@ async function sendUpdatePreview(sock, msg, info) {
         const hasDrift = remoteDiff.missing.length || remoteDiff.changed.length;
         const token = hasDrift ? rememberUpdateApproval(chatId, sender, info) : null;
 
-        await sock.sendMessage(chatId, {
+        const sent = await sock.sendMessage(chatId, {
             text: [
                 '*Updates Available*',
                 `Remote: ${remoteDiff.remote}`,
@@ -536,11 +572,13 @@ async function sendUpdatePreview(sock, msg, info) {
                 remoteDiff.missing.length ? `Files to create:\n${remoteDiff.missing.slice(0, 20).join('\n')}` : '',
                 remoteDiff.changed.length ? `Files to update:\n${remoteDiff.changed.slice(0, 20).join('\n')}` : '',
                 '',
-                hasDrift ? 'Reply to this message with yes, apply, or update to install these updates.' : 'No remote file updates found.',
+                hasDrift ? 'Reply yes/apply/update or react ✅ to install these updates.' : 'No remote file updates found.',
                 token ? `[UPDATE_TOKEN:${token}]` : '',
                 hasDrift ? '[REPLY_ID:update]' : ''
             ].filter(Boolean).join('\n').slice(0, 7000)
         }, { quoted: msg });
+
+        if (token) registerApprovalMessage(token, sent);
         return;
     }
 
@@ -552,7 +590,7 @@ async function sendUpdatePreview(sock, msg, info) {
     }
 
     const token = rememberUpdateApproval(chatId, sender, info);
-    await sock.sendMessage(chatId, {
+    const sent = await sock.sendMessage(chatId, {
         text: [
             '*Updates Available*',
             `Remote: ${info.remote}`,
@@ -565,11 +603,12 @@ async function sendUpdatePreview(sock, msg, info) {
             '*Update list*',
             ...formatCommitList(info.incomingCommitDetails),
             '',
-            'Reply to this message with yes, apply, or update to install these updates.',
+            'Reply yes/apply/update or react ✅ to install these updates.',
             `[UPDATE_TOKEN:${token}]`,
             '[REPLY_ID:update]'
         ].filter(Boolean).join('\n').slice(0, 7000)
     }, { quoted: msg });
+    registerApprovalMessage(token, sent);
 }
 
 async function applyUpdate(sock, msg, expectedApproval = null) {
@@ -771,6 +810,60 @@ module.exports = {
             await sock.sendMessage(chatId, {
                 text: `Update failed:\n${String(error.message || error).slice(0, 3000)}`
             }, { quoted: msg });
+        }
+    },
+    onReaction: async (sock, msg, reaction) => {
+        const chatId = msg.key.remoteJid;
+        const reactionText = String(reaction.text || '').trim();
+        const approvalResult = getApprovalFromReaction(reaction);
+
+        if (!approvalResult?.approval) return false;
+
+        try {
+            if (!reactionText) return true;
+
+            if (!isOwnerMessage(msg)) {
+                await sock.sendMessage(chatId, {
+                    text: 'Only the owner can approve updates by reaction.'
+                }, { quoted: msg });
+                return true;
+            }
+
+            const sender = msg.key.participant || msg.key.remoteJid;
+            if (approvalResult.approval.sender !== sender) {
+                await sock.sendMessage(chatId, {
+                    text: 'Only the same owner who requested this update preview can approve it.'
+                }, { quoted: msg });
+                return true;
+            }
+
+            if (isCancelUpdateReaction(reactionText)) {
+                pendingUpdateApprovals.delete(approvalResult.token);
+                await sock.sendMessage(chatId, {
+                    text: 'Update cancelled.'
+                }, { quoted: msg });
+                return true;
+            }
+
+            if (!isPositiveUpdateReaction(reactionText)) {
+                await sock.sendMessage(chatId, {
+                    text: 'React ✅ to install this update, or ❌ to cancel.'
+                }, { quoted: msg });
+                return true;
+            }
+
+            pendingUpdateApprovals.delete(approvalResult.token);
+            await sock.sendMessage(chatId, {
+                text: 'Approval reaction received. Applying update now...'
+            }, { quoted: msg });
+            await applyUpdate(sock, msg, approvalResult.approval);
+            return true;
+        } catch (error) {
+            console.error('Update reaction error:', error);
+            await sock.sendMessage(chatId, {
+                text: `Update failed:\n${String(error.message || error).slice(0, 3000)}`
+            }, { quoted: msg });
+            return true;
         }
     }
 };

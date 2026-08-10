@@ -47,6 +47,11 @@ function normalizeText(msg) {
         || '';
 }
 
+function getReaction(msg) {
+    const message = unwrapMessage(msg.message);
+    return message.reactionMessage || null;
+}
+
 function getContextInfo(msg) {
     const message = unwrapMessage(msg.message);
     return message.extendedTextMessage?.contextInfo
@@ -103,6 +108,27 @@ async function safeSendMessage(sock, jid, content, options, logType = 'send_mess
         });
         return false;
     }
+}
+
+async function dispatchReaction(sock, msg, reaction, commandHandler) {
+    if (!reaction?.key || !commandHandler?.commands) return false;
+
+    const uniqueCommands = new Set(commandHandler.commands.values());
+    for (const command of uniqueCommands) {
+        if (!command?.onReaction) continue;
+
+        try {
+            const handled = await command.onReaction(sock, msg, reaction);
+            if (handled) return true;
+        } catch (error) {
+            logger.log('reaction_command_error', {
+                command: command.config?.name || 'unknown',
+                error: error.message
+            });
+        }
+    }
+
+    return false;
 }
 
 async function getGroupMetadata(sock, groupId) {
@@ -322,6 +348,12 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
             if (!msg || !isFreshMessage(msg, startupTimeSeconds)) return;
 
             if (m.type === 'notify') {
+                const reaction = getReaction(msg);
+                if (reaction) {
+                    await dispatchReaction(sock, msg, reaction, commandHandler);
+                    return;
+                }
+
                 const text = normalizeText(msg);
                 if (!text) return;
 
