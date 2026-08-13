@@ -4,10 +4,10 @@ const state = require('../utils/stateManager');
 const { requestJson, friendlyApiError, getErrorMessage, isTimeout } = require('../utils/apiClient');
 const contextResolver = require('../utils/contextResolver');
 
-const AI_CHAT_URL = config.apis?.aiChat || 'https://omegatech-api.dixonomega.tech/api/ai/Chatbot';
-const VISION_URL = config.apis?.aiVision || 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini';
-const IMAGE_URL = config.apis?. || 'https://omegatech-api.dixonomega.tech/api/ai/Aicli';
-const CATBOX_UPLOAD_URL = config.apis?.catboxUpload || 'https://catbox.moe/user/api.php';
+const AI_CHAT_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Chatbot';
+const VISION_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini';
+const IMAGE_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Aicli';
+const CATBOX_UPLOAD_URL = 'https://catbox.moe/user/api.php';
 const LOCAL_TIME_ZONE = process.env.BOT_TIMEZONE || config.ai?.timezone || config.bot?.timezone || 'Africa/Lagos';
 const MAX__IMAGES = config.ai?.maxImages || config.media?.MaxImages || 8;
 const AI_REQUEST_TIMEOUT_MS = config.ai?.requestTimeoutMs || 45000;

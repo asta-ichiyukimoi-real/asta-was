@@ -293,11 +293,21 @@ function getApprovalFromReaction(reaction) {
 }
 
 function isPositiveUpdateReaction(value) {
-    return ['✅', '👍', '☑️', '✔️', '🆙'].includes(String(value || '').trim());
+    return [
+        '\u2705',
+        '\ud83d\udc4d',
+        '\u2611\ufe0f',
+        '\u2714\ufe0f',
+        '\ud83c\udd99'
+    ].includes(String(value || '').trim());
 }
 
 function isCancelUpdateReaction(value) {
-    return ['❌', '👎', '✖️'].includes(String(value || '').trim());
+    return [
+        '\u274c',
+        '\ud83d\udc4e',
+        '\u2716\ufe0f'
+    ].includes(String(value || '').trim());
 }
 
 function describeRemoteDiff(diff) {
@@ -906,7 +916,7 @@ module.exports = {
 
             if (!isPositiveUpdateReaction(reactionText)) {
                 await sock.sendMessage(chatId, {
-                    text: 'React ✅ to install this update, or ❌ to cancel.'
+                    text: 'React with a check mark to install this update, or X to cancel.'
                 }, { quoted: msg });
                 return true;
             }

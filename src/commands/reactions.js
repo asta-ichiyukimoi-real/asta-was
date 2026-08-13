@@ -14,6 +14,18 @@ function normalizeEmoji(value) {
     return String(value || '').trim();
 }
 
+function isDeleteReaction(emoji) {
+    return emoji === '\ud83d\uddd1\ufe0f';
+}
+
+function isStickerReaction(emoji) {
+    return emoji === '\ud83c\udfa8' || emoji === '\ud83d\uddbc\ufe0f';
+}
+
+function isSaveReaction(emoji) {
+    return emoji === '\u2b50';
+}
+
 function savedPreview(targetMessage) {
     const text = getMessageText(targetMessage);
     if (text) return text.slice(0, 500);
@@ -29,7 +41,7 @@ module.exports = {
         version: '1.0.0',
         description: 'Reaction shortcuts for bot actions',
         usage: 'react to messages',
-        examples: ['React 🗑️ to a bot message', 'React 🎨 to an image', 'React ⭐ to save'],
+        examples: ['React trash to a bot message', 'React art to an image', 'React star to save'],
         permissions: 0,
         cooldown: 0,
         category: 'utility'
@@ -39,9 +51,9 @@ module.exports = {
         await sock.sendMessage(msg.key.remoteJid, {
             text: [
                 '*Reaction Shortcuts*',
-                '🗑️ delete a bot message',
-                '🎨 make an image into a sticker',
-                '⭐ save a message to bot logs'
+                'Trash reaction: delete a bot message',
+                'Art reaction: make an image into a sticker',
+                'Star reaction: save a message to bot logs'
             ].join('\n')
         }, { quoted: msg });
     },
@@ -53,18 +65,19 @@ module.exports = {
 
         if (!emoji) return false;
 
-        if (emoji === '🗑️') {
-            if (!targetMessage?.key?.fromMe) return false;
+        if (isDeleteReaction(emoji)) {
+            const deleteKey = targetMessage?.key || reaction.key;
+            if (!deleteKey?.fromMe) return false;
             if (!isOwner(msg)) {
                 await sock.sendMessage(chatId, { text: 'Only the owner can delete bot messages by reaction.' }, { quoted: msg });
                 return true;
             }
 
-            await sock.sendMessage(chatId, { delete: targetMessage.key });
+            await sock.sendMessage(chatId, { delete: deleteKey });
             return true;
         }
 
-        if (emoji === '🎨' || emoji === '🖼️') {
+        if (isStickerReaction(emoji)) {
             if (!targetMessage) return false;
 
             const media = findMediaMessage(targetMessage, ['image']);
@@ -82,7 +95,7 @@ module.exports = {
             return true;
         }
 
-        if (emoji === '⭐') {
+        if (isSaveReaction(emoji)) {
             if (!targetMessage) return false;
 
             const saved = state.addSavedMessage({
