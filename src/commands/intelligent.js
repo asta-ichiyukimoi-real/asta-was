@@ -275,10 +275,36 @@ function isNetworkTimeout(error, message) {
 async function fetchJson(url, timeoutMs = 45000) {
     return requestJson(url, { timeoutMs, service: 'AI API' });
 }
+
+function pickText(source, fields) {
+    if (!source || typeof source !== 'object') return '';
+
+    for (const field of fields) {
+        const value = source[field];
+        if (typeof value === 'string' && value.trim()) return value.trim();
+    }
+
+    return '';
+}
+
+function extractChatReply(data) {
+    return pickText(data, ['reply', 'answer', 'result', 'response', 'text'])
+        || pickText(data?.data, ['reply', 'answer', 'result', 'response', 'text', 'message'])
+        || pickText(data?.result, ['reply', 'answer', 'response', 'text', 'message'])
+        || pickText(data?.output, ['reply', 'answer', 'response', 'text', 'message']);
+}
+
+function extractVisionReply(data) {
+    return pickText(data, ['answer', 'reply', 'result', 'response', 'text', 'message'])
+        || pickText(data?.data, ['answer', 'reply', 'result', 'response', 'text', 'message'])
+        || pickText(data?.result, ['answer', 'reply', 'response', 'text', 'message'])
+        || pickText(data?.output, ['answer', 'reply', 'response', 'text', 'message']);
+}
+
 async function askOmegaChat(message, sessionId) {
     const url = `${AI_CHAT_URL}?action=chat&message=${encodeURIComponent(message)}&sessionId=${encodeURIComponent(sessionId)}&needSearch=true`;
     const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
-    const text = data.reply;
+    const text = extractChatReply(data);
 
     if (!text) {
         throw new Error('No answer returned from AI.');
@@ -291,7 +317,7 @@ async function askOmegaVision(message, imageUrl, sessionId) {
     const visionSessionId = imageUrl || sessionId;
     const url = `${VISION_URL}?message=${encodeURIComponent(message)}&imageUrl=${encodeURIComponent(imageUrl)}&model=1&sessionId=${encodeURIComponent(visionSessionId)}`;
     const data = await fetchJson(url, AI_VISION_TIMEOUT_MS);
-    const text = data.answer || data.result || data.message;
+    const text = extractVisionReply(data);
 
     if (!text) {
         throw new Error('No vision answer returned from AI.');

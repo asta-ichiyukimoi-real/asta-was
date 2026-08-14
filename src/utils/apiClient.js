@@ -58,6 +58,10 @@ async function requestJson(url, options = {}) {
             });
             const data = await response.json().catch(() => null);
 
+            if (!data) {
+                throw new Error(`API returned an empty or invalid JSON response with status ${response.status}`);
+            }
+
             if (!response.ok || data?.success === false || data?.status === false) {
                 throw new Error(data?.message || data?.error || `API responded with status ${response.status}`);
             }
