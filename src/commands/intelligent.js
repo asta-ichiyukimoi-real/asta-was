@@ -1,7 +1,7 @@
 const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const config = require('../../config');
 const state = require('../utils/stateManager');
-const { requestJson, friendlyApiError, getErrorMessage, isTimeout } = require('../utils/apiClient');
+const { friendlyApiError, getErrorMessage, isTimeout } = require('../utils/apiClient');
 const contextResolver = require('../utils/contextResolver');
 
 const AI_CHAT_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Chatbot';
@@ -273,7 +273,31 @@ function isNetworkTimeout(error, message) {
 }
 
 async function fetchJson(url, timeoutMs = 45000) {
-    return requestJson(url, { timeoutMs, service: 'AI API' });
+    const response = await fetch(url, {
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+            Accept: 'application/json'
+        },
+        signal: AbortSignal.timeout(timeoutMs)
+    });
+    const body = await response.text();
+    let data = null;
+
+    try {
+        data = body ? JSON.parse(body) : null;
+    } catch {
+        throw new Error(`AI API returned invalid JSON with status ${response.status}: ${body.slice(0, 300) || 'empty body'}`);
+    }
+
+    if (!data || typeof data !== 'object') {
+        throw new Error(`AI API returned empty JSON with status ${response.status}: ${body.slice(0, 300) || 'empty body'}`);
+    }
+
+    if (!response.ok || data.success === false || data.status === false) {
+        throw new Error(data.message || data.error || `AI API responded with status ${response.status}`);
+    }
+
+    return data;
 }
 
 function pickText(source, fields) {
@@ -295,7 +319,9 @@ function extractChatReply(data) {
 }
 
 function describeResponseShape(data) {
-    if (!data || typeof data !== 'object') return typeof data;
+    if (data === null) return 'null';
+    if (data === undefined) return 'undefined';
+    if (typeof data !== 'object') return typeof data;
 
     const keys = Object.keys(data).slice(0, 12).join(', ') || 'none';
     const nested = ['data', 'result', 'output']
