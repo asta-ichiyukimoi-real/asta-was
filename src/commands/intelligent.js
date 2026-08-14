@@ -3,6 +3,7 @@ const config = require('../../config');
 const state = require('../utils/stateManager');
 const { friendlyApiError, getErrorMessage, isTimeout } = require('../utils/apiClient');
 const contextResolver = require('../utils/contextResolver');
+const logger = require('../utils/logger');
 
 const AI_CHAT_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Chatbot';
 const VISION_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini';
@@ -300,6 +301,14 @@ async function fetchJson(url, timeoutMs = 45000) {
     return data;
 }
 
+function safeJsonPreview(value, maxLength = 900) {
+    try {
+        return JSON.stringify(value, null, 2).slice(0, maxLength);
+    } catch {
+        return String(value).slice(0, maxLength);
+    }
+}
+
 function pickText(source, fields) {
     if (!source || typeof source !== 'object') return '';
 
@@ -332,6 +341,15 @@ function describeResponseShape(data) {
     return nested ? `${keys}; ${nested}` : keys;
 }
 
+function logEmptyAiReply(data, context = {}) {
+    logger.log('ai_empty_reply', {
+        ...context,
+        responseType: data === null ? 'null' : typeof data,
+        responseKeys: data && typeof data === 'object' ? Object.keys(data).slice(0, 20) : [],
+        responsePreview: safeJsonPreview(data, 1500)
+    });
+}
+
 function extractVisionReply(data) {
     return pickText(data, ['answer', 'reply', 'result', 'response', 'text', 'message'])
         || pickText(data?.data, ['answer', 'reply', 'result', 'response', 'text', 'message'])
@@ -345,12 +363,18 @@ async function askOmegaChat(message, sessionId, fallbackMessage = '') {
     const text = extractChatReply(data);
 
     if (!text) {
+        logEmptyAiReply(data, {
+            service: 'chat',
+            sessionId,
+            promptPreview: String(message || '').slice(0, 300)
+        });
+
         const fallback = String(fallbackMessage || '').trim();
         if (fallback && fallback !== message) {
             return askOmegaChat(fallback, sessionId);
         }
 
-        throw new Error(`No answer returned from AI. Response fields: ${describeResponseShape(data)}`);
+        throw new Error(`No answer returned from AI. Response fields: ${describeResponseShape(data)}. Preview: ${safeJsonPreview(data, 700)}`);
     }
 
     return String(text).trim();
