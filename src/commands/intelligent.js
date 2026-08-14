@@ -294,6 +294,18 @@ function extractChatReply(data) {
         || pickText(data?.output, ['reply', 'answer', 'response', 'text', 'message']);
 }
 
+function describeResponseShape(data) {
+    if (!data || typeof data !== 'object') return typeof data;
+
+    const keys = Object.keys(data).slice(0, 12).join(', ') || 'none';
+    const nested = ['data', 'result', 'output']
+        .filter(key => data[key] && typeof data[key] === 'object')
+        .map(key => `${key}: ${Object.keys(data[key]).slice(0, 8).join(', ') || 'none'}`)
+        .join('; ');
+
+    return nested ? `${keys}; ${nested}` : keys;
+}
+
 function extractVisionReply(data) {
     return pickText(data, ['answer', 'reply', 'result', 'response', 'text', 'message'])
         || pickText(data?.data, ['answer', 'reply', 'result', 'response', 'text', 'message'])
@@ -301,13 +313,18 @@ function extractVisionReply(data) {
         || pickText(data?.output, ['answer', 'reply', 'response', 'text', 'message']);
 }
 
-async function askOmegaChat(message, sessionId) {
+async function askOmegaChat(message, sessionId, fallbackMessage = '') {
     const url = `${AI_CHAT_URL}?action=chat&message=${encodeURIComponent(message)}&sessionId=${encodeURIComponent(sessionId)}&needSearch=true`;
     const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
     const text = extractChatReply(data);
 
     if (!text) {
-        throw new Error('No answer returned from AI.');
+        const fallback = String(fallbackMessage || '').trim();
+        if (fallback && fallback !== message) {
+            return askOmegaChat(fallback, sessionId);
+        }
+
+        throw new Error(`No answer returned from AI. Response fields: ${describeResponseShape(data)}`);
     }
 
     return String(text).trim();
@@ -569,7 +586,7 @@ async function runIntelligent(sock, msg, request) {
 
 
     const prompt = buildPromptWithMemory(msg, request.prompt);
-    const text = await askOmegaChat(prompt, sessionId);
+    const text = await askOmegaChat(prompt, sessionId, request.prompt);
     remember(msg, request.prompt, text);
     await sendText(sock, msg, 'AI', text);
     await sendPresence(sock, msg, 'paused');
