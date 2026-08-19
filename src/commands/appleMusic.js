@@ -476,6 +476,7 @@ async function showSearchResults(
 
     lines.push(
         'Reply with *1* or *2* to download.',
+        '[REPLY_ID:music]'
     );
 
     await sock.sendMessage(
