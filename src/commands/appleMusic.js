@@ -1,3 +1,5 @@
+const musicReplySessions = new Map();
+
 const config = require('../../config');
 const { friendlyApiError } = require('../utils/apiClient');
 
@@ -476,16 +478,31 @@ async function showSearchResults(
 
     lines.push(
         'Reply with *1* or *2* to download.',
+        '',
         '[REPLY_ID:music]'
     );
 
-    await sock.sendMessage(
-        msg.key.remoteJid,
-        {
-            text: lines.join('\n')
-        },
-        { quoted: msg }
-    );
+    const sentMessage = await sock.sendMessage(
+    msg.key.remoteJid,
+    {
+        text: lines.join('\n')
+    },
+    { quoted: msg }
+);
+
+// Store the query against the actual WhatsApp message ID
+musicReplySessions.set(
+    sentMessage.key.id,
+    {
+        query,
+        results
+    }
+);
+
+// Automatically clean it after 10 minutes
+setTimeout(() => {
+    musicReplySessions.delete(sentMessage.key.id);
+}, 10 * 60 * 1000);
 }
 
 
@@ -664,73 +681,85 @@ module.exports = {
     },
 
 
-    onReply: async (
-        sock,
-        msg,
-        replyText
-    ) => {
-        const context =
-            readMusicContext(msg);
+    onReply: async (sock, msg, replyText) => {
+    try {
+        const answer = String(replyText || '').trim();
+        const choice = Number(answer);
 
-        const answer =
-            String(replyText || '').trim();
-
-        try {
-            if (context.step !== 'result') {
-                await sock.sendMessage(
-                    msg.key.remoteJid,
-                    {
-                        text:
-                            'Start again with:\n' +
-                            '.music <song name>'
-                    },
-                    { quoted: msg }
-                );
-
-                return;
-            }
-
-            const choice =
-                Number(answer);
-
-            if (
-                !Number.isInteger(choice) ||
-                choice < 1 ||
-                choice > SEARCH_LIMIT
-            ) {
-                await sock.sendMessage(
-                    msg.key.remoteJid,
-                    {
-                        text:
-                            '❌ Reply with *1* or *2*.'
-                    },
-                    { quoted: msg }
-                );
-
-                return;
-            }
-
-            const selected =
-                context.results[choice - 1];
-
-            if (!selected?.url) {
-                throw new Error(
-                    'Selected song is unavailable.'
-                );
-            }
-
-            await sendMusic(
-                sock,
-                msg,
-                selected
+        if (!Number.isInteger(choice) || choice < 1 || choice > 2) {
+            await sock.sendMessage(
+                msg.key.remoteJid,
+                {
+                    text: '❌ Reply with *1* or *2*.'
+                },
+                { quoted: msg }
             );
 
-        } catch (error) {
-            await handleMusicError(
-                sock,
-                msg,
-                error
+            return;
+        }
+
+        const contextInfo = getContextInfo(msg);
+
+        const quotedMessageId =
+            contextInfo?.stanzaId;
+
+        if (!quotedMessageId) {
+            await sock.sendMessage(
+                msg.key.remoteJid,
+                {
+                    text:
+                        '❌ I could not identify the music search. ' +
+                        'Please search again with `.music <song name>`.'
+                },
+                { quoted: msg }
+            );
+
+            return;
+        }
+
+        const session =
+            musicReplySessions.get(quotedMessageId);
+
+        if (!session) {
+            await sock.sendMessage(
+                msg.key.remoteJid,
+                {
+                    text:
+                        '⌛ This music search has expired.\n\n' +
+                        'Please search again with:\n' +
+                        '`.music <song name>`'
+                },
+                { quoted: msg }
+            );
+
+            return;
+        }
+
+        const selected =
+            session.results[choice - 1];
+
+        if (!selected?.url) {
+            throw new Error(
+                'The selected music result is unavailable.'
             );
         }
+
+        musicReplySessions.delete(
+            quotedMessageId
+        );
+
+        await sendMusic(
+            sock,
+            msg,
+            selected
+        );
+
+    } catch (error) {
+        await handleMusicError(
+            sock,
+            msg,
+            error
+        );
     }
+}
 };
