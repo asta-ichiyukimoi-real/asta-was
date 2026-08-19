@@ -9,9 +9,6 @@ const SEARCH_LIMIT = 2;
 const TIMEOUT_MS = 60000;
 
 
-/**
- * Unwrap WhatsApp messages.
- */
 function unwrapMessage(message) {
     let current = message || {};
 
@@ -60,9 +57,6 @@ function getQuotedText(msg) {
 }
 
 
-/**
- * Read our reply markers.
- */
 function marker(text, name) {
     const match = String(text || '').match(
         new RegExp(`\\[MUSIC_${name}:([^\\]]*)\\]`, 'i')
@@ -75,26 +69,31 @@ function marker(text, name) {
 function readMusicContext(msg) {
     const quotedText = getQuotedText(msg);
 
-    const rawQuery = marker(quotedText, 'QUERY');
-
     return {
         step: marker(quotedText, 'STEP').toLowerCase(),
 
-        query: rawQuery
-            ? decodeURIComponent(rawQuery)
-            : '',
+        query: decodeURIComponent(
+            marker(quotedText, 'QUERY') || ''
+        ),
 
         results: [
             {
                 url: decodeURIComponent(
                     marker(quotedText, 'URL1') || ''
                 ),
+
                 title: decodeURIComponent(
                     marker(quotedText, 'TITLE1') || ''
                 ),
+
                 artist: decodeURIComponent(
                     marker(quotedText, 'ARTIST1') || ''
                 ),
+
+                cover: decodeURIComponent(
+                    marker(quotedText, 'COVER1') || ''
+                ),
+
                 explicit:
                     marker(quotedText, 'EXPLICIT1') === 'true'
             },
@@ -103,12 +102,19 @@ function readMusicContext(msg) {
                 url: decodeURIComponent(
                     marker(quotedText, 'URL2') || ''
                 ),
+
                 title: decodeURIComponent(
                     marker(quotedText, 'TITLE2') || ''
                 ),
+
                 artist: decodeURIComponent(
                     marker(quotedText, 'ARTIST2') || ''
                 ),
+
+                cover: decodeURIComponent(
+                    marker(quotedText, 'COVER2') || ''
+                ),
+
                 explicit:
                     marker(quotedText, 'EXPLICIT2') === 'true'
             }
@@ -117,34 +123,28 @@ function readMusicContext(msg) {
 }
 
 
-/**
- * Generic fetch helper for this API.
- *
- * We intentionally DON'T use requestJson() because the API
- * sometimes returns HTTP 200 with unusual/empty bodies.
- */
-async function fetchApiJson(url) {
+async function fetchJson(url) {
     const controller = new AbortController();
 
-    const timeout = setTimeout(() => {
-        controller.abort();
-    }, TIMEOUT_MS);
+    const timeout = setTimeout(
+        () => controller.abort(),
+        TIMEOUT_MS
+    );
 
     try {
         const response = await fetch(url, {
             method: 'GET',
+
             headers: {
                 Accept: 'application/json',
-                'User-Agent': 'Mozilla/5.0'
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
             },
+
             signal: controller.signal
         });
 
         const text = await response.text();
-
-        console.log(
-            `[AppleMusic] HTTP ${response.status} ${response.statusText}`
-        );
 
         if (!response.ok) {
             throw new Error(
@@ -152,19 +152,17 @@ async function fetchApiJson(url) {
             );
         }
 
-        if (!text || !text.trim()) {
+        if (!text.trim()) {
             throw new Error(
-                'Apple Music API returned HTTP 200 but an empty response.'
+                'Apple Music API returned an empty response.'
             );
         }
 
-        let data;
-
         try {
-            data = JSON.parse(text);
-        } catch (error) {
+            return JSON.parse(text);
+        } catch {
             console.error(
-                '[AppleMusic] Invalid JSON response:',
+                '[AppleMusic] Invalid JSON:',
                 text.slice(0, 500)
             );
 
@@ -173,41 +171,31 @@ async function fetchApiJson(url) {
             );
         }
 
-        return data;
-
     } finally {
         clearTimeout(timeout);
     }
 }
 
 
-/**
- * Search Apple Music.
- */
 async function searchMusic(query) {
     const url =
-        `${API_URL}` +
-        `?action=search` +
+        `${API_URL}?action=search` +
         `&query=${encodeURIComponent(query)}` +
         `&limit=${SEARCH_LIMIT}`;
 
-    console.log('[AppleMusic] Search URL:', url);
+    console.log(
+        '[AppleMusic] Searching:',
+        url
+    );
 
-    const response = await fetchApiJson(url);
+    const response = await fetchJson(url);
 
     if (
-        !response ||
-        response.success !== true ||
-        !response.data ||
-        !Array.isArray(response.data.results)
+        !response?.success ||
+        !Array.isArray(response?.data?.results)
     ) {
-        console.error(
-            '[AppleMusic] Unexpected search response:',
-            JSON.stringify(response)
-        );
-
         throw new Error(
-            'Apple Music returned an unexpected search response.'
+            'Invalid Apple Music search response.'
         );
     }
 
@@ -215,15 +203,7 @@ async function searchMusic(query) {
 }
 
 
-/**
- * Build the download endpoint.
- *
- * IMPORTANT:
- * We don't request this ourselves.
- *
- * This URL is passed directly to Baileys as the audio source.
- */
-function getDownloadUrl(appleMusicUrl) {
+function getDownloadApiUrl(appleMusicUrl) {
     return (
         `${API_URL}` +
         `?action=download` +
@@ -231,10 +211,222 @@ function getDownloadUrl(appleMusicUrl) {
     );
 }
 
+async function downloadAudio(appleMusicUrl) {
+    const apiUrl =
+        getDownloadApiUrl(appleMusicUrl);
 
-/**
- * Safe MP3 filename.
- */
+    console.log(
+        '[AppleMusic] Download API:',
+        apiUrl
+    );
+
+    const controller = new AbortController();
+
+    const timeout = setTimeout(
+        () => controller.abort(),
+        TIMEOUT_MS
+    );
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'GET',
+
+            headers: {
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                Accept:
+                    'audio/mpeg,audio/*,*/*'
+            },
+
+            redirect: 'follow',
+
+            signal: controller.signal
+        });
+
+        console.log(
+            '[AppleMusic] Download status:',
+            response.status
+        );
+
+        console.log(
+            '[AppleMusic] Final URL:',
+            response.url
+        );
+
+        console.log(
+            '[AppleMusic] Content-Type:',
+            response.headers.get('content-type')
+        );
+
+        if (!response.ok) {
+            throw new Error(
+                `Music download failed with HTTP ${response.status}.`
+            );
+        }
+
+        const contentType =
+            response.headers.get('content-type') || '';
+
+        if (
+            contentType.includes('application/json') ||
+            contentType.includes('text/html')
+        ) {
+            const text = await response.text();
+
+            console.error(
+                '[AppleMusic] Download endpoint returned:',
+                text.slice(0, 1000)
+            );
+
+            try {
+                const json = JSON.parse(text);
+
+                const realUrl =
+                    json?.data?.downloadUrl ||
+                    json?.downloadUrl;
+
+                if (realUrl) {
+                    console.log(
+                        '[AppleMusic] Found real download URL:',
+                        realUrl
+                    );
+
+                    return downloadDirectAudio(realUrl);
+                }
+            } catch {
+ 
+            }
+
+            throw new Error(
+                'Apple Music download endpoint did not return audio.'
+            );
+        }
+
+        const arrayBuffer =
+            await response.arrayBuffer();
+
+        const buffer =
+            Buffer.from(arrayBuffer);
+
+        if (!buffer.length) {
+            throw new Error(
+                'Apple Music returned an empty audio file.'
+            );
+        }
+
+        console.log(
+            '[AppleMusic] Audio size:',
+            buffer.length,
+            'bytes'
+        );
+
+
+        const isId3 =
+            buffer.length >= 3 &&
+            buffer.toString(
+                'ascii',
+                0,
+                3
+            ) === 'ID3';
+
+        const firstByte =
+            buffer.length > 0
+                ? buffer[0]
+                : 0;
+
+        const secondByte =
+            buffer.length > 1
+                ? buffer[1]
+                : 0;
+
+        const isMpegFrame =
+            firstByte === 0xff &&
+            (secondByte & 0xe0) === 0xe0;
+
+        if (!isId3 && !isMpegFrame) {
+            console.warn(
+                '[AppleMusic] File does not look like a normal MP3.'
+            );
+        }
+
+        return buffer;
+
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+
+async function downloadDirectAudio(url) {
+    console.log(
+        '[AppleMusic] Fetching final audio URL:',
+        url
+    );
+
+    const controller = new AbortController();
+
+    const timeout = setTimeout(
+        () => controller.abort(),
+        TIMEOUT_MS
+    );
+
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+
+            headers: {
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                Accept:
+                    'audio/mpeg,audio/*,*/*'
+            },
+
+            redirect: 'follow',
+
+            signal: controller.signal
+        });
+
+        if (!response.ok) {
+            throw new Error(
+                `Final audio URL returned HTTP ${response.status}.`
+            );
+        }
+
+        const contentType =
+            response.headers.get('content-type') || '';
+
+        console.log(
+            '[AppleMusic] Final content type:',
+            contentType
+        );
+
+        const arrayBuffer =
+            await response.arrayBuffer();
+
+        const buffer =
+            Buffer.from(arrayBuffer);
+
+        if (!buffer.length) {
+            throw new Error(
+                'Final audio URL returned an empty file.'
+            );
+        }
+
+        console.log(
+            '[AppleMusic] Final audio size:',
+            buffer.length,
+            'bytes'
+        );
+
+        return buffer;
+
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+
+
 function safeFileName(title, artist) {
     const cleanTitle = String(title || 'music')
         .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
@@ -254,24 +446,27 @@ function safeFileName(title, artist) {
 }
 
 
-/**
- * Show search results.
- */
-async function showSearchResults(sock, msg, query, results) {
+
+async function showSearchResults(
+    sock,
+    msg,
+    query,
+    results
+) {
     const first = results[0] || {};
     const second = results[1] || {};
 
     const lines = [
         '🎵 *Apple Music Search*',
         '',
-        `🔎 Search: *${query}*`,
+        `🔎 *${query}*`,
         ''
     ];
 
     results.forEach((track, index) => {
         lines.push(
-            `*${index + 1}. ${track.title || 'Unknown title'}*`,
-            `👤 ${track.artist || 'Unknown artist'}`,
+            `*${index + 1}. ${track.title || 'Unknown'}*`,
+            `👤 ${track.artist || 'Unknown Artist'}`,
             track.explicit
                 ? '🔞 Explicit'
                 : '🟢 Clean',
@@ -281,41 +476,7 @@ async function showSearchResults(sock, msg, query, results) {
 
     lines.push(
         'Reply with *1* or *2* to download.',
-        '',
-        '[REPLY_ID:music]',
-        '[MUSIC_STEP:result]',
-        `[MUSIC_QUERY:${encodeURIComponent(query)}]`,
-
-        `[MUSIC_URL1:${encodeURIComponent(first.url || '')}]`,
-        `[MUSIC_TITLE1:${encodeURIComponent(first.title || '')}]`,
-        `[MUSIC_ARTIST1:${encodeURIComponent(first.artist || '')}]`,
-        `[MUSIC_EXPLICIT1:${first.explicit ? 'true' : 'false'}]`,
-
-        `[MUSIC_URL2:${encodeURIComponent(second.url || '')}]`,
-        `[MUSIC_TITLE2:${encodeURIComponent(second.title || '')}]`,
-        `[MUSIC_ARTIST2:${encodeURIComponent(second.artist || '')}]`,
-        `[MUSIC_EXPLICIT2:${second.explicit ? 'true' : 'false'}]`
     );
-
-    /*
-     * Send cover image when available.
-     *
-     * This makes the search result look nicer.
-     */
-    if (first.cover) {
-        await sock.sendMessage(
-            msg.key.remoteJid,
-            {
-                image: {
-                    url: first.cover
-                },
-                caption: lines.join('\n')
-            },
-            { quoted: msg }
-        );
-
-        return;
-    }
 
     await sock.sendMessage(
         msg.key.remoteJid,
@@ -327,81 +488,65 @@ async function showSearchResults(sock, msg, query, results) {
 }
 
 
-/**
- * Download/send selected song.
- */
 async function sendMusic(sock, msg, track) {
-    if (!track?.url) {
+    const title =
+        track.title || 'Music';
+
+    const artist =
+        track.artist || 'Unknown Artist';
+
+    if (!track.url) {
         throw new Error(
-            'The selected song does not have a valid Apple Music URL.'
+            'Selected track has no Apple Music URL.'
         );
     }
-
-    const title = track.title || 'Music';
-    const artist = track.artist || 'Unknown Artist';
-
-    /*
-     * This is the important part.
-     *
-     * The endpoint itself is used as the audio source.
-     */
-    const downloadUrl = getDownloadUrl(track.url);
-
-    const fileName = safeFileName(
-        title,
-        artist
-    );
-
-    console.log(
-        '[AppleMusic] Download URL:',
-        downloadUrl
-    );
-
-    try {
-        await sock.sendPresenceUpdate(
-            'recording',
-            msg.key.remoteJid
-        );
-    } catch {}
 
     await sock.sendMessage(
         msg.key.remoteJid,
         {
             text:
-                `⬇️ *Downloading Music...*\n\n` +
-                `🎵 *${title}*\n` +
+                `⬇️ *Downloading...*\n\n` +
+                `🎵 ${title}\n` +
                 `👤 ${artist}`
         },
         { quoted: msg }
     );
 
-    /*
-     * Do NOT use requestJson() here.
-     *
-     * Baileys fetches the actual audio from this URL.
-     */
+    try {
+        await sock.sendPresenceUpdate(
+            'uploading',
+            msg.key.remoteJid
+        );
+    } catch {}
+
+    const audioBuffer =
+        await downloadAudio(track.url);
+
+    const fileName =
+        safeFileName(title, artist);
+
+    console.log(
+        `[AppleMusic] Sending ${fileName} ` +
+        `(${audioBuffer.length} bytes)`
+    );
+
     await sock.sendMessage(
         msg.key.remoteJid,
         {
-            audio: {
-                url: downloadUrl
-            },
-
+            audio: audioBuffer,
             mimetype: 'audio/mpeg',
-
             fileName,
-
             ptt: false
         },
         { quoted: msg }
     );
 }
 
-
-/**
- * Error handler.
- */
-async function handleMusicError(sock, msg, error) {
+async function handleMusicError(
+    sock,
+    msg,
+    error
+) {
     console.error(
         'Music command error:',
         error
@@ -417,7 +562,7 @@ async function handleMusicError(sock, msg, error) {
     } catch {
         message =
             error?.message ||
-            'Something went wrong while processing the music.';
+            'Failed to download the music.';
     }
 
     await sock.sendMessage(
@@ -439,7 +584,7 @@ module.exports = {
             'itunes'
         ],
 
-        version: '3.0.0',
+        version: '4.0.0',
 
         description:
             'Search and download music from Apple Music',
@@ -460,11 +605,13 @@ module.exports = {
     },
 
 
-    /**
-     * .music faded
-     */
-    onRun: async (sock, msg, args) => {
-        const query = args.join(' ').trim();
+    onRun: async (
+        sock,
+        msg,
+        args
+    ) => {
+        const query =
+            args.join(' ').trim();
 
         if (!query) {
             await sock.sendMessage(
@@ -474,7 +621,7 @@ module.exports = {
                         '🎵 *Music Command*\n\n' +
                         'Send a song name.\n\n' +
                         'Example:\n' +
-                        '*.music faded*'
+                        '.music faded'
                 },
                 { quoted: msg }
             );
@@ -483,7 +630,8 @@ module.exports = {
         }
 
         try {
-            const results = await searchMusic(query);
+            const results =
+                await searchMusic(query);
 
             if (!results.length) {
                 await sock.sendMessage(
@@ -515,12 +663,16 @@ module.exports = {
     },
 
 
-    /**
-     * Handle user's 1 / 2 selection.
-     */
-    onReply: async (sock, msg, replyText) => {
-        const context = readMusicContext(msg);
-        const answer = String(replyText || '').trim();
+    onReply: async (
+        sock,
+        msg,
+        replyText
+    ) => {
+        const context =
+            readMusicContext(msg);
+
+        const answer =
+            String(replyText || '').trim();
 
         try {
             if (context.step !== 'result') {
@@ -528,8 +680,8 @@ module.exports = {
                     msg.key.remoteJid,
                     {
                         text:
-                            'Please start again with:\n' +
-                            '*.music <song name>*'
+                            'Start again with:\n' +
+                            '.music <song name>'
                     },
                     { quoted: msg }
                 );
@@ -537,7 +689,8 @@ module.exports = {
                 return;
             }
 
-            const choice = Number(answer);
+            const choice =
+                Number(answer);
 
             if (
                 !Number.isInteger(choice) ||
@@ -548,8 +701,7 @@ module.exports = {
                     msg.key.remoteJid,
                     {
                         text:
-                            '❌ Invalid choice.\n\n' +
-                            'Reply with *1* or *2*.'
+                            '❌ Reply with *1* or *2*.'
                     },
                     { quoted: msg }
                 );
@@ -561,17 +713,9 @@ module.exports = {
                 context.results[choice - 1];
 
             if (!selected?.url) {
-                await sock.sendMessage(
-                    msg.key.remoteJid,
-                    {
-                        text:
-                            '❌ That result is unavailable. ' +
-                            'Please search again.'
-                    },
-                    { quoted: msg }
+                throw new Error(
+                    'Selected song is unavailable.'
                 );
-
-                return;
             }
 
             await sendMusic(
