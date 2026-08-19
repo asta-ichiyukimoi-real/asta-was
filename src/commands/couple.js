@@ -69,9 +69,8 @@ module.exports = {
         name: 'couple',
 
         aliases: [
-            'couplepp',
-            'couplepic',
-            'couplepics'
+            'cpp',
+            'cpic',
         ],
 
         version: '1.0.0',
