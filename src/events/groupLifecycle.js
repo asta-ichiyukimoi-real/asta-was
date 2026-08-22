@@ -1,6 +1,7 @@
 const config = require('../../config');
 const state = require('../utils/stateManager');
 const logger = require('../utils/logger');
+const groupApproval = require('../utils/groupApproval');
 
 function normalizeJid(value) {
     if (!value || typeof value !== 'string') return '';
@@ -92,9 +93,10 @@ async function handleBotGroupLifecycle(sock, configCommandHandler, groupId, even
     });
 
     if (eventType === 'added') {
-        await safeSendMessage(sock, groupId, {
-            text: `Thanks for adding me to this group, ${groupName}. I’m ready to help whenever you need me.`
-        }, undefined, 'bot_added_welcome_error');
+        await groupApproval.markPendingAndSchedule(sock, groupId, {
+            groupName,
+            addedBy
+        }, configCommandHandler);
 
         const payload = {
             text: `Asta Bot joined a group\n` +
@@ -160,6 +162,7 @@ module.exports = (sock, options = {}) => {
             startupMembersByGroup = snapshot;
             startupSnapshotReady = true;
         });
+        groupApproval.scheduleStoredPendingGroups(sock);
     });
 
     sock.ev.on('group-participants.update', async (update) => {

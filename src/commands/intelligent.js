@@ -115,6 +115,15 @@ function looksLikeCapabilityRequest(text) {
     return /\b(what can you do|your features|your abilities|what are you able to do|what do you do)\b/i.test(text || '');
 }
 
+function looksLikeSearchRequest(text) {
+    const value = String(text || '').trim();
+    if (!value) return false;
+
+    return /\b(search|look up|lookup|google|browse|web search|find online|latest|recent|today|current|news|update|price|weather|score|schedule|who won|release date|202[0-9])\b/i.test(value)
+        || /\b(source|sources|link|links|website|websites)\b/i.test(value)
+        || /^\s*(what happened|what is happening|is .* still|are .* still)\b/i.test(value);
+}
+
 
 function answerDateTime(text) {
     const now = new Date();
@@ -357,8 +366,8 @@ function extractVisionReply(data) {
         || pickText(data?.output, ['answer', 'reply', 'response', 'text', 'message']);
 }
 
-async function askOmegaChat(message, sessionId, fallbackMessage = '') {
-    const url = `${AI_CHAT_URL}?action=chat&message=${encodeURIComponent(message)}&sessionId=${encodeURIComponent(sessionId)}&needSearch=true`;
+async function askOmegaChat(message, sessionId, fallbackMessage = '', needSearch = false) {
+    const url = `${AI_CHAT_URL}?action=chat&message=${encodeURIComponent(message)}&sessionId=${encodeURIComponent(sessionId)}&needSearch=${needSearch ? 'true' : 'false'}`;
     const data = await fetchJson(url, AI_REQUEST_TIMEOUT_MS);
     const text = extractChatReply(data);
 
@@ -371,7 +380,7 @@ async function askOmegaChat(message, sessionId, fallbackMessage = '') {
 
         const fallback = String(fallbackMessage || '').trim();
         if (fallback && fallback !== message) {
-            return askOmegaChat(fallback, sessionId);
+            return askOmegaChat(fallback, sessionId, '', needSearch);
         }
 
         throw new Error(`No answer returned from AI. Response fields: ${describeResponseShape(data)}. Preview: ${safeJsonPreview(data, 700)}`);
@@ -635,8 +644,9 @@ async function runIntelligent(sock, msg, request) {
 
 
 
+    const needSearch = looksLikeSearchRequest(request.prompt);
     const prompt = buildPromptWithMemory(msg, request.prompt);
-    const text = await askOmegaChat(prompt, sessionId, request.prompt);
+    const text = await askOmegaChat(prompt, sessionId, request.prompt, needSearch);
     remember(msg, request.prompt, text);
     await sendText(sock, msg, 'AI', text);
     await sendPresence(sock, msg, 'paused');

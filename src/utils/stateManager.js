@@ -60,6 +60,10 @@ const DEFAULT_STATE = {
     },
     savedMessages: {
         items: {}
+    },
+    groupApprovals: {
+        approved: {},
+        pending: {}
     }
 };
 
@@ -474,6 +478,81 @@ function addSavedMessage(entry) {
     return saveState(state).savedMessages.items[id];
 }
 
+function approveGroup(groupId, approvedBy = null) {
+    const state = loadState();
+    state.groupApprovals = state.groupApprovals || { approved: {}, pending: {} };
+    state.groupApprovals.approved = state.groupApprovals.approved || {};
+    state.groupApprovals.pending = state.groupApprovals.pending || {};
+
+    state.groupApprovals.approved[groupId] = {
+        approvedBy,
+        approvedAt: new Date().toISOString()
+    };
+    delete state.groupApprovals.pending[groupId];
+
+    return saveState(state).groupApprovals.approved[groupId];
+}
+
+function unapproveGroup(groupId) {
+    const state = loadState();
+    state.groupApprovals = state.groupApprovals || { approved: {}, pending: {} };
+    state.groupApprovals.approved = state.groupApprovals.approved || {};
+    state.groupApprovals.pending = state.groupApprovals.pending || {};
+
+    delete state.groupApprovals.approved[groupId];
+    delete state.groupApprovals.pending[groupId];
+
+    return saveState(state);
+}
+
+function isGroupApproved(groupId) {
+    if (!String(groupId || '').endsWith('@g.us')) return true;
+    const state = loadState();
+    return Boolean(state.groupApprovals?.approved?.[groupId]);
+}
+
+function markGroupApprovalPending(groupId, details = {}) {
+    const state = loadState();
+    state.groupApprovals = state.groupApprovals || { approved: {}, pending: {} };
+    state.groupApprovals.approved = state.groupApprovals.approved || {};
+    state.groupApprovals.pending = state.groupApprovals.pending || {};
+
+    if (state.groupApprovals.approved[groupId]) {
+        delete state.groupApprovals.pending[groupId];
+        return saveState(state).groupApprovals.approved[groupId];
+    }
+
+    const now = Date.now();
+    const current = state.groupApprovals.pending[groupId] || {};
+    state.groupApprovals.pending[groupId] = {
+        groupId,
+        groupName: details.groupName || current.groupName || null,
+        addedBy: details.addedBy || current.addedBy || null,
+        addedAt: current.addedAt || new Date(now).toISOString(),
+        leaveAt: current.leaveAt || new Date(now + (details.leaveAfterMs || 30 * 60 * 1000)).toISOString()
+    };
+
+    return saveState(state).groupApprovals.pending[groupId];
+}
+
+function clearGroupApprovalPending(groupId) {
+    const state = loadState();
+    state.groupApprovals = state.groupApprovals || { approved: {}, pending: {} };
+    state.groupApprovals.pending = state.groupApprovals.pending || {};
+    delete state.groupApprovals.pending[groupId];
+    return saveState(state);
+}
+
+function getPendingGroupApprovals() {
+    const state = loadState();
+    return Object.values(state.groupApprovals?.pending || {});
+}
+
+function getApprovedGroups() {
+    const state = loadState();
+    return state.groupApprovals?.approved || {};
+}
+
 module.exports = {
     getState,
     incrementCommandUsage,
@@ -512,5 +591,12 @@ module.exports = {
     hasRole,
     updateHealth,
     addRecentLog,
-    addSavedMessage
+    addSavedMessage,
+    approveGroup,
+    unapproveGroup,
+    isGroupApproved,
+    markGroupApprovalPending,
+    clearGroupApprovalPending,
+    getPendingGroupApprovals,
+    getApprovedGroups
 };

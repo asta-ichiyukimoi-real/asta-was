@@ -1,6 +1,7 @@
 const config = require('../../config');
 const state = require('../utils/stateManager');
 const logger = require('../utils/logger');
+const groupApproval = require('../utils/groupApproval');
 
 // Lazy load stats to avoid circular dependencies
 let statsManager = null;
@@ -412,6 +413,9 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
 
                 const text = normalizeText(msg);
                 if (!text) return;
+
+                const unapprovedGroupBlocked = await groupApproval.blockIfUnapproved(sock, msg, text, configCommandHandler);
+                if (unapprovedGroupBlocked) return;
 
                 if (!msg.key.fromMe) {
                     const moderated = await applyModeration(sock, msg, text, configCommandHandler);
