@@ -17,8 +17,15 @@ function senderIsBotAdmin(msg) {
     return Boolean(handler?.isOwner?.(sender, msg) || handler?.isAdmin?.(sender));
 }
 
+function getPendingGroupApprovals() {
+    if (typeof state.getPendingGroupApprovals === 'function') {
+        return state.getPendingGroupApprovals();
+    }
+
+    return Object.values(state.getState?.().groupApprovals?.pending || {});
+}
 function getPendingGroups() {
-    return state.getPendingGroupApprovals()
+    return getPendingGroupApprovals()
         .filter(item => item?.groupId)
         .sort((a, b) => {
             const left = Date.parse(a.addedAt || '') || 0;

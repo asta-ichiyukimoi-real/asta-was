@@ -11,6 +11,21 @@ function senderIsBotAdmin(msg) {
     return (handler?.isOwner?.(sender, msg) || handler?.isAdmin?.(sender));
 }
 
+function getApprovedGroups() {
+    if (typeof state.getApprovedGroups === 'function') {
+        return state.getApprovedGroups();
+    }
+
+    return state.getState?.().groupApprovals?.approved || {};
+}
+
+function getPendingGroupApprovals() {
+    if (typeof state.getPendingGroupApprovals === 'function') {
+        return state.getPendingGroupApprovals();
+    }
+
+    return Object.values(state.getState?.().groupApprovals?.pending || {});
+}
 function resolveGroupId(msg, args) {
     if (isGroupJid(args[0])) return args[0];
     if (isGroupJid(msg.key.remoteJid)) return msg.key.remoteJid;
@@ -43,8 +58,8 @@ module.exports = {
         const action = args[0]?.toLowerCase() || 'approve';
 
         if (action === 'list') {
-            const approved = state.getApprovedGroups();
-            const pending = state.getPendingGroupApprovals();
+            const approved = getApprovedGroups();
+            const pending = getPendingGroupApprovals();
             const approvedLines = Object.keys(approved).sort();
             const pendingLines = pending
                 .sort((a, b) => String(a.groupId).localeCompare(String(b.groupId)))
