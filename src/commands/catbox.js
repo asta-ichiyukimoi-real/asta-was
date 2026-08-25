@@ -9,7 +9,6 @@ const UPLOAD_TIMEOUT_MS = 120000;
 
 function unwrapMessage(message) {
     let current = message || {};
-
     for (let i = 0; i < 10; i++) {
         const next =
             current.ephemeralMessage?.message ||
@@ -221,7 +220,7 @@ async function downloadQuotedMedia(
 
     if (!buffer) {
         throw new Error(
-            'WhatsApp returned no media data.'
+            'WhatsApp returned no media data duhh.'
         );
     }
 
