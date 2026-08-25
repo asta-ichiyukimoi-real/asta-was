@@ -504,6 +504,8 @@ async function reloadHandlers() {
         if (
             key.includes('\\src\\commands\\')
             || key.includes('/src/commands/')
+            || key.includes('\\src\\utils\\messageStyle.js')
+            || key.includes('/src/utils/messageStyle.js')
             || key.endsWith('\\config.js')
             || key.endsWith('/config.js')
         ) {
@@ -538,6 +540,13 @@ async function reloadHandlers() {
     if (replyCommandHandler?.loadReplyCommands) {
         replyCommandHandler.replyCommands.clear();
         replyCommandHandler.loadReplyCommands();
+    }
+
+    try {
+        const { installMessageFont } = require('../utils/messageStyle');
+        installMessageFont(global.sock);
+    } catch (error) {
+        console.error('Message font reload after update failed:', error);
     }
 
     return {

@@ -1,11 +1,10 @@
 const state = require('../utils/stateManager');
-const {
-    availableFonts,
-    fontLabel,
-    getReplyFont,
-    normalizeFontName,
-    styleText
-} = require('../utils/messageStyle');
+
+function getMessageStyle() {
+    const modulePath = require.resolve('../utils/messageStyle');
+    delete require.cache[modulePath];
+    return require('../utils/messageStyle');
+}
 
 function refreshConfigHandler() {
     if (global.configCommandHandler?.reload) {
@@ -27,6 +26,16 @@ module.exports = {
     onRun: async (sock, msg, args) => {
         const chatId = msg.key.remoteJid;
         const input = args.join(' ').trim();
+        const {
+            availableFonts,
+            fontLabel,
+            getReplyFont,
+            installMessageFont,
+            normalizeFontName,
+            styleText
+        } = getMessageStyle();
+
+        installMessageFont(sock);
 
         if (!input || input.toLowerCase() === 'list') {
             const current = getReplyFont();

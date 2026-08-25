@@ -15,6 +15,8 @@ module.exports = {
             if (
                 key.includes('\\src\\commands\\')
                 || key.includes('/src/commands/')
+                || key.includes('\\src\\utils\\messageStyle.js')
+                || key.includes('/src/utils/messageStyle.js')
                 || key.endsWith('\\config.js')
                 || key.endsWith('/config.js')
             ) {
@@ -49,6 +51,13 @@ module.exports = {
         if (replyCommandHandler?.loadReplyCommands) {
             replyCommandHandler.replyCommands.clear();
             replyCommandHandler.loadReplyCommands();
+        }
+
+        try {
+            const { installMessageFont } = require('../utils/messageStyle');
+            installMessageFont(sock);
+        } catch (error) {
+            console.error('Message font reload error:', error);
         }
 
         const uniqueCommands = commandHandler?.commands
