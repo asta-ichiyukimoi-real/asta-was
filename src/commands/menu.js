@@ -41,45 +41,46 @@ module.exports = {
 15. ${prefix}wallpaper akaza -4 - Send wallpapers
 16. ${prefix}pinterest akaza -4 - Search Pinterest images
 17. ${prefix}find akaza - Choose media search type
+18. ${prefix}imgurl - Upload an image and get its URL
 
 *Group*
-18. ${prefix}groupinfo - Show group details
-19. ${prefix}tagall message - Mention everyone
+19. ${prefix}groupinfo - Show group details
+20. ${prefix}tagall message - Mention everyone
 
 *Moderation*
-20. ${prefix}kick @user - Remove a member
-21. ${prefix}warn @user - Warn a member
-22. ${prefix}antilink on - Block links
-23. ${prefix}badword add word - Filter a word
-24. ${prefix}mute - Lock the group
+21. ${prefix}kick @user - Remove a member
+22. ${prefix}warn @user - Warn a member
+23. ${prefix}antilink on - Block links
+24. ${prefix}badword add word - Filter a word
+25. ${prefix}mute - Lock the group
 
 *Custom*
-25. ${prefix}addcmd rules Be respectful - Add a command
-26. ${prefix}listcmd - List custom commands
-27. ${prefix}disable sticker - Disable a command here
-28. ${prefix}enable sticker - Enable it again
+26. ${prefix}addcmd rules Be respectful - Add a command
+27. ${prefix}listcmd - List custom commands
+28. ${prefix}disable sticker - Disable a command here
+29. ${prefix}enable sticker - Enable it again
 
 *Platform*
-29. ${prefix}setprefix . - Set chat prefix
-30. ${prefix}setwelcome Welcome {{name}} - Edit welcome
-31. ${prefix}role add mod @user - Add bot mod
-32. ${prefix}health - Bot health
-33. ${prefix}config get media.wallpaperMaxImages - Runtime config
-34. ${prefix}features media off - Toggle categories
-35. ${prefix}backup - Backup bot state
-36. ${prefix}ownertest - Debug owner permission
-37. ${prefix}reload - Reload commands
-38. ${prefix}update check - Check GitHub updates
+30. ${prefix}setprefix . - Set chat prefix
+31. ${prefix}setwelcome Welcome {{name}} - Edit welcome
+32. ${prefix}role add mod @user - Add bot mod
+33. ${prefix}health - Bot health
+34. ${prefix}config get media.wallpaperMaxImages - Runtime config
+35. ${prefix}features media off - Toggle categories
+36. ${prefix}backup - Backup bot state
+37. ${prefix}ownertest - Debug owner permission
+38. ${prefix}reload - Reload commands
+39. ${prefix}update check - Check GitHub updates
 
 *Developer*
-39. ${prefix}logs 20 - Show recent logs
-40. ${prefix}shell git status --short - Run shell command
-41. ${prefix}file list src/commands - Manage files
-42. ${prefix}analytics - Bot metrics
-43. ${prefix}apistatus - Check API health
-44. ${prefix}env - Check allowed env vars
-45. ${prefix}eval commands.size - Evaluate JS
-46. ${prefix}restart - Restart bot
+40. ${prefix}logs 20 - Show recent logs
+41. ${prefix}shell git status --short - Run shell command
+42. ${prefix}file list src/commands - Manage files
+43. ${prefix}analytics - Bot metrics
+44. ${prefix}apistatus - Check API health
+45. ${prefix}env - Check allowed env vars
+46. ${prefix}eval commands.size - Evaluate JS
+47. ${prefix}restart - Restart bot
 
 Reply with one of the commands above to continue.`;
 

@@ -165,38 +165,6 @@ assets: {
 }
 ```
 
-If a command image is empty, the bot uses `defaultCommandImageUrl`. If the image fails to send, the bot falls back to plain text.
-
-Photo-enabled commands:
-
-| Command | What It Shows |
-| --- | --- |
-| `help` | Full command list and command details |
-| `menu` | Main bot command menu |
-| `info` | Live bot information |
-| `health` | Runtime health and status |
-| `ping` | Latency and uptime |
-| `stats` | Usage statistics |
-| `analytics` | Bot metrics and command analytics |
-| `features` | Enabled/disabled command categories |
-| `selftest` | Bot diagnostics |
-
-All command files currently included:
-
-```text
-addcmd, adminid, analytics, antilink, apistatus, appleMusic, approvegroup,
-asta, backup, badword, banuser, calc, catbox, choose, cmd, config, couple,
-dbadmin, delcmd, delete, demote, disable, echo, editimg, enable, env, eval,
-features, file, find, groupinfo, health, hello, help, info, intelligent, jid,
-joke, kick, leaderboard, leave, listcmd, logs, makesticker, match, media, menu,
-mute, muteuser, mystats, new, novel, ownertest, pending, pfp, ping, pinterest,
-prefix, promote, qwen, qwenimage, quote, reactions, reload, remind, resetasta,
-restart, restore, reverse, role, roll, search, selftest, setfarewell, setprefix,
-settings, setwelcome, shell, smart, stats, sticker, tagall, test, time, translate,
-TTS, tyr, unbanuser, unmute, unmuteuser, update, viewonce, wallpaper, warn,
-warnings, wikipedia, youtube, ytdl
-```
-
 ## Authentication Files
 
 Baileys saves WhatsApp session files inside:
