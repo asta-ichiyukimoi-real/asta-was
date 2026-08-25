@@ -72,6 +72,8 @@ module.exports = {
 
     connection: {
         authDir: './auth_info_baileys',
+        // Digits only, with country code. Example: '23491564521'
+        pairingPhoneNumber: '2347059797535',
         reconnectDelayMs: 2000,
         markOnlineOnConnect: false,
         syncFullHistory: false,

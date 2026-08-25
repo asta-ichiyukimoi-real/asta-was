@@ -101,22 +101,38 @@ function renderPanel(title, lines) {
     console.log(`${style.cyan}+${'-'.repeat(width)}+${style.reset}`);
 }
 
-function showStartup(loadedCommands) {
+function showStartup(loadedCommands, authMode = 'qr') {
     const dashboardPort = config.dashboard?.port || config.dashboardPort || 3030;
+    const status = authMode === 'pairing'
+        ? 'Status : Waiting for pairing code authentication'
+        : 'Status : Waiting for QR authentication';
+    const tip = authMode === 'pairing'
+        ? 'Tip: Use the pairing code in WhatsApp > Linked devices > Link with phone number.'
+        : 'Tip: Scan the QR code below with WhatsApp to connect.';
+
     clearScreen();
     console.log(`${style.blue}${style.bright}${APP_NAME}${style.reset}\n`);
     renderPanel('WELCOME', [
         `Version: ${APP_VERSION}`,
-        'Status : Waiting for QR authentication',
+        status,
         `Prefix : ${config.prefix}`,
         `Commands loaded: ${loadedCommands}`,
         `Dashboard: http://127.0.0.1:${dashboardPort}`
     ]);
-    console.log(`\n${style.dim}Tip: Scan the QR code below with WhatsApp to connect.${style.reset}\n`);
+    console.log(`\n${style.dim}${tip}${style.reset}\n`);
 }
 
-function showConnecting() {
+function showConnecting(mode = 'qr') {
     clearScreen();
+    if (mode === 'pairing') {
+        renderPanel('AUTHENTICATION', [
+            `${style.yellow}Ready to connect with pairing code.${style.reset}`,
+            'Open WhatsApp > Linked devices > Link with phone number.',
+            `Prefix: ${config.prefix}`
+        ]);
+        return;
+    }
+
     renderPanel('AUTHENTICATION', [
         `${style.yellow}Ready to connect.${style.reset}`,
         'Open WhatsApp and scan the QR code now.',
@@ -155,6 +171,16 @@ const quietLogger = {
     trace: () => {}
 };
 
+function normalizePairingPhoneNumber(value) {
+    const number = String(value || '').trim().replace(/[\s()+-]/g, '');
+
+    if (!number) {
+        return '';
+    }
+
+    return /^\d{8,15}$/.test(number) ? number : '';
+}
+
 async function connectToWhatsApp() {
     installConsoleNoiseFilter();
     installProcessErrorHandlers();
@@ -187,9 +213,16 @@ async function connectToWhatsApp() {
     }
 
     const uniqueCommands = Array.from(new Set(commandHandler.commands.values())).length;
-    showStartup(uniqueCommands);
 
     const groupMetadataCache = new Map();
+    const rawPairingPhoneNumber = configCommandHandler.get('connection.pairingPhoneNumber', '');
+    const pairingPhoneNumber = normalizePairingPhoneNumber(rawPairingPhoneNumber);
+    let pairingCodeRequested = false;
+
+    showStartup(uniqueCommands, pairingPhoneNumber ? 'pairing' : 'qr');
+    if (rawPairingPhoneNumber && !pairingPhoneNumber) {
+        console.log(`${style.yellow}Invalid pairingPhoneNumber in config. Use digits only with country code, for example 23491564521. Falling back to QR.${style.reset}`);
+    }
 
     const sock = makeWASocket({
         auth: state,
@@ -281,7 +314,7 @@ async function connectToWhatsApp() {
         }
     });
 
-    sock.ev.on('connection.update', (update) => {
+    sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
         const reason = lastDisconnect?.error?.message
             || lastDisconnect?.error?.output?.statusCode
@@ -292,6 +325,33 @@ async function connectToWhatsApp() {
         console.log('[Baileys raw update]', JSON.stringify(update, null, 2));
 
         if (qr) {
+            if (pairingPhoneNumber && !sock.authState.creds.registered) {
+                if (pairingCodeRequested) {
+                    return;
+                }
+
+                pairingCodeRequested = true;
+                showConnecting('pairing');
+                console.log(`${style.yellow}Pairing challenge received. Requesting code for ${pairingPhoneNumber}.${style.reset}`);
+
+                try {
+                    const code = await sock.requestPairingCode(pairingPhoneNumber);
+                    console.log(`${style.green}Pairing code: ${style.bright}${code}${style.reset}`);
+                    console.log(`${style.dim}Enter this code in WhatsApp > Linked devices > Link with phone number.${style.reset}`);
+                } catch (error) {
+                    pairingCodeRequested = false;
+                    console.log(`${style.red}Pairing code failed: ${error.message}${style.reset}`);
+                    console.log(`${style.yellow}Falling back to QR authentication.${style.reset}`);
+                    try {
+                        qrcode.generate(qr, { small: true });
+                    } catch (qrError) {
+                        console.log(`${style.red}QR renderer failed: ${qrError.message}${style.reset}`);
+                        console.log(qr);
+                    }
+                }
+                return;
+            }
+
             showConnecting();
             console.log(`${style.yellow}QR challenge received. Scan it from the phone now.${style.reset}`);
             try {

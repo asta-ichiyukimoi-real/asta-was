@@ -32,6 +32,7 @@ const DEFAULT_CONFIG = {
     },
     connection: {
         authDir: './auth_info_baileys',
+        pairingPhoneNumber: '',
         reconnectDelayMs: 2000,
         markOnlineOnConnect: false,
         syncFullHistory: false,

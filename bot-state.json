@@ -84,21 +84,61 @@
   },
   "health": {
     "status": "online",
-    "startedAt": "2026-08-19T14:38:40.363Z",
-    "lastConnectedAt": "2026-08-19T14:38:46.507Z",
+    "startedAt": "2026-08-25T13:16:38.437Z",
+    "lastConnectedAt": "2026-08-25T13:17:16.907Z",
     "lastError": "Stream Errored (restart required)",
-    "reconnects": 208,
+    "reconnects": 209,
     "commandsRun": 0,
-    "pid": 23392,
+    "pid": 13668,
     "node": "v24.12.0",
-    "uptimeSeconds": 182,
-    "memoryMb": 116,
-    "heapMb": 46,
+    "uptimeSeconds": 61,
+    "memoryMb": 90,
+    "heapMb": 34,
     "loadAverage": 0,
-    "commandEntries": 227
+    "commandEntries": 246
   },
   "logs": {
     "recent": [
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-25T13:17:17.289Z"
+      },
+      {
+        "type": "groups_update_received",
+        "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
+        "groupId": "120363423367644103@g.us",
+        "subject": "Asta bot gc",
+        "announce": null,
+        "restrict": null,
+        "at": "2026-08-25T13:17:17.283Z"
+      },
+      {
+        "type": "connected_socket_user",
+        "jid": "2347059797535:5@s.whatsapp.net",
+        "lid": "142473443672263:5@lid",
+        "phone": null,
+        "name": "Asta bot",
+        "at": "2026-08-25T13:17:16.914Z"
+      },
+      {
+        "type": "connected",
+        "at": "2026-08-25T13:17:16.910Z"
+      },
+      {
+        "type": "reconnect",
+        "reason": "Stream Errored (restart required)",
+        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{\"tag\":\"stream:error\",\"attrs\":{\"code\":\"515\"}},\"isBoom\":true,\"isServer\":true,\"output\":{\"statusCode\":515,\"payload\":{\"statusCode\":515,\"error\":\"Unknown\",\"message\":\"Stream Errored (restart required)\"},\"headers\":{}}},\"date\":\"2026-08-25T13:17:11.271Z\"}}",
+        "at": "2026-08-25T13:17:11.275Z"
+      },
+      {
+        "type": "logged_out",
+        "at": "2026-08-25T13:12:31.419Z"
+      },
       {
         "type": "groups_update_received",
         "rawEvent": "{\"id\":\"120363423367644103@g.us\",\"addressingMode\":\"lid\",\"subject\":\"Asta bot gc\",\"subjectOwner\":\"63097851101285@lid\",\"subjectOwnerPn\":\"2349139977668@s.whatsapp.net\",\"subjectTime\":1767314289,\"size\":2,\"creation\":1767314289,\"owner\":\"63097851101285@lid\",\"ownerPn\":\"2349139977668@s.whatsapp.net\",\"owner_country_code\":\"NG\",\"descTime\":null,\"restrict\":false,\"announce\":false,\"isCommunity\":false,\"isCommunityAnnounce\":false,\"joinApprovalMode\":false,\"memberAddMode\":false,\"participants\":[{\"id\":\"63097851101285@lid\",\"phoneNumber\":\"2349139977668@s.whatsapp.net\",\"admin\":\"superadmin\"},{\"id\":\"142473443672263@lid\",\"phoneNumber\":\"2347059797535@s.whatsapp.net\",\"admin\":null}]}",
@@ -746,46 +786,14 @@
         "reason": "WebSocket Error (Opening handshake has timed out)",
         "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:10:26.178Z\"}}",
         "at": "2026-08-08T13:10:26.182Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "WebSocket Error (Opening handshake has timed out)",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:10:04.120Z\"}}",
-        "at": "2026-08-08T13:10:04.125Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "WebSocket Error (Opening handshake has timed out)",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:09:42.062Z\"}}",
-        "at": "2026-08-08T13:09:42.068Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "WebSocket Error (Opening handshake has timed out)",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:09:20.003Z\"}}",
-        "at": "2026-08-08T13:09:20.008Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "WebSocket Error (Opening handshake has timed out)",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:08:57.822Z\"}}",
-        "at": "2026-08-08T13:08:57.825Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "WebSocket Error (Opening handshake has timed out)",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:08:35.767Z\"}}",
-        "at": "2026-08-08T13:08:35.773Z"
-      },
-      {
-        "type": "reconnect",
-        "reason": "WebSocket Error (Opening handshake has timed out)",
-        "update": "{\"connection\":\"close\",\"lastDisconnect\":{\"error\":{\"data\":{},\"isBoom\":true,\"isServer\":false,\"output\":{\"statusCode\":408,\"payload\":{\"statusCode\":408,\"error\":\"Request Time-out\",\"message\":\"WebSocket Error (Opening handshake has timed out)\"},\"headers\":{}}},\"date\":\"2026-08-08T13:08:13.708Z\"}}",
-        "at": "2026-08-08T13:08:13.712Z"
       }
     ]
   },
   "savedMessages": {
     "items": {}
+  },
+  "groupApprovals": {
+    "approved": {},
+    "pending": {}
   }
 }
