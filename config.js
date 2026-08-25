@@ -20,9 +20,9 @@ module.exports = {
 
     assets: {
         // Replace this with your own bot banner/photo URL.
-        defaultCommandImageUrl: 'https://picsum.photos/1200/630',
+        defaultCommandImageUrl: 'https://shz.al/Sfba',
         commandImages: {
-            help: '',
+            help: 'https://shz.al/Sfba',
             menu: '',
             info: '',
             health: '',

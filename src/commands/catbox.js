@@ -3,12 +3,13 @@ const {
 } = require('@whiskeysockets/baileys');
 
 const API_URL =
-    'https://omegatech-api.dixonomega.tech/api/tools/Top4top-uploader?action=upload';
+    'https://omegatech-api.dixonomega.tech/api/tools/shz-uploader';
 
 const UPLOAD_TIMEOUT_MS = 120000;
 
 function unwrapMessage(message) {
     let current = message || {};
+
     for (let i = 0; i < 10; i++) {
         const next =
             current.ephemeralMessage?.message ||
@@ -17,9 +18,7 @@ function unwrapMessage(message) {
             current.viewOnceMessageV2Extension?.message ||
             current.documentWithCaptionMessage?.message;
 
-        if (!next) {
-            break;
-        }
+        if (!next) break;
 
         current = next;
     }
@@ -28,16 +27,11 @@ function unwrapMessage(message) {
 }
 
 function getMessageContent(msg) {
-    return unwrapMessage(
-        msg?.message
-    );
+    return unwrapMessage(msg?.message);
 }
 
-
-
 function getContextInfo(msg) {
-    const message =
-        getMessageContent(msg);
+    const message = getMessageContent(msg);
 
     return (
         message.extendedTextMessage?.contextInfo ||
@@ -51,8 +45,7 @@ function getContextInfo(msg) {
 }
 
 function getQuotedMessage(msg) {
-    const context =
-        getContextInfo(msg);
+    const context = getContextInfo(msg);
 
     if (!context?.quotedMessage) {
         return null;
@@ -60,89 +53,60 @@ function getQuotedMessage(msg) {
 
     return {
         key: {
-            remoteJid:
-                msg.key.remoteJid,
-
-            id:
-                context.stanzaId,
-
-            participant:
-                context.participant,
-
-            fromMe:
-                false
+            remoteJid: msg.key.remoteJid,
+            id: context.stanzaId,
+            participant: context.participant,
+            fromMe: false
         },
-
-        message:
-            context.quotedMessage
+        message: context.quotedMessage
     };
 }
 
-
 function getMediaInfo(message) {
-    const content =
-        unwrapMessage(
-            message?.message ||
-            message
-        );
+    const content = unwrapMessage(
+        message?.message || message
+    );
 
-    if (!content) {
-        return null;
-    }
+    if (!content) return null;
 
     if (content.imageMessage) {
-        const media =
-            content.imageMessage;
+        const media = content.imageMessage;
 
         return {
             type: 'image',
             message: media,
-            mimetype:
-                media.mimetype ||
-                'image/jpeg',
+            mimetype: media.mimetype || 'image/jpeg',
             extension: 'jpg',
-            filename:
-                `image-${Date.now()}.jpg`
+            filename: `image-${Date.now()}.jpg`
         };
     }
 
     if (content.videoMessage) {
-        const media =
-            content.videoMessage;
+        const media = content.videoMessage;
 
         return {
             type: 'video',
             message: media,
-            mimetype:
-                media.mimetype ||
-                'video/mp4',
+            mimetype: media.mimetype || 'video/mp4',
             extension: 'mp4',
-            filename:
-                `video-${Date.now()}.mp4`
+            filename: `video-${Date.now()}.mp4`
         };
     }
 
     if (content.audioMessage) {
-        const media =
-            content.audioMessage;
+        const media = content.audioMessage;
 
         return {
             type: 'audio',
             message: media,
-            mimetype:
-                media.mimetype ||
-                'audio/mpeg',
+            mimetype: media.mimetype || 'audio/mpeg',
             extension: 'mp3',
-            filename:
-                `audio-${Date.now()}.mp3`
+            filename: `audio-${Date.now()}.mp3`
         };
     }
 
-
     if (content.documentMessage) {
-        const media =
-            content.documentMessage;
-
+        const media = content.documentMessage;
         const filename =
             media.fileName ||
             `document-${Date.now()}`;
@@ -164,30 +128,22 @@ function getMediaInfo(message) {
     }
 
     if (content.stickerMessage) {
-        const media =
-            content.stickerMessage;
+        const media = content.stickerMessage;
 
         return {
             type: 'sticker',
             message: media,
-            mimetype:
-                media.mimetype ||
-                'image/webp',
+            mimetype: media.mimetype || 'image/webp',
             extension: 'webp',
-            filename:
-                `sticker-${Date.now()}.webp`
+            filename: `sticker-${Date.now()}.webp`
         };
     }
 
     return null;
 }
 
-async function downloadQuotedMedia(
-    sock,
-    quoted
-) {
-    const media =
-        getMediaInfo(quoted);
+async function downloadQuotedMedia(sock, quoted) {
+    const media = getMediaInfo(quoted);
 
     if (!media) {
         throw new Error(
@@ -195,32 +151,24 @@ async function downloadQuotedMedia(
         );
     }
 
-    console.log(
-        'ToURL media type:',
-        media.type
-    );
-
     const messageToDownload = {
         key: quoted.key,
         message: quoted.message
     };
 
-    const buffer =
-        await downloadMediaMessage(
-            messageToDownload,
-            'buffer',
-            {},
-            {
-                logger: console,
-
-                reuploadRequest:
-                    sock.updateMediaMessage
-            }
-        );
+    const buffer = await downloadMediaMessage(
+        messageToDownload,
+        'buffer',
+        {},
+        {
+            logger: console,
+            reuploadRequest: sock.updateMediaMessage
+        }
+    );
 
     if (!buffer) {
         throw new Error(
-            'WhatsApp returned no media data duhh.'
+            'WhatsApp returned no media data.'
         );
     }
 
@@ -236,33 +184,25 @@ async function downloadQuotedMedia(
         );
     }
 
-    console.log(
-        'ToURL downloaded bytes:',
-        buffer.length
-    );
-
     return {
         buffer,
         ...media
     };
 }
 
-
-async function uploadToTop4Top(
+async function uploadToShz(
     buffer,
     filename,
     mimetype
 ) {
-    const form =
-        new FormData();
+    const form = new FormData();
 
-    const blob =
-        new Blob(
-            [buffer],
-            {
-                type: mimetype
-            }
-        );
+    const blob = new Blob(
+        [buffer],
+        {
+            type: mimetype
+        }
+    );
 
     form.append(
         'file',
@@ -270,68 +210,57 @@ async function uploadToTop4Top(
         filename
     );
 
-    const controller =
-        new AbortController();
+    const controller = new AbortController();
 
-    const timeout =
-        setTimeout(
-            () =>
-                controller.abort(),
-            UPLOAD_TIMEOUT_MS
-        );
+    const timeout = setTimeout(
+        () => controller.abort(),
+        UPLOAD_TIMEOUT_MS
+    );
 
     try {
-        const response =
-            await fetch(
-                API_URL,
-                {
-                    method: 'POST',
+        const response = await fetch(
+            API_URL,
+            {
+                method: 'POST',
+                body: form,
+                headers: {
+                    Accept: 'application/json'
+                },
+                signal: controller.signal
+            }
+        );
 
-                    body: form,
-
-                    headers: {
-                        Accept:
-                            'application/json'
-                    },
-
-                    signal:
-                        controller.signal
-                }
-            );
-
-        const raw =
-            await response.text();
+        const raw = await response.text();
 
         console.log(
-            'Top4Top status:',
+            'SHZ status:',
             response.status
         );
 
         console.log(
-            'Top4Top response:',
+            'SHZ response:',
             raw.slice(0, 2000)
         );
 
         if (!response.ok) {
             throw new Error(
-                `Top4Top API returned HTTP ${response.status}`
+                `SHZ API returned HTTP ${response.status}`
             );
         }
 
         if (!raw.trim()) {
             throw new Error(
-                'Top4Top API returned an empty response.'
+                'SHZ API returned an empty response.'
             );
         }
 
         let data;
 
         try {
-            data =
-                JSON.parse(raw);
+            data = JSON.parse(raw);
         } catch {
             throw new Error(
-                'Top4Top API returned invalid JSON.'
+                'SHZ API returned invalid JSON.'
             );
         }
 
@@ -339,7 +268,7 @@ async function uploadToTop4Top(
             throw new Error(
                 data?.error ||
                 data?.message ||
-                'Top4Top upload failed.'
+                'SHZ upload failed.'
             );
         }
 
@@ -348,23 +277,25 @@ async function uploadToTop4Top(
 
         if (
             !Array.isArray(files) ||
-            files.length === 0
+            !files.length
         ) {
             throw new Error(
-                'Top4Top did not return an uploaded file.'
+                'SHZ did not return an uploaded file.'
             );
         }
 
-        const uploaded =
-            files.find(
-                file =>
-                    file?.success &&
-                    file?.url
-            );
+        const uploaded = files.find(
+            file =>
+                file?.status &&
+                (
+                    file?.normalUrl ||
+                    file?.rawUrl
+                )
+        );
 
         if (!uploaded) {
             throw new Error(
-                'Top4Top upload was unsuccessful.'
+                'SHZ upload was unsuccessful.'
             );
         }
 
@@ -372,11 +303,10 @@ async function uploadToTop4Top(
 
     } catch (error) {
         if (
-            error.name ===
-            'AbortError'
+            error.name === 'AbortError'
         ) {
             throw new Error(
-                'Top4Top upload timed out.'
+                'SHZ upload timed out.'
             );
         }
 
@@ -392,24 +322,35 @@ async function sendUrl(
     msg,
     uploaded
 ) {
+    const url =
+        uploaded.normalUrl ||
+        uploaded.rawUrl;
+
     const lines = [
         '✅ *Upload successful!*',
         '',
-        `🔗 ${uploaded.url}`
+        `🔗 ${url}`
     ];
 
-    if (uploaded.filename) {
+    if (uploaded.rawUrl &&
+        uploaded.rawUrl !== url) {
         lines.push(
             '',
-            `📁 ${uploaded.filename}`
+            `🔗 Raw: ${uploaded.rawUrl}`
+        );
+    }
+
+    if (uploaded.expire) {
+        lines.push(
+            '',
+            `⏳ Expires: ${uploaded.expire}`
         );
     }
 
     await sock.sendMessage(
         msg.key.remoteJid,
         {
-            text:
-                lines.join('\n')
+            text: lines.join('\n')
         },
         {
             quoted: msg
@@ -428,10 +369,10 @@ module.exports = {
             'imageurl'
         ],
 
-        version: '1.1.0',
+        version: '1.2.0',
 
         description:
-            'Upload replied media to Top4Top and return its URL',
+            'Upload replied media to SHZ and return its URL',
 
         usage:
             'tourl',
@@ -449,15 +390,10 @@ module.exports = {
         category: 'tools'
     },
 
-    onRun: async (
-        sock,
-        msg
-    ) => {
-        const jid =
-            msg.key.remoteJid;
+    onRun: async (sock, msg) => {
+        const jid = msg.key.remoteJid;
 
         try {
-
             const quoted =
                 getQuotedMessage(msg);
 
@@ -499,11 +435,6 @@ module.exports = {
                 return;
             }
 
-            console.log(
-                'ToURL quoted media detected:',
-                media.type
-            );
-
             await sock.sendMessage(
                 jid,
                 {
@@ -522,7 +453,7 @@ module.exports = {
                 );
 
             const uploaded =
-                await uploadToTop4Top(
+                await uploadToShz(
                     downloaded.buffer,
                     downloaded.filename,
                     downloaded.mimetype
