@@ -1,14 +1,16 @@
-const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+const {
+    downloadMediaMessage
+} = require('@whiskeysockets/baileys');
 
 const API_URL =
-    'https://omegatech-api.dixonomega.tech/api/tools/Top4top-uploader';
+    'https://omegatech-api.dixonomega.tech/api/tools/Top4top-uploader?action=upload';
 
 const UPLOAD_TIMEOUT_MS = 120000;
 
 function unwrapMessage(message) {
     let current = message || {};
 
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
         const next =
             current.ephemeralMessage?.message ||
             current.viewOnceMessage?.message ||
@@ -16,7 +18,9 @@ function unwrapMessage(message) {
             current.viewOnceMessageV2Extension?.message ||
             current.documentWithCaptionMessage?.message;
 
-        if (!next) break;
+        if (!next) {
+            break;
+        }
 
         current = next;
     }
@@ -24,17 +28,32 @@ function unwrapMessage(message) {
     return current;
 }
 
+function getMessageContent(msg) {
+    return unwrapMessage(
+        msg?.message
+    );
+}
 
-function getQuotedMessage(msg) {
-    const message = unwrapMessage(msg.message);
 
-    const context =
+
+function getContextInfo(msg) {
+    const message =
+        getMessageContent(msg);
+
+    return (
         message.extendedTextMessage?.contextInfo ||
         message.imageMessage?.contextInfo ||
         message.videoMessage?.contextInfo ||
         message.documentMessage?.contextInfo ||
         message.audioMessage?.contextInfo ||
-        null;
+        message.stickerMessage?.contextInfo ||
+        null
+    );
+}
+
+function getQuotedMessage(msg) {
+    const context =
+        getContextInfo(msg);
 
     if (!context?.quotedMessage) {
         return null;
@@ -45,17 +64,14 @@ function getQuotedMessage(msg) {
             remoteJid:
                 msg.key.remoteJid,
 
-            fromMe:
-                Boolean(
-                    context.participant ===
-                    msg.key.remoteJid
-                ),
-
             id:
                 context.stanzaId,
 
             participant:
-                context.participant
+                context.participant,
+
+            fromMe:
+                false
         },
 
         message:
@@ -64,75 +80,73 @@ function getQuotedMessage(msg) {
 }
 
 
-function getMediaMessage(message) {
-    let current =
+function getMediaInfo(message) {
+    const content =
         unwrapMessage(
-            message?.message
+            message?.message ||
+            message
         );
 
-    if (!current) {
+    if (!content) {
         return null;
     }
 
-    if (
-        current.imageMessage ||
-        current.videoMessage ||
-        current.audioMessage ||
-        current.documentMessage ||
-        current.stickerMessage
-    ) {
-        return current;
-    }
+    if (content.imageMessage) {
+        const media =
+            content.imageMessage;
 
-    return null;
-}
-
-
-function getMediaType(message) {
-    const media =
-        getMediaMessage(message);
-
-    if (!media) {
-        return null;
-    }
-
-    if (media.imageMessage) {
         return {
             type: 'image',
-            message: media.imageMessage,
-            extension: 'jpg',
+            message: media,
             mimetype:
-                media.imageMessage.mimetype ||
-                'image/jpeg'
+                media.mimetype ||
+                'image/jpeg',
+            extension: 'jpg',
+            filename:
+                `image-${Date.now()}.jpg`
         };
     }
 
-    if (media.videoMessage) {
+    if (content.videoMessage) {
+        const media =
+            content.videoMessage;
+
         return {
             type: 'video',
-            message: media.videoMessage,
-            extension: 'mp4',
+            message: media,
             mimetype:
-                media.videoMessage.mimetype ||
-                'video/mp4'
+                media.mimetype ||
+                'video/mp4',
+            extension: 'mp4',
+            filename:
+                `video-${Date.now()}.mp4`
         };
     }
 
-    if (media.audioMessage) {
+    if (content.audioMessage) {
+        const media =
+            content.audioMessage;
+
         return {
             type: 'audio',
-            message: media.audioMessage,
-            extension: 'mp3',
+            message: media,
             mimetype:
-                media.audioMessage.mimetype ||
-                'audio/mpeg'
+                media.mimetype ||
+                'audio/mpeg',
+            extension: 'mp3',
+            filename:
+                `audio-${Date.now()}.mp3`
         };
     }
 
-    if (media.documentMessage) {
+
+    if (content.documentMessage) {
+        const media =
+            content.documentMessage;
+
         const filename =
-            media.documentMessage.fileName ||
-            'document';
+            media.fileName ||
+            `document-${Date.now()}`;
 
         const extension =
             filename.includes('.')
@@ -141,69 +155,92 @@ function getMediaType(message) {
 
         return {
             type: 'document',
-            message:
-                media.documentMessage,
-            extension,
+            message: media,
             mimetype:
-                media.documentMessage.mimetype ||
+                media.mimetype ||
                 'application/octet-stream',
+            extension,
             filename
         };
     }
 
-    if (media.stickerMessage) {
+    if (content.stickerMessage) {
+        const media =
+            content.stickerMessage;
+
         return {
             type: 'sticker',
-            message:
-                media.stickerMessage,
-            extension: 'webp',
+            message: media,
             mimetype:
-                media.stickerMessage.mimetype ||
-                'image/webp'
+                media.mimetype ||
+                'image/webp',
+            extension: 'webp',
+            filename:
+                `sticker-${Date.now()}.webp`
         };
     }
 
     return null;
 }
 
-
 async function downloadQuotedMedia(
     sock,
-    msg,
     quoted
 ) {
     const media =
-        getMediaType(quoted);
+        getMediaInfo(quoted);
 
     if (!media) {
         throw new Error(
-            'The quoted message does not contain supported media.'
+            'No supported media was found in the quoted message.'
         );
     }
 
-    const wrappedMessage = {
+    console.log(
+        'ToURL media type:',
+        media.type
+    );
+
+    const messageToDownload = {
         key: quoted.key,
         message: quoted.message
     };
 
     const buffer =
         await downloadMediaMessage(
-            wrappedMessage,
+            messageToDownload,
             'buffer',
             {},
             {
-                logger:
-                    console,
+                logger: console,
+
                 reuploadRequest:
                     sock.updateMediaMessage
             }
         );
 
-    if (!buffer || !buffer.length) {
+    if (!buffer) {
         throw new Error(
-            'WhatsApp returned an empty media file.'
+            'WhatsApp returned no media data.'
         );
     }
+
+    if (!Buffer.isBuffer(buffer)) {
+        throw new Error(
+            'Downloaded media is not a Buffer.'
+        );
+    }
+
+    if (!buffer.length) {
+        throw new Error(
+            'Downloaded media is empty.'
+        );
+    }
+
+    console.log(
+        'ToURL downloaded bytes:',
+        buffer.length
+    );
 
     return {
         buffer,
@@ -211,19 +248,22 @@ async function downloadQuotedMedia(
     };
 }
 
+
 async function uploadToTop4Top(
     buffer,
     filename,
     mimetype
 ) {
-    const form = new FormData();
+    const form =
+        new FormData();
 
-    const blob = new Blob(
-        [buffer],
-        {
-            type: mimetype
-        }
-    );
+    const blob =
+        new Blob(
+            [buffer],
+            {
+                type: mimetype
+            }
+        );
 
     form.append(
         'file',
@@ -236,7 +276,8 @@ async function uploadToTop4Top(
 
     const timeout =
         setTimeout(
-            () => controller.abort(),
+            () =>
+                controller.abort(),
             UPLOAD_TIMEOUT_MS
         );
 
@@ -295,22 +336,20 @@ async function uploadToTop4Top(
             );
         }
 
-        if (
-            !data.success ||
-            !data.data
-        ) {
+        if (!data?.success) {
             throw new Error(
-                data.message ||
+                data?.error ||
+                data?.message ||
                 'Top4Top upload failed.'
             );
         }
 
         const files =
-            data.data.files;
+            data?.data?.files;
 
         if (
             !Array.isArray(files) ||
-            !files.length
+            files.length === 0
         ) {
             throw new Error(
                 'Top4Top did not return an uploaded file.'
@@ -349,40 +388,29 @@ async function uploadToTop4Top(
     }
 }
 
-
-function createFilename(
-    media,
-    quoted
-) {
-    if (media.filename) {
-        return media.filename;
-    }
-
-    const timestamp =
-        Date.now();
-
-    return `asta-${timestamp}.${media.extension}`;
-}
-
-async function sendResult(
+async function sendUrl(
     sock,
     msg,
     uploaded
 ) {
+    const lines = [
+        '✅ *Upload successful!*',
+        '',
+        `🔗 ${uploaded.url}`
+    ];
+
+    if (uploaded.filename) {
+        lines.push(
+            '',
+            `📁 ${uploaded.filename}`
+        );
+    }
+
     await sock.sendMessage(
         msg.key.remoteJid,
         {
-            text: [
-                '✅ *Upload successful!*',
-                '',
-                `🔗 ${uploaded.url}`,
-                '',
-                uploaded.filename
-                    ? `📁 ${uploaded.filename}`
-                    : ''
-            ]
-                .filter(Boolean)
-                .join('\n')
+            text:
+                lines.join('\n')
         },
         {
             quoted: msg
@@ -401,18 +429,18 @@ module.exports = {
             'imageurl'
         ],
 
-        version: '1.0.0',
+        version: '1.1.0',
 
         description:
             'Upload replied media to Top4Top and return its URL',
 
         usage:
-            'tourl (reply to an image/media)',
+            'tourl',
 
         examples: [
-            'tourl',
-            'to-url',
-            'url'
+            'Reply to an image with .tourl',
+            'Reply to a video with .tourl',
+            'Reply to a document with .tourl'
         ],
 
         permissions: 0,
@@ -441,12 +469,9 @@ module.exports = {
                         text: [
                             '🖼️ *To URL*',
                             '',
-                            'Reply to an image or media with:',
+                            'Reply to an image, video, sticker or document with:',
                             '',
-                            '`.tourl`',
-                            '',
-                            'Example:',
-                            'Reply to an image → `.tourl`'
+                            '`.tourl`'
                         ].join('\n')
                     },
                     {
@@ -458,9 +483,7 @@ module.exports = {
             }
 
             const media =
-                getMediaType(
-                    quoted
-                );
+                getMediaInfo(quoted);
 
             if (!media) {
                 await sock.sendMessage(
@@ -477,12 +500,16 @@ module.exports = {
                 return;
             }
 
+            console.log(
+                'ToURL quoted media detected:',
+                media.type
+            );
 
             await sock.sendMessage(
                 jid,
                 {
                     text:
-                        '⏳ Uploading media...'
+                        `⏳ Uploading ${media.type}...`
                 },
                 {
                     quoted: msg
@@ -492,26 +519,17 @@ module.exports = {
             const downloaded =
                 await downloadQuotedMedia(
                     sock,
-                    msg,
                     quoted
                 );
-
-
-            const filename =
-                createFilename(
-                    downloaded,
-                    quoted
-                );
-
 
             const uploaded =
                 await uploadToTop4Top(
                     downloaded.buffer,
-                    filename,
+                    downloaded.filename,
                     downloaded.mimetype
                 );
 
-            await sendResult(
+            await sendUrl(
                 sock,
                 msg,
                 uploaded
