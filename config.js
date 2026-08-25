@@ -34,6 +34,12 @@ module.exports = {
         }
     },
 
+    messages: {
+        // Change anytime with: .font <normal|bold|italic|bolditalic|script|fraktur|double|mono|wide|smallcaps|circled|squared>
+        replyFont: 'normal',
+        fontScope: 'all'
+    },
+
     permissions: {
         owner,
         owners: [owner],

@@ -14,6 +14,7 @@ const ReplyCommandHandler = require('./handlers/replyCommandHandler');
 const ConfigCommandHandler = require('./handlers/configCommandHandler');
 const health = require('./src/services/health');
 const reminders = require('./src/services/reminders');
+const { installMessageFont } = require('./src/utils/messageStyle');
 
 const logger = require('./src/utils/logger');
 
@@ -250,6 +251,7 @@ async function connectToWhatsApp() {
             }
         }
     });
+    installMessageFont(sock);
 
     sock.ev.on('groups.upsert', async (event) => {
         try {

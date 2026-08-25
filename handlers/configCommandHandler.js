@@ -25,6 +25,10 @@ const DEFAULT_CONFIG = {
         defaultCommandImageUrl: '',
         commandImages: {}
     },
+    messages: {
+        replyFont: 'normal',
+        fontScope: 'all'
+    },
     dashboard: {
         enabled: true,
         port: 3030,
