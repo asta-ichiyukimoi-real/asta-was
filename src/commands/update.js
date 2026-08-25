@@ -9,7 +9,6 @@ const UPDATE_APPROVAL_TTL_MS = 15 * 60 * 1000;
 const pendingUpdateApprovals = new Map();
 const PROTECTED_REMOTE_NAMES = new Set([
     '.env',
-    'config.js',
     'bot-state.json',
     'cookies.txt',
     'auth_info_baileys',

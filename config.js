@@ -26,6 +26,7 @@ module.exports = {
             info: 'https://shz.al/A42x',
             health: 'https://shz.al/x58W',
             ping: 'https://shz.al/XYew',
+            prefix: 'https://shz.al/jGQt',
             stats: '',
             analytics: '',
             features: '',
@@ -88,7 +89,7 @@ module.exports = {
     connection: {
         authDir: './auth_info_baileys',
         // Digits only, with country code. Example: '23491564521'
-        pairingPhoneNumber: '2347059797535',
+        pairingPhoneNumber: '234xxxxxxxxxx',
         reconnectDelayMs: 2000,
         markOnlineOnConnect: false,
         syncFullHistory: false,
