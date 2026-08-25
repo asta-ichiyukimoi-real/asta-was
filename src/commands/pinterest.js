@@ -1,93 +1,76 @@
-const config = require('../../config');
-const { friendlyApiError } = require('../utils/apiClient');
+const API_URL =
+    'https://omegatech-api.dixonomega.tech/api/download/Pinterest';
 
-const API_BASE =
-    config.apis?.pinterestSearch ||
-    'https://omegatech-api.dixonomega.tech/api/Search/pinterest';
-
+const MAX_IMAGES = 10;
+const DEFAULT_LIMIT = 1;
 const REQUEST_TIMEOUT_MS = 60000;
 
-/**
- * Parse:
- *
- * .pin asta
- * .pin asta -5
- * .pin asta and yuno -10
- */
-function parseQuery(args) {
-    const input = args.join(' ').trim();
+function parseArgs(args) {
+    const input = Array.isArray(args) ? [...args] : [];
 
-    if (!input) {
-        return {
-            query: '',
-            limit: 1
-        };
+    let limit = DEFAULT_LIMIT;
+
+    const limitIndex = input.findIndex(arg =>
+        /^-\d+$/.test(String(arg))
+    );
+
+    if (limitIndex !== -1) {
+        limit = Number(
+            String(input[limitIndex]).slice(1)
+        );
+
+        input.splice(limitIndex, 1);
     }
 
-    // Number must be at the end.
-    const match = input.match(/\s+-([0-9]+)\s*$/);
-
-    if (!match) {
-        return {
-            query: input,
-            limit: 1
-        };
+    if (!Number.isFinite(limit) || limit < 1) {
+        limit = DEFAULT_LIMIT;
     }
 
-    const requestedLimit = Number(match[1]);
-
-    const query = input
-        .slice(0, match.index)
-        .trim();
+    limit = Math.min(limit, MAX_IMAGES);
 
     return {
-        query,
-        limit: Math.min(
-            Math.max(requestedLimit, 1),
-            10
-        )
+        query: input.join(' ').trim(),
+        limit
     };
 }
 
-/**
- * Fetch Pinterest results.
- *
- * We intentionally do NOT use requestJson()
- * because the Pinterest endpoint has been returning
- * a valid 200 response that requestJson() is rejecting.
- */
-async function fetchPinterestImages(query, limit) {
+async function fetchPinterest(query, limit) {
     const url =
-        `${API_BASE}?query=${encodeURIComponent(query)}` +
-        `&scope=pins` +
+        `${API_URL}?action=search` +
+        `&query=${encodeURIComponent(query)}` +
         `&limit=${limit}`;
 
-    console.log('Pinterest API URL:', url);
+    const controller =
+        new AbortController();
 
-    const controller = new AbortController();
-
-    const timeout = setTimeout(() => {
-        controller.abort();
-    }, REQUEST_TIMEOUT_MS);
+    const timeout =
+        setTimeout(
+            () => controller.abort(),
+            REQUEST_TIMEOUT_MS
+        );
 
     try {
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                Accept: 'application/json',
-                'User-Agent': 'Mozilla/5.0'
-            },
-            signal: controller.signal
-        });
+        const response =
+            await fetch(url, {
+                method: 'GET',
+                headers: {
+                    Accept: 'application/json',
+                    'User-Agent': 'Mozilla/5.0'
+                },
+                signal: controller.signal
+            });
 
-        const raw = await response.text();
+        const raw =
+            await response.text();
 
         console.log(
-            `Pinterest API status: ${response.status}`
+            'Pinterest API status:',
+            response.status
         );
 
         console.log(
-            `Pinterest API response length: ${raw.length}`
+            'Pinterest API response:',
+            raw.slice(0, 3000)
         );
 
         if (!response.ok) {
@@ -96,7 +79,7 @@ async function fetchPinterestImages(query, limit) {
             );
         }
 
-        if (!raw || !raw.trim()) {
+        if (!raw.trim()) {
             throw new Error(
                 'Pinterest API returned an empty response.'
             );
@@ -107,38 +90,48 @@ async function fetchPinterestImages(query, limit) {
         try {
             data = JSON.parse(raw);
         } catch (error) {
-            console.error(
-                'Pinterest API invalid JSON:',
-                raw.slice(0, 2000)
-            );
-
             throw new Error(
                 'Pinterest API returned invalid JSON.'
             );
         }
 
-        console.log(
-            'Pinterest API parsed successfully:',
-            JSON.stringify(data).slice(0, 1000)
-        );
-
         if (!data?.success) {
             throw new Error(
+                data?.error ||
                 data?.message ||
-                'Pinterest API returned an unsuccessful response.'
+                'Pinterest search failed.'
             );
         }
 
-        if (!Array.isArray(data.results)) {
+        const results =
+            Array.isArray(data?.results)
+                ? data.results
+                : Array.isArray(data?.data?.results)
+                    ? data.data.results
+                    : [];
+
+        if (!results.length) {
             throw new Error(
-                'Pinterest API did not return a results array.'
+                `No Pinterest results found for "${query}".`
             );
         }
 
-        return data.results;
+        return results
+            .filter(item => {
+                const image =
+                    item?.image ||
+                    item?.thumbnail ||
+                    item?.thumb;
+
+                return Boolean(image);
+            })
+            .slice(0, limit);
 
     } catch (error) {
-        if (error.name === 'AbortError') {
+        if (
+            error.name ===
+            'AbortError'
+        ) {
             throw new Error(
                 'Pinterest API request timed out.'
             );
@@ -151,183 +144,149 @@ async function fetchPinterestImages(query, limit) {
     }
 }
 
-/**
- * Create a caption for each Pinterest image.
- */
-function createCaption(result, index, total) {
-    const lines = [
-        `📌 *Pinterest ${index}/${total}*`
-    ];
+async function downloadImage(url) {
+    const response =
+        await fetch(url, {
+            method: 'GET',
+            redirect: 'follow',
+            headers: {
+                'User-Agent': 'Mozilla/5.0'
+            }
+        });
 
-    if (result.title) {
-        lines.push(
-            `✨ ${result.title}`
+    if (!response.ok) {
+        throw new Error(
+            `Image download failed: HTTP ${response.status}`
         );
     }
 
-    if (result.fullName) {
-        lines.push(
-            `👤 ${result.fullName}`
-        );
-    } else if (result.username) {
-        lines.push(
-            `👤 @${result.username}`
+    const contentType =
+        response.headers.get(
+            'content-type'
+        ) || '';
+
+    const arrayBuffer =
+        await response.arrayBuffer();
+
+    const buffer =
+        Buffer.from(arrayBuffer);
+
+    if (!buffer.length) {
+        throw new Error(
+            'Pinterest returned an empty image.'
         );
     }
 
-    if (result.pinUrl) {
-        lines.push(
-            `🔗 ${result.pinUrl}`
-        );
-    }
-
-    return lines.join('\n');
+    return {
+        buffer,
+        mimetype:
+            contentType.startsWith('image/')
+                ? contentType
+                : 'image/jpeg'
+    };
 }
 
-/**
- * Send Pinterest images to WhatsApp.
- */
+function getImageUrl(item) {
+    return (
+        item?.image ||
+        item?.thumbnail ||
+        item?.thumb ||
+        ''
+    );
+}
+
+function getTitle(item) {
+    return String(
+        item?.title ||
+        'Pinterest'
+    ).trim();
+}
+
 async function sendPinterestImages(
     sock,
     msg,
     query,
     results
 ) {
-    const jid = msg.key.remoteJid;
-
-    /*
-     * Only keep results that actually have an image.
-     */
-    const usableResults = results.filter(
-        result =>
-            result &&
-            (
-                result.image ||
-                result.thumb
-            )
-    );
-
-    if (!usableResults.length) {
-        throw new Error(
-            `No usable images were found for "${query}".`
-        );
-    }
-
-    const total = usableResults.length;
-
-    try {
-        await sock.sendPresenceUpdate(
-            'uploading',
-            jid
-        );
-    } catch {}
-
-    /*
-     * Send them one by one.
-     *
-     * This is more reliable than sending all
-     * images in one operation.
-     */
-    for (
-        let index = 0;
-        index < total;
-        index++
-    ) {
-        const result =
-            usableResults[index];
-
-        /*
-         * Prefer the original image.
-         * Fall back to thumbnail if necessary.
-         */
-        const imageUrl =
-            result.image ||
-            result.thumb;
-
-        const caption =
-            createCaption(
-                result,
-                index + 1,
-                total
-            );
-
-        try {
-            await sock.sendMessage(
-                jid,
-                {
-                    image: {
-                        url: imageUrl
-                    },
-                    caption
-                },
-                {
-                    quoted:
-                        index === 0
-                            ? msg
-                            : undefined
-                }
-            );
-
-            /*
-             * Small delay between images.
-             *
-             * Helps avoid hammering WhatsApp
-             * when requesting 10 images.
-             */
-            if (index < total - 1) {
-                await new Promise(
-                    resolve =>
-                        setTimeout(
-                            resolve,
-                            500
-                        )
-                );
-            }
-
-        } catch (error) {
-            console.error(
-                `Failed to send Pinterest image ${index + 1}:`,
-                error
-            );
-        }
-    }
-}
-
-/**
- * Send errors in a user-friendly way.
- */
-async function handlePinterestError(
-    sock,
-    msg,
-    error
-) {
-    console.error(
-        'Pinterest command error:',
-        error
-    );
-
-    let message;
-
-    try {
-        message = friendlyApiError(
-            error,
-            'Pinterest API'
-        );
-    } catch {
-        message =
-            error?.message ||
-            'Something went wrong while searching Pinterest.';
-    }
+    const jid =
+        msg.key.remoteJid;
 
     await sock.sendMessage(
-        msg.key.remoteJid,
+        jid,
         {
-            text: `❌ ${message}`
+            text:
+                `🔎 *Pinterest:* ${query}\n` +
+                `📌 Sending ${results.length} image${results.length === 1 ? '' : 's'}...`
         },
         {
             quoted: msg
         }
     );
+
+    let sent = 0;
+
+    for (
+        let index = 0;
+        index < results.length;
+        index++
+    ) {
+        const item =
+            results[index];
+
+        const imageUrl =
+            getImageUrl(item);
+
+        if (!imageUrl) {
+            continue;
+        }
+
+        try {
+            const image =
+                await downloadImage(
+                    imageUrl
+                );
+
+            await sock.sendMessage(
+                jid,
+                {
+                    image: image.buffer,
+                    mimetype: image.mimetype,
+                    caption:
+                        getTitle(item)
+                },
+                {
+                    quoted: msg
+                }
+            );
+
+            sent++;
+
+        } catch (error) {
+            console.error(
+                `Pinterest image ${index + 1} failed:`,
+                error.message
+            );
+        }
+    }
+
+    if (!sent) {
+        throw new Error(
+            'All Pinterest images failed to download.'
+        );
+    }
+
+    if (sent < results.length) {
+        await sock.sendMessage(
+            jid,
+            {
+                text:
+                    `⚠️ ${sent}/${results.length} images were sent successfully.`
+            },
+            {
+                quoted: msg
+            }
+        );
+    }
 }
 
 module.exports = {
@@ -335,26 +294,28 @@ module.exports = {
         name: 'pin',
 
         aliases: [
-            'pinterest'
+            'pinterest',
+            'pinterestsearch'
         ],
 
         version: '1.1.0',
 
         description:
-            'Search and send Pinterest images',
+            'Search Pinterest and send images',
 
         usage:
             'pin <query> [-number]',
 
         examples: [
             'pin asta',
-            'pin asta -5',
-            'pin asta and yuno -10'
+            'pin asta -3',
+            'pin asta and yuno -5',
+            'pin cute anime -10'
         ],
 
         permissions: 0,
 
-        cooldown: 8,
+        cooldown: 10,
 
         category: 'media'
     },
@@ -367,11 +328,8 @@ module.exports = {
         const {
             query,
             limit
-        } = parseQuery(args);
+        } = parseArgs(args);
 
-        /*
-         * No query.
-         */
         if (!query) {
             await sock.sendMessage(
                 msg.key.remoteJid,
@@ -380,15 +338,15 @@ module.exports = {
                         '📌 *Pinterest Search*',
                         '',
                         'Usage:',
-                        '.pin <query>',
-                        '.pin <query> -<number>',
+                        '.pin <search> [-number]',
                         '',
                         'Examples:',
                         '.pin asta',
-                        '.pin asta -5',
-                        '.pin asta and yuno -10',
+                        '.pin asta -3',
+                        '.pin asta and yuno -5',
+                        '.pin cute anime -10',
                         '',
-                        'Maximum: 10 images'
+                        `Maximum: ${MAX_IMAGES} images`
                     ].join('\n')
                 },
                 {
@@ -399,51 +357,13 @@ module.exports = {
             return;
         }
 
-        /*
-         * Tell the user we're searching.
-         */
-        await sock.sendMessage(
-            msg.key.remoteJid,
-            {
-                text:
-                    `🔎 Searching Pinterest for *${query}*...`
-            },
-            {
-                quoted: msg
-            }
-        );
-
         try {
-            /*
-             * Search Pinterest.
-             */
             const results =
-                await fetchPinterestImages(
+                await fetchPinterest(
                     query,
                     limit
                 );
 
-            /*
-             * No results.
-             */
-            if (!results.length) {
-                await sock.sendMessage(
-                    msg.key.remoteJid,
-                    {
-                        text:
-                            `❌ No Pinterest results found for *${query}*.`
-                    },
-                    {
-                        quoted: msg
-                    }
-                );
-
-                return;
-            }
-
-            /*
-             * Send images.
-             */
             await sendPinterestImages(
                 sock,
                 msg,
@@ -452,10 +372,20 @@ module.exports = {
             );
 
         } catch (error) {
-            await handlePinterestError(
-                sock,
-                msg,
+            console.error(
+                'Pinterest command error:',
                 error
+            );
+
+            await sock.sendMessage(
+                msg.key.remoteJid,
+                {
+                    text:
+                        `❌ Pinterest error: ${error.message}`
+                },
+                {
+                    quoted: msg
+                }
             );
         }
     }
