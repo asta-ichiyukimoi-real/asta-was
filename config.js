@@ -19,7 +19,6 @@ module.exports = {
     },
 
     assets: {
-        // Replace this with your own bot banner/photo URL.
         defaultCommandImageUrl: 'https://shz.al/Sfba',
         commandImages: {
             help: 'https://shz.al/Sfba',

@@ -3,7 +3,7 @@ const {
 } = require('@whiskeysockets/baileys');
 
 const API_URL =
-    'https://omegatech-api.dixonomega.tech/api/tools/shz-uploader';
+    'https://omegatech-api.dixonomega.tech/api/tools/shz-uploader?action=upload&expire=90d';
 
 const UPLOAD_TIMEOUT_MS = 120000;
 
