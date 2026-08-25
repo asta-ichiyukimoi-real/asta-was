@@ -18,6 +18,22 @@ module.exports = {
         locale: 'en-US'
     },
 
+    assets: {
+        // Replace this with your own bot banner/photo URL.
+        defaultCommandImageUrl: 'https://picsum.photos/1200/630',
+        commandImages: {
+            help: '',
+            menu: '',
+            info: '',
+            health: '',
+            ping: '',
+            stats: '',
+            analytics: '',
+            features: '',
+            selftest: ''
+        }
+    },
+
     permissions: {
         owner,
         owners: [owner],

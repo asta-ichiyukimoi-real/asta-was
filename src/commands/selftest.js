@@ -3,6 +3,7 @@ const path = require('path');
 const config = require('../../config');
 const state = require('../utils/stateManager');
 const { requestJson, getErrorMessage } = require('../utils/apiClient');
+const { sendStyledMessage } = require('../utils/messageStyle');
 
 function check(name, ok, detail = '') {
     return { name, ok: Boolean(ok), detail };
@@ -69,8 +70,9 @@ module.exports = {
         const lines = results.map(item => `${item.ok ? 'OK' : 'FAIL'} ${item.name}${item.detail ? ` - ${item.detail}` : ''}`);
         const failed = results.filter(item => !item.ok).length;
 
-        await sock.sendMessage(msg.key.remoteJid, {
-            text: `*Self Test*\n${lines.join('\n')}\n\nResult: ${failed ? `${failed} issue(s)` : 'all good'}`
-        }, { quoted: msg });
+        await sendStyledMessage(sock, msg.key.remoteJid, `*Self Test*\n${lines.join('\n')}\n\nResult: ${failed ? `${failed} issue(s)` : 'all good'}`, {
+            quoted: msg,
+            commandName: 'selftest'
+        });
     }
 };

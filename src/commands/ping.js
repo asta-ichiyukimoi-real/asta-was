@@ -1,3 +1,5 @@
+const { sendStyledMessage } = require('../utils/messageStyle');
+
 module.exports = {
     config: {
         name: 'ping',
@@ -23,7 +25,7 @@ module.exports = {
             let statusText = 'Online';
             
             // Send the ping message
-            const sentMsg = await sock.sendMessage(msg.key.remoteJid, 
+            await sock.sendMessage(msg.key.remoteJid, 
                 { text: '⏳ *Calculating ping...*' }, 
                 { quoted: msg }
             );
@@ -62,7 +64,10 @@ ${qualityEmoji} *Latency:* ${ping}ms
 ✅ Bot is responding perfectly!`;
             
             // Edit the loading message with final response
-            await sock.sendMessage(msg.key.remoteJid, { text: reply }, { quoted: msg });
+            await sendStyledMessage(sock, msg.key.remoteJid, reply, {
+                quoted: msg,
+                commandName: 'ping'
+            });
             
         } catch (error) {
             console.error('Ping command error:', error);

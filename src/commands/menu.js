@@ -1,5 +1,6 @@
 const config = require('../../config');
 const state = require('../utils/stateManager');
+const { sendStyledMessage } = require('../utils/messageStyle');
 
 module.exports = {
     config: {
@@ -82,6 +83,9 @@ module.exports = {
 
 Reply with one of the commands above to continue.`;
 
-        await sock.sendMessage(msg.key.remoteJid, { text }, { quoted: msg });
+        await sendStyledMessage(sock, msg.key.remoteJid, text, {
+            quoted: msg,
+            commandName: 'menu'
+        });
     }
 };

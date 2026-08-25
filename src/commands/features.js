@@ -1,5 +1,6 @@
 const config = require('../../config');
 const state = require('../utils/stateManager');
+const { sendStyledMessage } = require('../utils/messageStyle');
 
 function knownCategories() {
     const configured = global.configCommandHandler?.get?.('commands.categories', config.commands?.categories);
@@ -26,9 +27,10 @@ module.exports = {
         if (!category) {
             const disabled = state.getDisabledCategories(chatId);
             const lines = categories.map(name => `${name}: ${disabled.includes(name) ? 'off' : 'on'}`);
-            await sock.sendMessage(chatId, {
-                text: `*Features Here*\n${lines.join('\n')}\n\nUse: .features media off`
-            }, { quoted: msg });
+            await sendStyledMessage(sock, chatId, `*Features Here*\n${lines.join('\n')}\n\nUse: .features media off`, {
+                quoted: msg,
+                commandName: 'features'
+            });
             return;
         }
 

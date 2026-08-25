@@ -1,6 +1,7 @@
 const config = require('../../config');
 const health = require('../services/health');
 const state = require('../utils/stateManager');
+const { sendStyledMessage } = require('../utils/messageStyle');
 
 module.exports = {
     config: {
@@ -42,6 +43,9 @@ module.exports = {
             `Developer eval: ${handler?.get?.('developer.evalEnabled', config.developer?.evalEnabled) ? 'on' : 'off'}`
         ].join('\n');
 
-        await sock.sendMessage(msg.key.remoteJid, { text: infoText }, { quoted: msg });
+        await sendStyledMessage(sock, msg.key.remoteJid, infoText, {
+            quoted: msg,
+            commandName: 'info'
+        });
     }
 };

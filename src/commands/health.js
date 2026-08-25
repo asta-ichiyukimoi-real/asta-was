@@ -1,5 +1,6 @@
 const health = require('../services/health');
 const config = require('../../config');
+const { sendStyledMessage } = require('../utils/messageStyle');
 
 module.exports = {
     config: {
@@ -39,6 +40,9 @@ Last Error: ${h.lastError || 'none'}
 
 Dashboard: https://asta-was.onrender.com/`;
 
-        await sock.sendMessage(msg.key.remoteJid, { text }, { quoted: msg });
+        await sendStyledMessage(sock, msg.key.remoteJid, text, {
+            quoted: msg,
+            commandName: 'health'
+        });
     }
 };

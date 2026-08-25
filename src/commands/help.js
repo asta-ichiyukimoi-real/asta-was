@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const config = require('../../config');
 const state = require('../utils/stateManager');
+const { sendStyledMessage } = require('../utils/messageStyle');
 
 function loadCommands() {
     return fs.readdirSync(__dirname)
@@ -87,7 +88,10 @@ ${prefix}${requested}
 
 *Response:*
 ${customCommand.response}`;
-                await sock.sendMessage(chatId, { text: customMsg }, { quoted: msg });
+                await sendStyledMessage(sock, chatId, customMsg, {
+                    quoted: msg,
+                    commandName: 'help'
+                });
                 return;
             }
 
@@ -129,7 +133,10 @@ ${prefix}${usage}
                 });
             }
 
-            await sock.sendMessage(chatId, { text: detail }, { quoted: msg });
+            await sendStyledMessage(sock, chatId, detail, {
+                quoted: msg,
+                commandName: 'help'
+            });
             return;
         }
 
@@ -188,6 +195,9 @@ _Total: ${totalCommands} commands (${commands.length} built-in + ${customCommand
 • Commands with 🚫 are disabled in this chat
 • Type ${prefix}settings to manage commands`;
 
-        await sock.sendMessage(chatId, { text: helpMessage }, { quoted: msg });
+        await sendStyledMessage(sock, chatId, helpMessage, {
+            quoted: msg,
+            commandName: 'help'
+        });
     }
 };

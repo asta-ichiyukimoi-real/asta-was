@@ -21,6 +21,10 @@ const DEFAULT_CONFIG = {
         cooldown: 3,
         disabledGlobally: []
     },
+    assets: {
+        defaultCommandImageUrl: '',
+        commandImages: {}
+    },
     dashboard: {
         enabled: true,
         port: 3030,

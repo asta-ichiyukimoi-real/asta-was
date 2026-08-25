@@ -1,4 +1,6 @@
 const state = require('../utils/stateManager');
+const config = require('../../config');
+const { sendStyledMessage } = require('../utils/messageStyle');
 
 module.exports = {
     config: {
@@ -31,8 +33,12 @@ Total Commands Executed: ${usage.totalCommands}
             });
         }
 
-        statText += `\n\n_Use !help to see available commands._`;
+        const prefix = global.configCommandHandler?.getPrefix?.() || config.prefix || '.';
+        statText += `\n\n_Use ${prefix}help to see available commands._`;
 
-        await sock.sendMessage(msg.key.remoteJid, { text: statText }, { quoted: msg });
+        await sendStyledMessage(sock, msg.key.remoteJid, statText, {
+            quoted: msg,
+            commandName: 'stats'
+        });
     }
 };

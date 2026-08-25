@@ -41,16 +41,16 @@ Open `config.js` and update the important values:
 
 ```js
 module.exports = {
-    prefix: '.',
-    owner: 'your-owner-id',
+  prefix: ".",
+  owner: "your-owner-id",
 
-    connection: {
-        authDir: './auth_info_baileys',
-        pairingPhoneNumber: '',
-        reconnectDelayMs: 2000,
-        markOnlineOnConnect: false,
-        syncFullHistory: false
-    }
+  connection: {
+    authDir: "./auth_info_baileys",
+    pairingPhoneNumber: "",
+    reconnectDelayMs: 2000,
+    markOnlineOnConnect: false,
+    syncFullHistory: false,
+  },
 };
 ```
 
@@ -70,7 +70,7 @@ Use digits only, including country code:
 
 ```js
 connection: {
-    pairingPhoneNumber: '23491564521'
+  pairingPhoneNumber: "23491564521";
 }
 ```
 
@@ -90,111 +90,11 @@ If `pairingPhoneNumber` is empty or invalid, the bot automatically falls back to
 
 ```js
 connection: {
-    pairingPhoneNumber: ''
+  pairingPhoneNumber: "";
 }
 ```
 
 Then scan the terminal QR code with WhatsApp.
-
-## TikTok Ready Showcase
-
-Use this section if you want to present Asta Bot on TikTok, Reels, Shorts, or a portfolio video.
-
-### Short TikTok Caption
-
-```text
-I built a WhatsApp bot that connects with pairing code, runs AI commands, downloads media, manages groups, creates stickers, tracks stats, and even has a dashboard.
-```
-
-### Longer TikTok Caption
-
-```text
-Meet Asta Bot: a WhatsApp automation assistant powered by Baileys. It supports QR login or pairing-code login, AI chat, media tools, stickers, group moderation, reminders, stats, and a local dashboard. Built with Node.js for fast command handling and easy customization.
-```
-
-### 30 Second Video Script
-
-```text
-Hook:
-"I built a WhatsApp bot that does way more than reply hello."
-
-Show:
-"It connects using QR code or pairing code, so you can link it like a real device."
-
-Demo:
-"Here are the commands: AI chat, media download, stickers, group moderation, reminders, and stats."
-
-Proof:
-"It also has a dashboard, database storage, auto reconnect, and owner/admin permissions."
-
-Close:
-"This is Asta Bot, a full WhatsApp assistant built with Node.js and Baileys."
-```
-
-### Feature Shots To Record
-
-- Terminal showing the bot startup screen
-- Pairing code appearing in the console
-- WhatsApp linking screen
-- `.help` command output
-- AI or intelligent command response
-- Sticker command demo
-- Media download command demo
-- Group moderation command demo
-- Dashboard running locally
-- Bot reconnecting successfully
-
-### TikTok Hashtags
-
-```text
-#WhatsAppBot #NodeJS #Baileys #CodingProject #JavaScript #Automation #AIChatbot #BotDevelopment #TechTok #Programmer
-```
-
-## Commands
-
-The bot loads commands from `src/commands/`. Some common command categories include:
-
-| Category | Examples |
-| --- | --- |
-| General | `help`, `ping`, `info`, `menu`, `hello` |
-| AI | `intelligent`, `smart`, `qwen`, `translate` |
-| Media | `youtube`, `ytdl`, `media`, `sticker`, `wallpaper`, `pinterest` |
-| Group | `tagall`, `groupinfo`, `approvegroup`, `pending` |
-| Moderation | `antilink`, `warn`, `warnings`, `mute`, `kick`, `banuser` |
-| Admin | `config`, `reload`, `restart`, `backup`, `restore` |
-| Developer | `logs`, `health`, `selftest`, `env`, `eval`, `shell` |
-| Fun | `joke`, `quote`, `roll`, `choose`, `couple` |
-
-Use the configured prefix before commands. By default:
-
-```text
-.help
-.menu
-.ping
-```
-
-## Project Structure
-
-```text
-asta-wa/
-|-- config.js
-|-- index.js
-|-- package.json
-|-- handlers/
-|   |-- commandHandler.js
-|   |-- chatCommandHandler.js
-|   |-- replyCommandHandler.js
-|   `-- configCommandHandler.js
-|-- src/
-|   |-- commands/
-|   |-- events/
-|   |-- models/
-|   |-- services/
-|   `-- utils/
-|-- data/
-|-- logs/
-`-- auth_info_baileys/
-```
 
 ## Configuration
 
@@ -244,6 +144,59 @@ connection: {
 }
 ```
 
+### Command Images
+
+Some showcase commands can send a photo banner with their text. Replace the default image URL with your own bot image, logo, anime banner, or TikTok promo design.
+
+```js
+assets: {
+    defaultCommandImageUrl: 'https://picsum.photos/1200/630',
+    commandImages: {
+        help: '',
+        menu: '',
+        info: '',
+        health: '',
+        ping: '',
+        stats: '',
+        analytics: '',
+        features: '',
+        selftest: ''
+    }
+}
+```
+
+If a command image is empty, the bot uses `defaultCommandImageUrl`. If the image fails to send, the bot falls back to plain text.
+
+Photo-enabled commands:
+
+| Command | What It Shows |
+| --- | --- |
+| `help` | Full command list and command details |
+| `menu` | Main bot command menu |
+| `info` | Live bot information |
+| `health` | Runtime health and status |
+| `ping` | Latency and uptime |
+| `stats` | Usage statistics |
+| `analytics` | Bot metrics and command analytics |
+| `features` | Enabled/disabled command categories |
+| `selftest` | Bot diagnostics |
+
+All command files currently included:
+
+```text
+addcmd, adminid, analytics, antilink, apistatus, appleMusic, approvegroup,
+asta, backup, badword, banuser, calc, catbox, choose, cmd, config, couple,
+dbadmin, delcmd, delete, demote, disable, echo, editimg, enable, env, eval,
+features, file, find, groupinfo, health, hello, help, info, intelligent, jid,
+joke, kick, leaderboard, leave, listcmd, logs, makesticker, match, media, menu,
+mute, muteuser, mystats, new, novel, ownertest, pending, pfp, ping, pinterest,
+prefix, promote, qwen, qwenimage, quote, reactions, reload, remind, resetasta,
+restart, restore, reverse, role, roll, search, selftest, setfarewell, setprefix,
+settings, setwelcome, shell, smart, stats, sticker, tagall, test, time, translate,
+TTS, tyr, unbanuser, unmute, unmuteuser, update, viewonce, wallpaper, warn,
+warnings, wikipedia, youtube, ytdl
+```
+
 ## Authentication Files
 
 Baileys saves WhatsApp session files inside:
@@ -273,7 +226,7 @@ Use it to inspect bot status and runtime information.
 Check that `pairingPhoneNumber` is digits only:
 
 ```js
-pairingPhoneNumber: '23491564521'
+pairingPhoneNumber: "23491564521";
 ```
 
 Do not include `+`, spaces, or brackets.

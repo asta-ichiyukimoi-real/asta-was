@@ -1,6 +1,7 @@
 const state = require('../utils/stateManager');
 const commandQueue = require('../utils/commandQueue');
 const statsManager = require('../models/stats');
+const { sendStyledMessage } = require('../utils/messageStyle');
 
 function topEntries(object, limit = 8) {
     return Object.entries(object || {})
@@ -114,7 +115,10 @@ ${lines.length > 6 ? `... (${lines.length - 6} more rows)` : ''}
                 '`.analytics export csv [days]`'
             ].join('\n');
 
-            await sock.sendMessage(chat, { text });
+            await sendStyledMessage(sock, chat, text, {
+                quoted: msg,
+                commandName: 'analytics'
+            });
             await statsManager.recordCommand('analytics', chat, msg.key.participant, 0, 'success');
         } catch (error) {
             console.error('Error in analytics command:', error);
@@ -151,7 +155,10 @@ ${lines.length > 6 ? `... (${lines.length - 6} more rows)` : ''}
                 errorLogs[0] ? `${errorLogs[0].type}: ${errorLogs[0].error || errorLogs[0].message || 'see logs'}` : 'none'
             ].join('\n');
 
-            await sock.sendMessage(chat, { text: text.slice(0, 3500) }, { quoted: msg });
+            await sendStyledMessage(sock, chat, text.slice(0, 3500), {
+                quoted: msg,
+                commandName: 'analytics'
+            });
             await statsManager.recordCommand('analytics', chat, msg.key.participant, 0, 'error');
         }
     }
