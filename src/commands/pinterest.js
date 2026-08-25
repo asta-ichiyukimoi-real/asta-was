@@ -37,40 +37,30 @@ function parseArgs(args) {
 async function fetchPinterest(query, limit) {
     const url =
         `${API_URL}?action=search` +
-        `&query=${encodeURIComponent(query)}` +
-        `&limit=${limit}`;
+        `&query=${encodeURIComponent(query)}`;
 
-    const controller =
-        new AbortController();
+    const controller = new AbortController();
 
-    const timeout =
-        setTimeout(
-            () => controller.abort(),
-            REQUEST_TIMEOUT_MS
-        );
+    const timeout = setTimeout(
+        () => controller.abort(),
+        REQUEST_TIMEOUT_MS
+    );
 
     try {
-        const response =
-            await fetch(url, {
-                method: 'GET',
-                headers: {
-                    Accept: 'application/json',
-                    'User-Agent': 'Mozilla/5.0'
-                },
-                signal: controller.signal
-            });
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'User-Agent': 'Mozilla/5.0'
+            },
+            signal: controller.signal
+        });
 
-        const raw =
-            await response.text();
+        const raw = await response.text();
 
         console.log(
             'Pinterest API status:',
             response.status
-        );
-
-        console.log(
-            'Pinterest API response:',
-            raw.slice(0, 3000)
         );
 
         if (!response.ok) {
@@ -89,7 +79,12 @@ async function fetchPinterest(query, limit) {
 
         try {
             data = JSON.parse(raw);
-        } catch (error) {
+        } catch {
+            console.error(
+                'Pinterest invalid JSON:',
+                raw.slice(0, 3000)
+            );
+
             throw new Error(
                 'Pinterest API returned invalid JSON.'
             );
@@ -103,35 +98,35 @@ async function fetchPinterest(query, limit) {
             );
         }
 
-        const results =
-            Array.isArray(data?.results)
-                ? data.results
-                : Array.isArray(data?.data?.results)
-                    ? data.data.results
-                    : [];
+        const videos =
+            Array.isArray(data?.data?.videos)
+                ? data.data.videos
+                : [];
 
-        if (!results.length) {
+        const images = videos
+            .filter(item =>
+                item &&
+                typeof item.thumbnail === 'string' &&
+                item.thumbnail.trim()
+            )
+            .map(item => ({
+                thumbnail: item.thumbnail,
+                title: item.title || 'Pinterest',
+                pinUrl: item.link || '',
+                username: item.username || ''
+            }))
+            .slice(0, limit);
+
+        if (!images.length) {
             throw new Error(
-                `No Pinterest results found for "${query}".`
+                `No Pinterest images found for "${query}".`
             );
         }
 
-        return results
-            .filter(item => {
-                const image =
-                    item?.image ||
-                    item?.thumbnail ||
-                    item?.thumb;
-
-                return Boolean(image);
-            })
-            .slice(0, limit);
+        return images;
 
     } catch (error) {
-        if (
-            error.name ===
-            'AbortError'
-        ) {
+        if (error.name === 'AbortError') {
             throw new Error(
                 'Pinterest API request timed out.'
             );
@@ -145,25 +140,19 @@ async function fetchPinterest(query, limit) {
 }
 
 async function downloadImage(url) {
-    const response =
-        await fetch(url, {
-            method: 'GET',
-            redirect: 'follow',
-            headers: {
-                'User-Agent': 'Mozilla/5.0'
-            }
-        });
+    const response = await fetch(url, {
+        method: 'GET',
+        redirect: 'follow',
+        headers: {
+            'User-Agent': 'Mozilla/5.0'
+        }
+    });
 
     if (!response.ok) {
         throw new Error(
             `Image download failed: HTTP ${response.status}`
         );
     }
-
-    const contentType =
-        response.headers.get(
-            'content-type'
-        ) || '';
 
     const arrayBuffer =
         await response.arrayBuffer();
@@ -177,29 +166,14 @@ async function downloadImage(url) {
         );
     }
 
-    return {
-        buffer,
-        mimetype:
-            contentType.startsWith('image/')
-                ? contentType
-                : 'image/jpeg'
-    };
+    return buffer;
 }
 
-function getImageUrl(item) {
-    return (
-        item?.image ||
-        item?.thumbnail ||
-        item?.thumb ||
-        ''
-    );
-}
-
-function getTitle(item) {
-    return String(
-        item?.title ||
-        'Pinterest'
-    ).trim();
+function cleanTitle(value) {
+    return String(value || 'Pinterest')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 100);
 }
 
 async function sendPinterestImages(
@@ -208,15 +182,15 @@ async function sendPinterestImages(
     query,
     results
 ) {
-    const jid =
-        msg.key.remoteJid;
+    const jid = msg.key.remoteJid;
 
     await sock.sendMessage(
         jid,
         {
             text:
-                `🔎 *Pinterest:* ${query}\n` +
-                `📌 Sending ${results.length} image${results.length === 1 ? '' : 's'}...`
+                `📌 *Pinterest Search*\n` +
+                `Query: ${query}\n` +
+                `Images: ${results.length}`
         },
         {
             quoted: msg
@@ -230,29 +204,28 @@ async function sendPinterestImages(
         index < results.length;
         index++
     ) {
-        const item =
-            results[index];
-
-        const imageUrl =
-            getImageUrl(item);
-
-        if (!imageUrl) {
-            continue;
-        }
+        const item = results[index];
 
         try {
-            const image =
+            const buffer =
                 await downloadImage(
-                    imageUrl
+                    item.thumbnail
                 );
+
+            let caption =
+                cleanTitle(item.title);
+
+            if (item.username) {
+                caption +=
+                    `\n👤 ${item.username}`;
+            }
 
             await sock.sendMessage(
                 jid,
                 {
-                    image: image.buffer,
-                    mimetype: image.mimetype,
-                    caption:
-                        getTitle(item)
+                    image: buffer,
+                    mimetype: 'image/jpeg',
+                    caption
                 },
                 {
                     quoted: msg
@@ -263,7 +236,7 @@ async function sendPinterestImages(
 
         } catch (error) {
             console.error(
-                `Pinterest image ${index + 1} failed:`,
+                `Pinterest image ${index + 1} error:`,
                 error.message
             );
         }
@@ -271,7 +244,7 @@ async function sendPinterestImages(
 
     if (!sent) {
         throw new Error(
-            'All Pinterest images failed to download.'
+            'Pinterest thumbnails could not be downloaded.'
         );
     }
 
@@ -280,7 +253,7 @@ async function sendPinterestImages(
             jid,
             {
                 text:
-                    `⚠️ ${sent}/${results.length} images were sent successfully.`
+                    `⚠️ Sent ${sent}/${results.length} images.`
             },
             {
                 quoted: msg
@@ -298,7 +271,7 @@ module.exports = {
             'pinterestsearch'
         ],
 
-        version: '1.1.0',
+        version: '1.2.0',
 
         description:
             'Search Pinterest and send images',
