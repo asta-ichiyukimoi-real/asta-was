@@ -23,9 +23,9 @@ module.exports = {
         commandImages: {
             help: 'https://shz.al/Sfba',
             menu: '',
-            info: '',
-            health: '',
-            ping: '',
+            info: 'https://shz.al/A42x',
+            health: 'https://shz.al/x58W',
+            ping: 'https://shz.al/XYew',
             stats: '',
             analytics: '',
             features: '',
