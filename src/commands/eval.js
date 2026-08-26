@@ -16,7 +16,10 @@ function getDevConfig() {
 function formatValue(value, maxOutput) {
     const output = typeof value === 'string'
         ? value
-        : util.inspect(value, { depth: 4, breakLength: 120 });
+        : util.inspect(value, {
+            depth: 4,
+            breakLength: 120
+        });
 
     return output.length > maxOutput
         ? `${output.slice(0, maxOutput)}\n...output trimmed`
@@ -26,7 +29,7 @@ function formatValue(value, maxOutput) {
 function unwrapMessage(message) {
     let current = message || {};
 
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < 10; i += 1) {
         const next =
             current.ephemeralMessage?.message ||
             current.viewOnceMessage?.message ||
@@ -35,6 +38,7 @@ function unwrapMessage(message) {
             current.documentWithCaptionMessage?.message;
 
         if (!next) break;
+
         current = next;
     }
 
@@ -51,12 +55,22 @@ function getContextInfo(message) {
         current.audioMessage?.contextInfo ||
         current.documentMessage?.contextInfo ||
         current.stickerMessage?.contextInfo ||
+        current.buttonsResponseMessage?.contextInfo ||
+        current.listResponseMessage?.contextInfo ||
+        current.templateButtonReplyMessage?.contextInfo ||
+        current.interactiveResponseMessage?.contextInfo ||
         null
     );
 }
 
 function getQuotedMessage(msg) {
-    return getContextInfo(msg)?.quotedMessage || null;
+    const context = getContextInfo(msg);
+
+    if (!context?.quotedMessage) {
+        return null;
+    }
+
+    return unwrapMessage(context.quotedMessage);
 }
 
 function getMessageText(message) {
@@ -67,6 +81,7 @@ function getMessageText(message) {
         current.extendedTextMessage?.text ||
         current.imageMessage?.caption ||
         current.videoMessage?.caption ||
+        current.audioMessage?.caption ||
         current.documentMessage?.caption ||
         ''
     );
@@ -75,15 +90,39 @@ function getMessageText(message) {
 function getMessageType(message) {
     const current = unwrapMessage(message);
 
-    if (current.conversation || current.extendedTextMessage) return 'text';
     if (current.imageMessage) return 'image';
     if (current.videoMessage) return 'video';
     if (current.audioMessage) return 'audio';
     if (current.documentMessage) return 'document';
     if (current.stickerMessage) return 'sticker';
-    if (current.contactMessage || current.contactsArrayMessage) return 'contact';
-    if (current.locationMessage || current.liveLocationMessage) return 'location';
-    if (current.pollCreationMessage || current.pollCreationMessageV3) return 'poll';
+
+    if (
+        current.conversation ||
+        current.extendedTextMessage
+    ) {
+        return 'text';
+    }
+
+    if (
+        current.contactMessage ||
+        current.contactsArrayMessage
+    ) {
+        return 'contact';
+    }
+
+    if (
+        current.locationMessage ||
+        current.liveLocationMessage
+    ) {
+        return 'location';
+    }
+
+    if (
+        current.pollCreationMessage ||
+        current.pollCreationMessageV3
+    ) {
+        return 'poll';
+    }
 
     return 'unknown';
 }
@@ -120,17 +159,10 @@ async function downloadQuotedMedia(sock, msg) {
         throw new Error('No media found in the quoted message.');
     }
 
-    const messageForDownload = {
-        key: {
-            remoteJid: msg.key.remoteJid,
-            id: msg.key.id,
-            participant: msg.key.participant
-        },
-        message: unwrapMessage(quoted)
-    };
-
     try {
-        const { downloadContentFromMessage } = require('@whiskeysockets/baileys');
+        const {
+            downloadContentFromMessage
+        } = require('@whiskeysockets/baileys');
 
         const stream = await downloadContentFromMessage(
             mediaMessage,
@@ -145,7 +177,9 @@ async function downloadQuotedMedia(sock, msg) {
 
         return Buffer.concat(chunks);
     } catch (error) {
-        throw new Error(`Media download failed: ${error.message || error}`);
+        throw new Error(
+            `Media download failed: ${error.message || error}`
+        );
     }
 }
 
@@ -183,7 +217,7 @@ module.exports = {
     config: {
         name: 'eval',
         aliases: ['js'],
-        version: '2.1.0',
+        version: '2.2.0',
         description: 'Evaluate JavaScript inside a limited VM context',
         usage: 'eval <javascript>',
         examples: [
@@ -284,8 +318,14 @@ module.exports = {
                 decodeURIComponent
             };
 
+            const wrappedCode = `
+                (async () => {
+                    return (${code});
+                })()
+            `;
+
             const result = vm.runInNewContext(
-                `(async () => { return (${code}); })()`,
+                wrappedCode,
                 context,
                 {
                     timeout: devConfig.timeoutMs
@@ -297,7 +337,10 @@ module.exports = {
             await sock.sendMessage(
                 msg.key.remoteJid,
                 {
-                    text: `*Eval Result*\n${formatValue(resolved, devConfig.maxOutput)}`
+                    text: `*Eval Result*\n${formatValue(
+                        resolved,
+                        devConfig.maxOutput
+                    )}`
                 },
                 { quoted: msg }
             );
