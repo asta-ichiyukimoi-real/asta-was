@@ -60,6 +60,8 @@ module.exports = {
 
         try {
             const context = {
+                sock,
+                msg,
                 config,
                 commands: global.commandHandler?.commands,
                 chatCommands: global.chatCommandHandler?.chatCommands,
@@ -69,7 +71,7 @@ module.exports = {
                 Math,
                 Date,
                 JSON
-            };
+};
             const result = vm.runInNewContext(code, context, { timeout: devConfig.timeoutMs });
 
             await sock.sendMessage(msg.key.remoteJid, {
