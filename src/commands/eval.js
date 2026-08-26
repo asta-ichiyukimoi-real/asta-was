@@ -60,17 +60,45 @@ module.exports = {
 
         try {
             const context = {
-                sock,
-                msg,
-                config,
-                commands: global.commandHandler?.commands,
-                chatCommands: global.chatCommandHandler?.chatCommands,
-                replyCommands: global.replyCommandHandler?.replyCommands,
-                uptime: process.uptime(),
-                memory: process.memoryUsage(),
-                Math,
-                Date,
-                JSON
+    sock,
+    msg,
+    config,
+
+    commands: global.commandHandler?.commands,
+    chatCommands: global.chatCommandHandler?.chatCommands,
+    replyCommands: global.replyCommandHandler?.replyCommands,
+
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+
+    Math,
+    Date,
+    JSON,
+    Object,
+    Array,
+    String,
+    Number,
+    Boolean,
+    RegExp,
+    Map,
+    Set,
+
+    Promise,
+
+    setTimeout,
+    clearTimeout,
+    setInterval,
+    clearInterval,
+
+    parseInt,
+    parseFloat,
+    isNaN,
+    isFinite,
+
+    encodeURIComponent,
+    decodeURIComponent,
+
+    Buffer
 };
             const result = vm.runInNewContext(code, context, { timeout: devConfig.timeoutMs });
 
