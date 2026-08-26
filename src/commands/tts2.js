@@ -1,13 +1,11 @@
-const say = require('say');
-const fs = require('fs');
-const path = require('path');
+const googleTTS = require('google-tts-api');
 
 module.exports = {
     config: {
         name: 'say',
         aliases: ['tts', 'speak'],
         version: '1.0.0',
-        description: 'Converts your text into a WhatsApp audio note',
+        description: 'Converts your text into a WhatsApp audio note using Google TTS',
         usage: 'say <text>',
         examples: ['say Hello group! How are you doing?'],
         permissions: 0, 
@@ -15,6 +13,7 @@ module.exports = {
     },
     onRun: async (sock, msg, args) => {
         const jid = msg.key.remoteJid;
+
         const textToSpeak = args.join(' ');
 
         if (!textToSpeak.trim()) {
@@ -22,27 +21,26 @@ module.exports = {
             return;
         }
 
-        const tempAudioPath = path.join(__dirname, `../temp_audio_${Date.now()}.wav`);
-        say.export(textToSpeak, null, 1.0, tempAudioPath, async (err) => {
-            if (err) {
-                console.error('TTS Error:', err);
-                await sock.sendMessage(jid, { text: 'Failed to convert text to speech.' }, { quoted: msg });
-                return;
-            }
+        if (textToSpeak.length > 200) {
+            await sock.sendMessage(jid, { text: 'Text is too long! Please keep it under 200 characters.' }, { quoted: msg });
+            return;
+        }
 
-            try {
-                await sock.sendMessage(jid, {
-                    audio: { url: tempAudioPath },
-                    mimetype: 'audio/mp4', 
-                    ptt: true              
-                }, { quoted: msg });
+        try {
+            const audioUrl = googleTTS.getAudioUrl(textToSpeak, {
+                lang: 'en',     
+                slow: false,   
+                host: 'https://google.com',
+            });
+            await sock.sendMessage(jid, {
+                audio: { url: audioUrl },
+                mimetype: 'audio/mp4',
+                ptt: true 
+            }, { quoted: msg });
 
-            } catch (sendError) {
-                console.error('Failed to send audio:', sendError);
-            } finally {                if (fs.existsSync(tempAudioPath)) {
-                    fs.unlinkSync(tempAudioPath);
-                }
-            }
-        });
+        } catch (error) {
+            console.error('Google TTS Error:', error);
+            await sock.sendMessage(jid, { text: 'Failed to process speech conversion.' }, { quoted: msg });
+        }
     }
 };
