@@ -17,6 +17,13 @@ module.exports = {
             return;
         }
 
+            const botParticipant = groupMetadata.participants.find(p => p.id === botJid);
+            const isBotAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
+    if (!isBotAdmin) {
+         await sock.sendMessage(groupId, { text: 'I need to be an admin to kick members.' }, { quoted: msg });
+      return;
+    }
+        
         const targets = getTargetJids(msg);
         if (!targets.length) {
             await sock.sendMessage(groupId, {
