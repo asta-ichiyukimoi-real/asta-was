@@ -85,11 +85,11 @@ module.exports = {
             return;
         }
 
-        if (textToSpeak.length > 200) {
+        if (textToSpeak.length > 800) {
             await sock.sendMessage(
                 jid,
                 {
-                    text: 'Text is too long! Please keep it under 200 characters.'
+                    text: 'Text is too long! Please keep it under 800 characters.'
                 },
                 { quoted: msg }
             );
