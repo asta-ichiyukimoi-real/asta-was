@@ -14,7 +14,7 @@ module.exports = {
     onRun: async (sock, msg, args) => {
         const jid = msg.key.remoteJid;
         
-        // 1. Combine user arguments into a clean string
+    
         const textToSpeak = args.join(' ');
 
         if (!textToSpeak.trim()) {
@@ -22,14 +22,13 @@ module.exports = {
             return;
         }
 
-        // Google TTS limits single requests to 200 characters
+    
         if (textToSpeak.length > 200) {
             await sock.sendMessage(jid, { text: 'Text is too long! Please keep it under 200 characters.' }, { quoted: msg });
             return;
         }
 
         try {
-            // 2. Fetch the text compilation strictly as raw base64 data string
             const base64Audio = await googleTTS.getAudioBase64(textToSpeak, {
                 lang: 'en',
                 slow: false,
@@ -37,13 +36,10 @@ module.exports = {
                 timeout: 10000,
             });
 
-            // 3. Construct a standard local data URI pointer
             const localAudioUrl = `data:audio/mp3;base64,${base64Audio}`;
-
-            // 4. Send directly to WhatsApp via Baileys buffer handling
             await sock.sendMessage(jid, {
                 audio: { url: localAudioUrl },
-                mimetype: 'audio/mp4', // Forces audio player scaling on WhatsApp mobile devices
+                mimetype: 'audio/ogg; codecs=opus',
                 ptt: true 
             }, { quoted: msg });
 
