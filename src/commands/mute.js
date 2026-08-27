@@ -26,66 +26,31 @@ module.exports = {
         try {
             const groupMetadata = await sock.groupMetadata(groupId);
 
-            const botUser = sock.user || {};
-            const botId = botUser.id || '';
-            const botLid = botUser.lid || '';
-            const botJid = botUser.jid || '';
+            const botIds = [
+    sock.user?.id,
+    sock.user?.lid,
+    sock.user?.jid
+].filter(Boolean);
 
-            console.log('\n========== MUTE DEBUG ==========');
-            console.log('Group ID:', groupId);
+const botParticipant = (groupMetadata.participants || []).find(participant => {
+    const participantIds = [
+        participant.id,
+        participant.lid,
+        participant.jid,
+        participant.phoneNumber
+    ].filter(Boolean);
 
-            console.log('\n--- sock.user ---');
-            console.log(JSON.stringify(botUser, null, 2));
+    return participantIds.some(id => botIds.includes(id));
+});
 
-            console.log('\n--- Bot identity ---');
-            console.log('botUser.id:', botId);
-            console.log('botUser.lid:', botLid);
-            console.log('botUser.jid:', botJid);
+const isBotAdmin =
+    botParticipant?.admin === 'admin' ||
+    botParticipant?.admin === 'superadmin';
 
-            console.log('\n--- Bot ID types ---');
-            console.log('id type:', botId.includes('@lid') ? 'LID' : botId.includes('@s.whatsapp.net') ? 'JID' : 'UNKNOWN');
-            console.log('lid type:', botLid.includes('@lid') ? 'LID' : botLid.includes('@s.whatsapp.net') ? 'JID' : 'UNKNOWN');
-            console.log('jid type:', botJid.includes('@lid') ? 'LID' : botJid.includes('@s.whatsapp.net') ? 'JID' : 'UNKNOWN');
-
-            console.log('\n--- Group participants ---');
-
-            for (const participant of groupMetadata.participants || []) {
-                console.log(JSON.stringify({
-                    id: participant.id,
-                    lid: participant.lid,
-                    jid: participant.jid,
-                    phoneNumber: participant.phoneNumber,
-                    admin: participant.admin
-                }, null, 2));
-            }
-
-            console.log('\n================================\n');
-
-            const botParticipant = (groupMetadata.participants || []).find(
-                participant => {
-                    return (
-                        participant.id === botId ||
-                        participant.id === botLid ||
-                        participant.id === botJid ||
-                        participant.lid === botId ||
-                        participant.lid === botLid ||
-                        participant.lid === botJid ||
-                        participant.jid === botId ||
-                        participant.jid === botLid ||
-                        participant.jid === botJid
-                    );
-                }
-            );
-
-            console.log('Matched bot participant:');
-            console.log(JSON.stringify(botParticipant || null, null, 2));
-
-            const isBotAdmin =
-                botParticipant?.admin === 'admin' ||
-                botParticipant?.admin === 'superadmin';
-
-            console.log('Bot admin:', isBotAdmin);
-            console.log('Bot admin role:', botParticipant?.admin || 'NOT FOUND');
+console.log('Bot IDs:', botIds);
+console.log('Matched bot participant:', botParticipant);
+console.log('Bot admin:', isBotAdmin);
+console.log('Bot role:', botParticipant?.admin);
 
             if (!botParticipant) {
                 await sock.sendMessage(
