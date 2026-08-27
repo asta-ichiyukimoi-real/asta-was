@@ -3,7 +3,7 @@ const statsManager = require('../models/stats');
 module.exports = {
     config: {
         name: 'muteuser',
-        aliases: ['mute', 'silence'],
+        aliases: ['silence'],
         version: '1.0.0',
         description: 'Mute a user in the chat (prevent them from using commands)',
         usage: 'muteuser @user [minutes] [reason]',
