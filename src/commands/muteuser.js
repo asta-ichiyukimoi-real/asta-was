@@ -14,6 +14,15 @@ module.exports = {
     onRun: async (sock, msg, args) => {
         const chat = msg.key.remoteJid;
         const isGroup = chat.endsWith('@g.us');
+        const groupMetadata = await sock.groupMetadata(groupId);
+        const botJid = sock.user.id;
+            const botParticipant = groupMetadata.participants.find(p => p.id === botJid);
+            const isBotAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
+    if (!isBotAdmin) {
+         await sock.sendMessage(groupId, { text: 'I am not an admin'}, { quoted: msg });
+      return;
+    }
+        
         
         if (!isGroup) {
             return await sock.sendMessage(chat, { text: '❌ This command only works in groups' });
