@@ -16,7 +16,8 @@ module.exports = {
             await sock.sendMessage(groupId, { text: 'This command only works in groups.' }, { quoted: msg });
             return;
         }
-
+        const groupMetadata = await sock.groupMetadata(groupId);
+        const botJid = sock.user.id;
             const botParticipant = groupMetadata.participants.find(p => p.id === botJid);
             const isBotAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
     if (!isBotAdmin) {
