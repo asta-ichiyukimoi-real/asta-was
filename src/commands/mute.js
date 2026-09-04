@@ -1,8 +1,43 @@
+function normalizeId(id) {
+    if (!id) return '';
+
+    return String(id)
+        .trim()
+        .replace(/:\d+(?=@)/, '')
+        .toLowerCase();
+}
+
+function getIdVariants(id) {
+    if (!id) return [];
+
+    const normalized = normalizeId(id);
+    const variants = new Set([normalized]);
+
+    if (normalized.includes('@')) {
+        const [number] = normalized.split('@');
+
+        if (number) {
+            variants.add(number);
+        }
+    }
+
+    return [...variants];
+}
+
+function idsMatch(a, b) {
+    if (!a || !b) return false;
+
+    const aVariants = getIdVariants(a);
+    const bVariants = getIdVariants(b);
+
+    return aVariants.some(id => bVariants.includes(id));
+}
+
 module.exports = {
     config: {
         name: 'mute',
         aliases: ['close'],
-        version: '1.1.0',
+        version: '1.2.0',
         description: 'Locks the group so only admins can send messages',
         permissions: 1,
         cooldown: 2,
@@ -15,7 +50,9 @@ module.exports = {
         if (!groupId || !groupId.endsWith('@g.us')) {
             await sock.sendMessage(
                 groupId,
-                { text: 'This command only works in groups.' },
+                {
+                    text: 'This command only works in groups.'
+                },
                 { quoted: msg }
             );
             return;
@@ -33,22 +70,33 @@ module.exports = {
             console.log('\n========== MUTE DEBUG ==========');
             console.log('Group ID:', groupId);
 
-            console.log('\n--- sock.user ---');
+            console.log('\n--- Bot Identity ---');
             console.log(JSON.stringify(sock.user, null, 2));
 
             console.log('\n--- Bot IDs ---');
-            console.log(botIds);
 
-            console.log('\n--- Group participants ---');
+            for (const id of botIds) {
+                console.log({
+                    original: id,
+                    normalized: normalizeId(id),
+                    variants: getIdVariants(id)
+                });
+            }
+
+            console.log('\n--- Group Participants ---');
 
             for (const participant of groupMetadata.participants || []) {
-                console.log(JSON.stringify({
+                console.log({
                     id: participant.id,
+                    normalizedId: normalizeId(participant.id),
                     lid: participant.lid,
+                    normalizedLid: normalizeId(participant.lid),
                     jid: participant.jid,
+                    normalizedJid: normalizeId(participant.jid),
                     phoneNumber: participant.phoneNumber,
+                    normalizedPhoneNumber: normalizeId(participant.phoneNumber),
                     admin: participant.admin
-                }, null, 2));
+                });
             }
 
             const botParticipant = (groupMetadata.participants || []).find(participant => {
@@ -59,7 +107,9 @@ module.exports = {
                     participant.phoneNumber
                 ].filter(Boolean);
 
-                return participantIds.some(id => botIds.includes(id));
+                return participantIds.some(participantId =>
+                    botIds.some(botId => idsMatch(participantId, botId))
+                );
             });
 
             console.log('\n--- Matched Bot Participant ---');
@@ -70,7 +120,6 @@ module.exports = {
                 botParticipant?.admin === 'superadmin';
 
             console.log('\n--- Admin Check ---');
-            console.log('Bot IDs:', botIds);
             console.log('Matched:', Boolean(botParticipant));
             console.log('Role:', botParticipant?.admin || 'none');
             console.log('Is Bot Admin:', isBotAdmin);
@@ -80,7 +129,7 @@ module.exports = {
                 await sock.sendMessage(
                     groupId,
                     {
-                        text: '❌ I could not find my account in the group participant list.'
+                        text: '❌ I could not identify myself in this group.'
                     },
                     { quoted: msg }
                 );
@@ -98,7 +147,10 @@ module.exports = {
                 return;
             }
 
-            await sock.groupSettingUpdate(groupId, 'announcement');
+            await sock.groupSettingUpdate(
+                groupId,
+                'announcement'
+            );
 
             await sock.sendMessage(
                 groupId,
