@@ -35,10 +35,10 @@ function idsMatch(a, b) {
 
 module.exports = {
     config: {
-        name: 'mute',
-        aliases: ['close'],
+        name: 'unmute',
+        aliases: ['open'],
         version: '1.2.0',
-        description: 'Locks the group so only admins can send messages',
+        description: 'unmute the group so everyone can send messages',
         permissions: 1,
         cooldown: 2,
         category: 'moderation'
@@ -149,26 +149,26 @@ module.exports = {
 
             await sock.groupSettingUpdate(
                 groupId,
-                'announcement'
+                'not_announcement'
             );
 
             await sock.sendMessage(
                 groupId,
                 {
-                    text: '🔇 *Group muted*\n\nOnly admins can send messages now.'
+                    text: '✅ *Group unmuted*\n\nEveryone can send messages now.'
                 },
                 { quoted: msg }
             );
 
         } catch (error) {
-            console.error('\n========== MUTE ERROR ==========');
+            console.error('\n========== UNMUTE ERROR ==========');
             console.error(error);
             console.error('================================\n');
 
             await sock.sendMessage(
                 groupId,
                 {
-                    text: `❌ Failed to mute the group:\n${String(error.message || error).slice(0, 1000)}`
+                    text: `❌ Failed to unmute the group:\n${String(error.message || error).slice(0, 1000)}`
                 },
                 { quoted: msg }
             );

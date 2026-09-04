@@ -3,7 +3,7 @@ const statsManager = require('../models/stats');
 module.exports = {
     config: {
         name: 'unmuteuser',
-        aliases: ['unmute', 'unsilence'],
+        aliases: [ 'unsilence'],
         version: '1.0.0',
         description: 'Unmute a user in the chat',
         usage: 'unmuteuser @user',
