@@ -80,7 +80,7 @@ module.exports = {
 
     apis: {
         omegatechBase: 'https://omegatech-api.dixonomega.tech',
-        astaGroupChat: 'https://api.omegatech.app/api/ai/Asyntai',
+        astaGroupChat: 'https://api.omegatech.app/api/ai/Gpt-4-mini',
         aiChat: 'https://vision-scrape-2ex8.onrender.com/ai/chat',
         aiResearch: 'https://omegatech-api.dixonomega.tech/api/ai/Ai-research',
         aiVision: 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini',
