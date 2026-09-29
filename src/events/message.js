@@ -128,7 +128,7 @@ function isBotMentioned(msg, sock) {
     const mentionedJids = getContextInfo(msg)?.mentionedJid || [];
     if (!mentionedJids.length) return false;
 
-    const botJids = [sock.user?.id, sock.user?.lid, sock.user?.phone]
+    const botJids = [sock.user?.id, sock.user?.lid, sock.user?.jid, sock.user?.phone]
         .filter(Boolean)
         .map(normalizeJid);
     return mentionedJids.some(mentionedJid => botJids.includes(normalizeJid(mentionedJid)));
@@ -136,7 +136,11 @@ function isBotMentioned(msg, sock) {
 
 function removeBotMention(text, msg, sock) {
     const mentionedJids = getContextInfo(msg)?.mentionedJid || [];
-    const botJids = new Set([sock.user?.id, sock.user?.lid, sock.user?.phone].filter(Boolean).map(normalizeJid));
+    const botJids = new Set(
+        [sock.user?.id, sock.user?.lid, sock.user?.jid, sock.user?.phone]
+            .filter(Boolean)
+            .map(normalizeJid)
+    );
     const botMentionNumbers = mentionedJids
         .filter(mentionedJid => botJids.has(normalizeJid(mentionedJid)))
         .map(mentionedJid => String(mentionedJid).split('@')[0].replace(/:\d+$/, ''))
@@ -601,3 +605,6 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
     });
 
 };
+
+module.exports.isBotMentioned = isBotMentioned;
+module.exports.removeBotMention = removeBotMention;

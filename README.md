@@ -217,7 +217,7 @@ If you need to login again from scratch, stop the bot and remove the auth folder
 
 ## Owner and Admin IDs During Updates
 
-When applying a GitHub update, the bot saves the current owner/admin IDs and `connection.pairingPhoneNumber` to the ignored local file `.local-permissions.json`. Those values override the corresponding values in the updated `config.js`, while other configuration and bot files can still be updated. Keep this file private and do not delete it if you want to retain these local settings across future updates.
+When applying a GitHub update, the bot saves the current owner/admin IDs and `connection.pairingPhoneNumber` to the ignored local file `.local-permissions.json`. Those values override the corresponding values in the updated `config.js`. Remote file-sync updates also skip the local `config.js` and its permissions override helper so they cannot replace local connection settings; other bot files can still be updated. Keep `.local-permissions.json` private and do not delete it if you want to retain these local settings across future updates.
 
 ## Dashboard
 

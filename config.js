@@ -2,7 +2,7 @@ const localPermissions = require('./src/utils/localPermissions').loadLocalPermis
 const owner = localPermissions.owner ?? '63097851101285@lid';
 const admins = localPermissions.admins ?? [];
 const owners = localPermissions.owners ?? [owner];
-const pairingPhoneNumber = localPermissions.pairingPhoneNumber ?? '234xxxxxxxxxx';
+const pairingPhoneNumber = localPermissions.pairingPhoneNumber ?? '2347059797535';
 
 module.exports = {
     prefix: '.',

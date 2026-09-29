@@ -12,11 +12,15 @@ const PROTECTED_REMOTE_NAMES = new Set([
     '.env',
     'bot-state.json',
     'cookies.txt',
+    'config.js',
     'auth_info_baileys',
     '.local-permissions.json',
     'backups',
     'data',
     'logs'
+]);
+const PROTECTED_REMOTE_PATHS = new Set([
+    'src/utils/localPermissions.js'
 ]);
 
 function normalizeRemotePath(filePath) {
@@ -24,8 +28,10 @@ function normalizeRemotePath(filePath) {
 }
 
 function isProtectedRemotePath(filePath) {
-    const [topLevelName] = normalizeRemotePath(filePath).split('/');
-    return PROTECTED_REMOTE_NAMES.has(topLevelName);
+    const normalizedPath = normalizeRemotePath(filePath);
+    const [topLevelName] = normalizedPath.split('/');
+    return PROTECTED_REMOTE_NAMES.has(topLevelName)
+        || PROTECTED_REMOTE_PATHS.has(normalizedPath);
 }
 
 function runGit(args, options = {}) {
@@ -739,6 +745,7 @@ async function applyUpdate(sock, msg, expectedApproval = null) {
             text: 'Applying approved remote file sync...'
         }, { quoted: msg });
 
+        preserveLocalPermissions();
         const remoteSync = await syncRemoteRepoToWorkspace();
         const reload = await reloadHandlers();
 
