@@ -66,7 +66,7 @@ Mention the bot in a group and include a message to chat with Asta. Reply direct
 
 ### Image Support (Vision)
 
-When you mention Asta with an image or reply with an image, the bot automatically extracts the image URL and includes it in the conversation context:
+When you mention Asta while sending an image or while replying to an image, the bot downloads the WhatsApp media and uploads it to the configured Omegatech uploader. This gives Gpt-4-mini a public image URL it can actually read; Baileys' private media URL is not passed to the AI:
 
 - **With an image**: Mention Asta and send an image — the bot will analyze it and respond.
 - **Without a new image**: Reply to Asta's message with text only — the bot remembers the last image from that conversation and includes it in context.

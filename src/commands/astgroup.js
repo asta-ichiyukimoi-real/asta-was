@@ -1,4 +1,5 @@
 const { createHash } = require('crypto');
+const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 const config = require('../../config');
 const state = require('../utils/stateManager');
 const logger = require('../utils/logger');
@@ -6,6 +7,7 @@ const { isTimeout } = require('../utils/apiClient');
 const { chooseReply } = require('../utils/replyCopy');
 
 const MAX_CONTEXT_MESSAGES = 10;
+const IMAGE_UPLOAD_URL = `${config.apis.omegatechBase}/api/tools/shz-uploader?action=upload&expire=90d`;
 
 function logAstaDiagnostic(type, details = {}) {
     console.info(`[Asta diagnostic] ${type}: ${JSON.stringify(details)}`);
@@ -53,27 +55,106 @@ function buildApiMessage(conversationId, userMessage, imageUrl = '') {
     return prompt.slice(-12000);
 }
 
-function extractImageUrlFromMessage(msg) {
-    if (!msg?.message) return '';
+function unwrapMessage(message) {
+    let current = message || {};
+    for (let i = 0; i < 5; i += 1) {
+        const wrapped = current.ephemeralMessage?.message
+            || current.viewOnceMessage?.message
+            || current.viewOnceMessageV2?.message
+            || current.viewOnceMessageV2Extension?.message
+            || current.documentWithCaptionMessage?.message;
+        if (!wrapped) break;
+        current = wrapped;
+    }
+    return current;
+}
 
-    const candidateMessages = [
-        msg.message.imageMessage,
-        msg.message.videoMessage,
-        msg.message.stickerMessage,
-        msg.message.documentMessage,
-        msg.message.audioMessage
-    ].filter(Boolean);
-
-    for (const candidate of candidateMessages) {
-        if (typeof candidate.url === 'string' && /^https?:\/\//i.test(candidate.url)) {
-            return candidate.url;
-        }
-        if (typeof candidate?.jpegThumbnail === 'string' && candidate.jpegThumbnail.length > 100) {
-            return candidate.jpegThumbnail;
-        }
+function getImageMessage(msg) {
+    const message = unwrapMessage(msg?.message);
+    if (message.imageMessage) {
+        return {
+            message: message.imageMessage,
+            source: 'direct',
+            downloadMessage: msg
+        };
     }
 
-    return '';
+    const contextInfo = message.extendedTextMessage?.contextInfo
+        || message.imageMessage?.contextInfo
+        || message.videoMessage?.contextInfo
+        || message.documentMessage?.contextInfo;
+    const quoted = unwrapMessage(contextInfo?.quotedMessage);
+    if (!quoted.imageMessage) return null;
+
+    return {
+        message: quoted.imageMessage,
+        source: 'quoted',
+        downloadMessage: {
+            key: {
+                remoteJid: msg.key.remoteJid,
+                id: contextInfo.stanzaId,
+                participant: contextInfo.participant,
+                fromMe: false
+            },
+            message: contextInfo.quotedMessage
+        }
+    };
+}
+
+async function uploadImage(buffer, mimetype) {
+    const form = new FormData();
+    const extension = mimetype.split('/')[1]?.replace(/[^a-z0-9]/gi, '') || 'jpg';
+    form.append('file', new Blob([buffer], { type: mimetype }), `asta-image.${extension}`);
+
+    const response = await fetch(IMAGE_UPLOAD_URL, {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+        body: form,
+        signal: AbortSignal.timeout(60000)
+    });
+    const raw = await response.text();
+    if (!response.ok) {
+        throw new Error(`Asta image upload returned HTTP ${response.status}.`);
+    }
+
+    let payload;
+    try {
+        payload = JSON.parse(raw);
+    } catch {
+        throw new Error('Asta image upload returned invalid JSON.');
+    }
+    const files = Array.isArray(payload?.data?.files) ? payload.data.files : [];
+    const file = files.find((item) =>
+        item?.status && (typeof item.normalUrl === 'string' || typeof item.rawUrl === 'string')
+    );
+    const imageUrl = file?.normalUrl || file?.rawUrl;
+    if (!payload?.success || !imageUrl || !/^https?:\/\//i.test(imageUrl)) {
+        throw new Error(payload?.error || payload?.message || 'Asta image upload did not return a public image URL.');
+    }
+    return imageUrl;
+}
+
+async function extractImageUrlFromMessage(sock, msg) {
+    const image = getImageMessage(msg);
+    if (!image) return { imageUrl: '', source: 'none' };
+
+    const buffer = await downloadMediaMessage(
+        image.downloadMessage,
+        'buffer',
+        {},
+        {
+            logger: console,
+            reuploadRequest: sock.updateMediaMessage
+        }
+    );
+    if (!Buffer.isBuffer(buffer) || !buffer.length) {
+        throw new Error('WhatsApp did not provide image data for Asta.');
+    }
+
+    return {
+        imageUrl: await uploadImage(buffer, image.message.mimetype || 'image/jpeg'),
+        source: image.source
+    };
 }
 
 function classifyResponseBody(body, contentType) {
@@ -138,7 +219,9 @@ async function askAstaGroup(conversationId, message, imageUrl = '') {
             throw new Error(`Asta group chat API returned a non-JSON response (HTTP ${result.status}, ${classifyResponseBody(body, contentType)}).`);
         }
         if (!result.ok || response.success === false || response.status === false) {
-            throw new Error(`Asta group chat API responded with HTTP ${result.status}.`);
+            const apiError = [response.error, response.message, response.details]
+                .find((value) => typeof value === 'string' && value.trim());
+            throw new Error(`Asta group chat API responded with HTTP ${result.status}${apiError ? `: ${apiError.slice(0, 240)}` : ''}.`);
         }
     } catch (error) {
         if (isTimeout(error)) {
@@ -171,13 +254,18 @@ async function sendAstaGroupReply(sock, msg, userMessage) {
     }
 
     const conversationId = getConversationId(msg);
-    let imageUrl = extractImageUrlFromMessage(msg);
-
-    if (!imageUrl) {
-        imageUrl = state.getLastImageUrl(conversationId);
-    }
+    let imageUrl;
+    let imageSource;
 
     try {
+        const extractedImage = await extractImageUrlFromMessage(sock, msg);
+        imageUrl = extractedImage.imageUrl || state.getLastImageUrl(conversationId);
+        imageSource = extractedImage.source;
+        logAstaDiagnostic('asta_group_image_context', {
+            foundImage: extractedImage.source !== 'none',
+            source: extractedImage.source,
+            usingPreviousImage: !extractedImage.imageUrl && Boolean(imageUrl)
+        });
         const reply = await askAstaGroup(conversationId, message, imageUrl);
         state.addAstaMessage(conversationId, 'user', message, imageUrl);
         state.addAstaMessage(conversationId, 'bot', reply);
@@ -187,7 +275,9 @@ async function sendAstaGroupReply(sock, msg, userMessage) {
         logAstaDiagnostic('asta_group_chat_sent', { replyLength: reply.length, hasImage: Boolean(imageUrl) });
     } catch (error) {
         logAstaDiagnostic('asta_group_chat_error', {
-            error: isTimeout(error) ? 'request_timeout' : error.message
+            error: isTimeout(error) ? 'request_timeout' : error.message,
+            hasImage: Boolean(imageUrl),
+            imageSource: imageSource || 'unknown'
         });
         const text = isTimeout(error)
             ? chooseReply([
@@ -215,6 +305,7 @@ module.exports = {
     getConversationId,
     getSessionId,
     buildApiMessage,
+    getImageMessage,
     extractImageUrlFromMessage,
     classifyResponseBody,
     askAstaGroup,
