@@ -26,6 +26,15 @@ const STARTUP_MESSAGE_GRACE_SECONDS = 300;
 const RECENT_MESSAGE_CACHE_LIMIT = 500;
 const recentMessages = new Map();
 
+function logAstaDiagnostic(type, details = {}) {
+    console.info(`[Asta diagnostic] ${type}: ${JSON.stringify(details)}`);
+    try {
+        logger.log(type, details);
+    } catch (error) {
+        console.error(`[Asta diagnostic] Could not write ${type} to the log file:`, error.message);
+    }
+}
+
 function unwrapMessage(message) {
     let current = message || {};
 
@@ -462,6 +471,8 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
         });
     });
 
+    console.info('[Asta diagnostic] Message handler registered; group-message diagnostics enabled.');
+
     sock.ev.on('messages.upsert', async (m) => {
         try {
             const msg = m.messages[0];
@@ -471,13 +482,15 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
             const fresh = isFreshMessage(msg, startupTimeSeconds);
             const mentionCandidate = mentionDiagnostics.mentionCount > 0 || /@asta(?:\s*bot)?/i.test(text);
 
-            if (mentionDiagnostics.isGroup && mentionCandidate) {
-                logger.log('asta_mention_incoming', {
+            if (mentionDiagnostics.isGroup) {
+                logAstaDiagnostic('asta_group_message_received', {
                     upsertType: m.type || null,
                     fresh,
                     fromMe: Boolean(msg.key.fromMe),
                     hasText: Boolean(text),
+                    textLength: text.length,
                     messageTypes: Object.keys(unwrapMessage(msg.message) || {}),
+                    mentionCandidate,
                     ...mentionDiagnostics
                 });
             }
@@ -496,11 +509,17 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
                 if (!text) return;
 
                 const unapprovedGroupBlocked = await groupApproval.blockIfUnapproved(sock, msg, text, configCommandHandler);
-                if (unapprovedGroupBlocked) return;
+                if (unapprovedGroupBlocked) {
+                    if (mentionCandidate) logAstaDiagnostic('asta_mention_blocked', { reason: 'group_not_approved' });
+                    return;
+                }
 
                 if (!msg.key.fromMe) {
                     const moderated = await applyModeration(sock, msg, text, configCommandHandler);
-                    if (moderated) return;
+                    if (moderated) {
+                        if (mentionCandidate) logAstaDiagnostic('asta_mention_blocked', { reason: 'moderation' });
+                        return;
+                    }
 
                     const emoji = chooseRandomEmoji(text);
                     if (emoji) {
@@ -536,13 +555,13 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
 
                 if (!msg.key.fromMe && mentionDiagnostics.isGroup && mentionDiagnostics.matched) {
                     const prompt = removeBotMention(text, msg, sock);
-                    logger.log('asta_mention_dispatch', {
+                    logAstaDiagnostic('asta_mention_dispatch', {
                         hasPrompt: Boolean(prompt),
                         promptLength: prompt.length,
                         commandLoaded: Boolean(commandHandler?.commands?.has('astgroup'))
                     });
                     await commandHandler.execute(sock, msg, 'astgroup', prompt ? [prompt] : []);
-                    logger.log('asta_mention_dispatch_complete', {
+                    logAstaDiagnostic('asta_mention_dispatch_complete', {
                         commandLoaded: Boolean(commandHandler?.commands?.has('astgroup'))
                     });
                     return;
@@ -612,7 +631,12 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
                 }
             }
         } catch (error) {
-            logger.log('messages_upsert_error', { error: error.message, code: error.data || error.output?.statusCode });
+            console.error('[Asta diagnostic] Message handler failed:', error.message);
+            try {
+                logger.log('messages_upsert_error', { error: error.message, code: error.data || error.output?.statusCode });
+            } catch (logError) {
+                console.error('[Asta diagnostic] Could not write message handler error to the log file:', logError.message);
+            }
         }
     });
 

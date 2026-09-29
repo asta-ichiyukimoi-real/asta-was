@@ -7,6 +7,15 @@ const { chooseReply } = require('../utils/replyCopy');
 
 const MAX_CONTEXT_MESSAGES = 10;
 
+function logAstaDiagnostic(type, details = {}) {
+    console.info(`[Asta diagnostic] ${type}: ${JSON.stringify(details)}`);
+    try {
+        logger.log(type, details);
+    } catch (error) {
+        console.error(`[Asta diagnostic] Could not write ${type} to the log file:`, error.message);
+    }
+}
+
 function getConversationId(msg) {
     const groupId = msg.key.remoteJid || 'unknown-group';
     const senderId = msg.key.participant || msg.key.remoteJid || 'unknown-user';
@@ -57,7 +66,7 @@ async function askAstaGroup(conversationId, message) {
         || 45000;
     let response;
     try {
-        logger.log('asta_group_chat_request', {
+        logAstaDiagnostic('asta_group_chat_request', {
             hasApiUrl: true,
             promptLength: url.searchParams.get('message')?.length || 0,
             timeoutMs
@@ -67,7 +76,7 @@ async function askAstaGroup(conversationId, message) {
             signal: AbortSignal.timeout(timeoutMs)
         });
         response = await result.json().catch(() => null);
-        logger.log('asta_group_chat_response', {
+        logAstaDiagnostic('asta_group_chat_response', {
             httpStatus: result.status,
             ok: result.ok,
             hasJson: Boolean(response),
@@ -117,10 +126,9 @@ async function sendAstaGroupReply(sock, msg, userMessage) {
         await sock.sendMessage(msg.key.remoteJid, {
             text: `*Asta*\n${reply.slice(0, 3500)}\n\n_Reply to me to keep chatting._\n[REPLY_ID:astgroup]`
         }, { quoted: msg });
-        logger.log('asta_group_chat_sent', { replyLength: reply.length });
+        logAstaDiagnostic('asta_group_chat_sent', { replyLength: reply.length });
     } catch (error) {
-        logger.log('asta_group_chat_error', {
-            groupId: msg.key.remoteJid,
+        logAstaDiagnostic('asta_group_chat_error', {
             error: isTimeout(error) ? 'request_timeout' : error.message
         });
         const text = isTimeout(error)
