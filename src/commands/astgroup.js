@@ -48,6 +48,13 @@ function buildApiMessage(conversationId, userMessage) {
     return prompt.slice(-12000);
 }
 
+function classifyResponseBody(body, contentType) {
+    if (!body.trim()) return 'empty';
+    if (/html/i.test(contentType) || /^\s*(?:<!doctype html|<html)/i.test(body)) return 'html';
+    if (/json/i.test(contentType) || /^[\[{"]/.test(body.trim())) return 'json_or_invalid_json';
+    return 'plain_text';
+}
+
 async function askAstaGroup(conversationId, message) {
     const apiUrl = global.configCommandHandler?.get?.(
         'apis.astaGroupChat',
@@ -72,18 +79,30 @@ async function askAstaGroup(conversationId, message) {
             timeoutMs
         });
         const result = await fetch(url, {
-            headers: { 'User-Agent': 'AstaBot/1.0 (WhatsApp bot)' },
+            headers: {
+                'Accept': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'
+            },
             signal: AbortSignal.timeout(timeoutMs)
         });
-        response = await result.json().catch(() => null);
+        const body = await result.text();
+        const contentType = result.headers?.get?.('content-type') || '';
+        try {
+            response = body.trim() ? JSON.parse(body.replace(/^\uFEFF/, '')) : null;
+        } catch {
+            response = null;
+        }
         logAstaDiagnostic('asta_group_chat_response', {
             httpStatus: result.status,
             ok: result.ok,
             hasJson: Boolean(response),
-            hasReply: typeof response?.reply === 'string' && Boolean(response.reply.trim())
+            hasReply: typeof response?.reply === 'string' && Boolean(response.reply.trim()),
+            contentType: contentType.split(';')[0] || 'unknown',
+            bodyLength: body.length,
+            bodyKind: classifyResponseBody(body, contentType)
         });
         if (!response) {
-            throw new Error(`Asta group chat API returned invalid JSON (HTTP ${result.status}).`);
+            throw new Error(`Asta group chat API returned a non-JSON response (HTTP ${result.status}, ${classifyResponseBody(body, contentType)}).`);
         }
         if (!result.ok || response.success === false || response.status === false) {
             throw new Error(`Asta group chat API responded with HTTP ${result.status}.`);
@@ -157,6 +176,7 @@ module.exports = {
     getConversationId,
     getSessionId,
     buildApiMessage,
+    classifyResponseBody,
     askAstaGroup,
     onRun: async (sock, msg, args) => sendAstaGroupReply(sock, msg, args.join(' ')),
     onReply: async (sock, msg, replyText) => sendAstaGroupReply(sock, msg, replyText)
