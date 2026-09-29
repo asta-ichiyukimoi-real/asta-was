@@ -62,7 +62,19 @@ Default greetings, help/rules auto-replies, and welcome/farewell messages now us
 
 ## Asta Group Chat
 
-Mention the bot in a group and include a message to chat with Asta. Reply directly to Asta’s response to continue that conversation without mentioning the bot again. Group conversations are kept separate for each participant in each group. The Asyntai endpoint is configured as `apis.astaGroupChat` in `config.js`.
+Mention the bot in a group and include a message to chat with Asta. Reply directly to Asta's response to continue that conversation without mentioning the bot again. Group conversations are kept separate for each participant in each group.
+
+### Image Support (Vision)
+
+When you mention Asta with an image or reply with an image, the bot automatically extracts the image URL and includes it in the conversation context:
+
+- **With an image**: Mention Asta and send an image — the bot will analyze it and respond.
+- **Without a new image**: Reply to Asta's message with text only — the bot remembers the last image from that conversation and includes it in context.
+- **With a new image**: You can replace the image context by sending a different image in your next message.
+
+Image URLs are stored per conversation and persist across turns, so multi-turn discussions about images work naturally.
+
+The Gpt-4-mini endpoint (with vision support) is configured as `apis.astaGroupChat` in `config.js`.
 
 ## Quick Start
 

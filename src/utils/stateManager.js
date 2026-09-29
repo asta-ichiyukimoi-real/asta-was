@@ -204,21 +204,35 @@ function getAstaConversation(conversationId) {
     };
 }
 
-function addAstaMessage(conversationId, role, text) {
+function addAstaMessage(conversationId, role, text, imageUrl = '') {
     const state = loadState();
     const current = state.asta.conversations[conversationId] || {
         resetCount: 0,
-        history: []
+        history: [],
+        lastImageUrl: ''
     };
 
-    current.history.push({
+    const entry = {
         role,
         text: String(text).slice(0, 1000),
         at: new Date().toISOString()
-    });
+    };
+
+    if (imageUrl && role === 'user') {
+        entry.imageUrl = imageUrl;
+        current.lastImageUrl = imageUrl;
+    }
+
+    current.history.push(entry);
     current.history = current.history.slice(-12);
     state.asta.conversations[conversationId] = current;
     return saveState(state).asta.conversations[conversationId];
+}
+
+function getLastImageUrl(conversationId) {
+    const state = loadState();
+    const current = state.asta.conversations[conversationId] || {};
+    return current.lastImageUrl || '';
 }
 
 function resetAstaConversation(conversationId) {
@@ -588,6 +602,7 @@ module.exports = {
     getAstaConversation,
     addAstaMessage,
     resetAstaConversation,
+    getLastImageUrl,
     getChatCustomCommands,
     setCustomCommand,
     removeCustomCommand,

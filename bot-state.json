@@ -55,7 +55,36 @@
     "groups": {}
   },
   "asta": {
-    "conversations": {}
+    "conversations": {
+      "group_abcd1234efgh5678ijkl9012mnop3456": {
+        "resetCount": 0,
+        "history": [
+          {
+            "role": "user",
+            "text": "What is in this image?",
+            "at": "2026-09-29T21:02:29.089Z",
+            "imageUrl": "https://example.com/image1.jpg"
+          },
+          {
+            "role": "bot",
+            "text": "This is a nice image of a sunset.",
+            "at": "2026-09-29T21:02:29.115Z"
+          },
+          {
+            "role": "user",
+            "text": "Tell me more about it.",
+            "at": "2026-09-29T21:02:29.122Z"
+          },
+          {
+            "role": "user",
+            "text": "What about this one?",
+            "at": "2026-09-29T21:02:29.129Z",
+            "imageUrl": "https://example.com/image2.jpg"
+          }
+        ],
+        "lastImageUrl": "https://example.com/image2.jpg"
+      }
+    }
   },
   "customCommands": {
     "chats": {}
