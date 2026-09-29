@@ -122,16 +122,31 @@ function getContextInfo(msg) {
         || null;
 }
 
-function isBotMentioned(msg, sock) {
-    if (!String(msg.key.remoteJid || '').endsWith('@g.us')) return false;
-
-    const mentionedJids = getContextInfo(msg)?.mentionedJid || [];
-    if (!mentionedJids.length) return false;
-
-    const botJids = [sock.user?.id, sock.user?.lid, sock.user?.jid, sock.user?.phone]
+function getBotMentionDiagnostics(msg, sock) {
+    const mentionedJidsValue = getContextInfo(msg)?.mentionedJid;
+    const mentionedJids = Array.isArray(mentionedJidsValue) ? mentionedJidsValue : [];
+    const botIdentities = [sock.user?.id, sock.user?.lid, sock.user?.jid, sock.user?.phone]
         .filter(Boolean)
-        .map(normalizeJid);
-    return mentionedJids.some(mentionedJid => botJids.includes(normalizeJid(mentionedJid)));
+        .map(normalizeJid)
+        .filter(Boolean);
+    const normalizedMentions = mentionedJids
+        .filter(value => typeof value === 'string')
+        .map(normalizeJid)
+        .filter(Boolean);
+
+    return {
+        isGroup: String(msg.key.remoteJid || '').endsWith('@g.us'),
+        mentionCount: normalizedMentions.length,
+        hasBotIdentity: botIdentities.length > 0,
+        matched: normalizedMentions.some(mentionedJid => botIdentities.includes(mentionedJid)),
+        mentionServers: [...new Set(normalizedMentions.map(jid => jid.split('@')[1] || 'unknown'))],
+        botIdentityServers: [...new Set(botIdentities.map(jid => jid.split('@')[1] || 'unknown'))]
+    };
+}
+
+function isBotMentioned(msg, sock) {
+    const diagnostics = getBotMentionDiagnostics(msg, sock);
+    return diagnostics.isGroup && diagnostics.matched;
 }
 
 function removeBotMention(text, msg, sock) {
@@ -450,7 +465,24 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
     sock.ev.on('messages.upsert', async (m) => {
         try {
             const msg = m.messages[0];
-            if (!msg || !isFreshMessage(msg, startupTimeSeconds)) return;
+            if (!msg) return;
+            const text = normalizeText(msg);
+            const mentionDiagnostics = getBotMentionDiagnostics(msg, sock);
+            const fresh = isFreshMessage(msg, startupTimeSeconds);
+            const mentionCandidate = mentionDiagnostics.mentionCount > 0 || /@asta(?:\s*bot)?/i.test(text);
+
+            if (mentionDiagnostics.isGroup && mentionCandidate) {
+                logger.log('asta_mention_incoming', {
+                    upsertType: m.type || null,
+                    fresh,
+                    fromMe: Boolean(msg.key.fromMe),
+                    hasText: Boolean(text),
+                    messageTypes: Object.keys(unwrapMessage(msg.message) || {}),
+                    ...mentionDiagnostics
+                });
+            }
+
+            if (!fresh) return;
             rememberMessage(msg);
 
             if (m.type === 'notify') {
@@ -461,7 +493,6 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
                     return;
                 }
 
-                const text = normalizeText(msg);
                 if (!text) return;
 
                 const unapprovedGroupBlocked = await groupApproval.blockIfUnapproved(sock, msg, text, configCommandHandler);
@@ -503,9 +534,17 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
                     }
                 }
 
-                if (!msg.key.fromMe && isBotMentioned(msg, sock)) {
+                if (!msg.key.fromMe && mentionDiagnostics.isGroup && mentionDiagnostics.matched) {
                     const prompt = removeBotMention(text, msg, sock);
+                    logger.log('asta_mention_dispatch', {
+                        hasPrompt: Boolean(prompt),
+                        promptLength: prompt.length,
+                        commandLoaded: Boolean(commandHandler?.commands?.has('astgroup'))
+                    });
                     await commandHandler.execute(sock, msg, 'astgroup', prompt ? [prompt] : []);
+                    logger.log('asta_mention_dispatch_complete', {
+                        commandLoaded: Boolean(commandHandler?.commands?.has('astgroup'))
+                    });
                     return;
                 }
 
@@ -608,3 +647,4 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
 
 module.exports.isBotMentioned = isBotMentioned;
 module.exports.removeBotMention = removeBotMention;
+module.exports.getBotMentionDiagnostics = getBotMentionDiagnostics;

@@ -57,11 +57,22 @@ async function askAstaGroup(conversationId, message) {
         || 45000;
     let response;
     try {
+        logger.log('asta_group_chat_request', {
+            hasApiUrl: true,
+            promptLength: url.searchParams.get('message')?.length || 0,
+            timeoutMs
+        });
         const result = await fetch(url, {
             headers: { 'User-Agent': 'AstaBot/1.0 (WhatsApp bot)' },
             signal: AbortSignal.timeout(timeoutMs)
         });
         response = await result.json().catch(() => null);
+        logger.log('asta_group_chat_response', {
+            httpStatus: result.status,
+            ok: result.ok,
+            hasJson: Boolean(response),
+            hasReply: typeof response?.reply === 'string' && Boolean(response.reply.trim())
+        });
         if (!response) {
             throw new Error(`Asta group chat API returned invalid JSON (HTTP ${result.status}).`);
         }
@@ -106,6 +117,7 @@ async function sendAstaGroupReply(sock, msg, userMessage) {
         await sock.sendMessage(msg.key.remoteJid, {
             text: `*Asta*\n${reply.slice(0, 3500)}\n\n_Reply to me to keep chatting._\n[REPLY_ID:astgroup]`
         }, { quoted: msg });
+        logger.log('asta_group_chat_sent', { replyLength: reply.length });
     } catch (error) {
         logger.log('asta_group_chat_error', {
             groupId: msg.key.remoteJid,
