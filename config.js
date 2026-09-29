@@ -1,5 +1,7 @@
-const owner = '63097851101285@lid';
-const admins = [];
+const localPermissions = require('./src/utils/localPermissions').loadLocalPermissions();
+const owner = localPermissions.owner ?? '63097851101285@lid';
+const admins = localPermissions.admins ?? [];
+const owners = localPermissions.owners ?? [owner];
 
 module.exports = {
     prefix: '.',
@@ -42,7 +44,7 @@ module.exports = {
 
     permissions: {
         owner,
-        owners: [owner],
+        owners,
         admins,
         debugOwnerCheck: true,
         allowFromMeAsOwner: true

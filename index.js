@@ -3,7 +3,7 @@ const dashboard = require('./src/services/dashboard');
 const stateManager = require('./src/utils/stateManager');
 const { initDatabase } = require('./src/services/database');
 const statsManager = require('./src/models/stats');
-const { startCleanupService } = require('./src/services/cleanup');
+const { startCleanupService, startAuthFileCleanupService } = require('./src/services/cleanup');
 
 const { makeWASocket, DisconnectReason, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
@@ -198,7 +198,9 @@ async function connectToWhatsApp() {
     }
 
     const configCommandHandler = new ConfigCommandHandler(config);
-    const { state, saveCreds } = await useMultiFileAuthState(configCommandHandler.get('connection.authDir', './auth_info_baileys'));
+    const authDir = configCommandHandler.get('connection.authDir', './auth_info_baileys');
+    startAuthFileCleanupService(authDir, 30);
+    const { state, saveCreds } = await useMultiFileAuthState(authDir);
     const commandHandler = new CommandHandler(configCommandHandler);
     const chatCommandHandler = new ChatCommandHandler();
     const replyCommandHandler = new ReplyCommandHandler();

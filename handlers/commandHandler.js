@@ -5,6 +5,11 @@ const state = require('../src/utils/stateManager');
 const logger = require('../src/utils/logger');
 const ConfigCommandHandler = require('./configCommandHandler');
 const commandQueue = require('../src/utils/commandQueue');
+const {
+    isGroupAdmin: isGroupAdminParticipant,
+    isSenderGroupAdmin,
+    hasCommandPermission
+} = require('../src/utils/commandPermissions');
 
 class CommandHandler {
     constructor(configCommandHandler = new ConfigCommandHandler(config)) {
@@ -84,8 +89,39 @@ class CommandHandler {
     }
 
     async execute(sock, msg, commandName, args) {
-        const command = this.commands.get(commandName);
         const chatId = msg.key.remoteJid;
+        const sender = msg.key.participant || msg.key.remoteJid;
+        const isOwner = this.configCommandHandler.isOwner(sender, msg);
+        const isBotAdmin = this.configCommandHandler.isAdmin(sender);
+        const isGroup = chatId.endsWith('@g.us');
+        const command = this.commands.get(commandName);
+
+        if (state.isAdminOnlyEnabled() && !isOwner && !isBotAdmin) {
+            await this.safeSendMessage(sock, chatId, {
+                text: 'Only admins can use the bot for now.'
+            }, { quoted: msg });
+            return;
+        }
+
+        if (isGroup && state.isGroupAdminOnlyEnabled(chatId)) {
+            let senderIsGroupAdmin = false;
+            try {
+                senderIsGroupAdmin = await isSenderGroupAdmin(sock, chatId, sender);
+            } catch (error) {
+                console.error(`Could not verify group admin for ${chatId}:`, error);
+                await this.safeSendMessage(sock, chatId, {
+                    text: 'I could not verify group admin status, so bot commands are temporarily restricted.'
+                }, { quoted: msg });
+                return;
+            }
+
+            if (!senderIsGroupAdmin) {
+                await this.safeSendMessage(sock, chatId, {
+                    text: 'Only group admins can use the bot in this group for now.'
+                }, { quoted: msg });
+                return;
+            }
+        }
 
         if (!command) {
             const customCommand = state.getCustomCommand(chatId, commandName);
@@ -116,10 +152,6 @@ class CommandHandler {
         }
 
         // Permission check
-        const sender = msg.key.participant || msg.key.remoteJid;
-        const isOwner = this.configCommandHandler.isOwner(sender, msg);
-        const isAdmin = this.configCommandHandler.isAdmin(sender);
-        const isMod = state.hasRole(chatId, sender, 'mod');
         const isBanned = state.hasRole(chatId, sender, 'banned');
         const cooldownSeconds = this.configCommandHandler.getCommandCooldown(command.config);
         const cooldownKey = `${sender}:${command.config.name}`;
@@ -129,19 +161,17 @@ class CommandHandler {
             return;
         }
 
-        // For group chats, check if sender is group admin
+        const permLevel = command.config.permissions ?? 0;
         let isGroupAdmin = false;
-        if (msg.key.remoteJid.endsWith('@g.us')) {
+        if (permLevel === 2 && msg.key.remoteJid.endsWith('@g.us')) {
             try {
                 const groupMetadata = await sock.groupMetadata(msg.key.remoteJid);
-                const participant = groupMetadata.participants.find(p => p.id === sender);
-                isGroupAdmin = participant && (participant.admin === 'admin' || participant.admin === 'superadmin');
+                isGroupAdmin = isGroupAdminParticipant(groupMetadata.participants, sender);
             } catch (error) {
                 console.error('Error checking group admin:', error);
             }
         }
 
-        const permLevel = command.config.permissions || 0;
         const category = command.config.category || 'other';
         if (this.configCommandHandler.isCommandDisabledGlobally(command.config.name) && !isOwner) {
             await this.safeSendMessage(sock, chatId, {
@@ -156,23 +186,15 @@ class CommandHandler {
             logger.log('owner_permission_debug', ownerDebug);
         }
 
-        if (permLevel === 2 && !isOwner) {
-            await this.safeSendMessage(sock, msg.key.remoteJid, {
-                text: [
-                    'This command is only for the owner.',
-                    '',
-                    '*Owner permission debug*',
-                    `Expected: ${this.configCommandHandler.get('permissions.owner', config.owner)}`,
-                    `Expected list: ${this.configCommandHandler.getOwnerIds().join(', ') || 'none'}`,
-                    `Got: ${sender}`,
-                    `Chat: ${msg.key.remoteJid}`,
-                    `Participant: ${msg.key.participant || 'none'}`
-                ].join('\n')
-            }, { quoted: msg });
-            return;
-        }
-        if (permLevel === 1 && !isOwner && !isAdmin && !isGroupAdmin && !isMod) {
-            await this.safeSendMessage(sock, msg.key.remoteJid, { text: 'This command is only for admins.' });
+        if (!hasCommandPermission(permLevel, { isOwner, isBotAdmin, isGroupAdmin })) {
+            const message = permLevel === 0
+                ? 'This command has an invalid permission level.'
+                : permLevel === 1
+                    ? 'This command is only for the bot owner or bot admins.'
+                    : permLevel === 2
+                        ? 'This command is only for the bot owner, bot admins, or group admins.'
+                        : 'This command has an unsupported permission level.';
+            await this.safeSendMessage(sock, chatId, { text: message }, { quoted: msg });
             return;
         }
 

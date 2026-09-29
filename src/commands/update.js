@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { execFile } = require('child_process');
+const localPermissions = require('../utils/localPermissions');
 
 const DEFAULT_REMOTE_URL = 'https://github.com/asta-ichiyukimoi-real/asta-was.git';
 const DEFAULT_BRANCH = 'main';
@@ -12,6 +13,7 @@ const PROTECTED_REMOTE_NAMES = new Set([
     'bot-state.json',
     'cookies.txt',
     'auth_info_baileys',
+    '.local-permissions.json',
     'backups',
     'data',
     'logs'
@@ -55,6 +57,25 @@ function createApprovalToken() {
 
 function outputOf(result) {
     return [result.stdout, result.stderr, result.error].filter(Boolean).join('\n').trim();
+}
+
+function preserveLocalPermissions() {
+    const config = global.configCommandHandler?.config || require('../../config');
+    const owners = [
+        config.owner,
+        config.permissions?.owner,
+        ...(Array.isArray(config.permissions?.owners) ? config.permissions.owners : [])
+    ].filter((value, index, values) => typeof value === 'string' && value && values.indexOf(value) === index);
+    const admins = [
+        ...(Array.isArray(config.admins) ? config.admins : []),
+        ...(Array.isArray(config.permissions?.admins) ? config.permissions.admins : [])
+    ].filter((value, index, values) => typeof value === 'string' && value && values.indexOf(value) === index);
+
+    localPermissions.saveLocalPermissions({
+        owner: config.owner || config.permissions?.owner || '',
+        owners,
+        admins
+    });
 }
 
 function unwrapMessage(message) {
@@ -749,6 +770,8 @@ async function applyUpdate(sock, msg, expectedApproval = null) {
         }, { quoted: msg });
         return;
     }
+
+    preserveLocalPermissions();
 
     let stashed = false;
     if (info.dirty) {

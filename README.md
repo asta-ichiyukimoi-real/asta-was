@@ -27,6 +27,35 @@ The bot includes a command system, runtime configuration, SQLite storage, modera
 - Auto reconnect after disconnects
 - Logs, health checks, reminders, backups, and developer utilities
 
+## Command Permission Levels
+
+Command `permissions` values use these access rules:
+
+| Level | Who can use the command |
+| --- | --- |
+| `0` | Everyone |
+| `1` | Bot owner and configured bot admins |
+| `2` | Bot owner, configured bot admins, and admins/superadmins of the current group |
+
+Group admin status only grants access to level `2` commands when the command is used in a group. Unsupported permission levels are denied.
+
+## Temporary Bot Access Modes
+
+- `.adminonly on` restricts command and custom-command use globally to the bot owner and configured bot admins. Use `.adminonly off` to turn it off; either way, the change applies across chats and survives restarts.
+- `.gadminonly on` restricts command and custom-command use in the current group to its WhatsApp group admins. Use `.gadminonly off` in that group to turn it off. Each group's setting is independent and survives restarts.
+
+The normal permission level configured for each command still applies while a mode is enabled.
+
+The public `.help` command lists only commands available to everyone. Bot admins and the owner can use `.adminhelp` to view all commands, including restricted commands.
+
+## Group Anti-Link Moderation
+
+In a group, a WhatsApp group admin, bot admin, or bot owner can use `.antilink on` or `.antilink off`. When enabled, links sent by regular members are deleted and count as a warning; members are removed after three warnings. Group admins, bot admins, the owner, and members with the `mod` or `trusted` role are exempt. The bot must be a group admin to delete messages and remove members.
+
+## Automatic Emoji Reactions
+
+The bot automatically reacts to incoming text or caption messages that contain emoji, choosing one emoji at random when a message contains several. It does not react to its own messages.
+
 ## Quick Start
 
 ### 1. Install Dependencies
@@ -174,8 +203,13 @@ auth_info_baileys/
 ```
 
 Keep this folder private. Anyone with the auth files may be able to access the linked WhatsApp session.
+The bot checks this folder every 30 minutes and removes only stale `.tmp` and `.temp` files older than 30 minutes. It does not delete Baileys credentials, keys, or other session files.
 
 If you need to login again from scratch, stop the bot and remove the auth folder, then restart the bot.
+
+## Owner and Admin IDs During Updates
+
+When applying a GitHub update, the bot saves the current owner/admin IDs to the ignored local file `.local-permissions.json`. Those IDs override the corresponding values in the updated `config.js`, while other configuration and bot files can still be updated. Keep this file private and do not delete it if you want to retain the local owner/admin IDs across future updates.
 
 ## Dashboard
 

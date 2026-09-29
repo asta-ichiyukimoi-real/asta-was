@@ -36,7 +36,9 @@ const DEFAULT_STATE = {
     },
     commandControls: {
         chats: {},
-        runtimeConfig: {}
+        runtimeConfig: {},
+        adminOnly: false,
+        groupAdminOnlyChats: {}
     },
     chatSettings: {
         chats: {}
@@ -335,6 +337,30 @@ function deleteRuntimeConfig(path) {
     return saveState(state).commandControls.runtimeConfig;
 }
 
+function isAdminOnlyEnabled() {
+    return Boolean(loadState().commandControls.adminOnly);
+}
+
+function setAdminOnlyEnabled(enabled) {
+    const state = loadState();
+    state.commandControls.adminOnly = Boolean(enabled);
+    return saveState(state).commandControls.adminOnly;
+}
+
+function isGroupAdminOnlyEnabled(chatId) {
+    return Boolean(loadState().commandControls.groupAdminOnlyChats[chatId]);
+}
+
+function setGroupAdminOnlyEnabled(chatId, enabled) {
+    if (!String(chatId || '').endsWith('@g.us')) {
+        throw new Error('Group-admin-only mode can only be configured in a group chat.');
+    }
+
+    const state = loadState();
+    state.commandControls.groupAdminOnlyChats[chatId] = Boolean(enabled);
+    return saveState(state).commandControls.groupAdminOnlyChats[chatId];
+}
+
 function defaultChatSettings() {
     return {
         prefix: null,
@@ -579,6 +605,10 @@ module.exports = {
     getRuntimeConfig,
     setRuntimeConfig,
     deleteRuntimeConfig,
+    isAdminOnlyEnabled,
+    setAdminOnlyEnabled,
+    isGroupAdminOnlyEnabled,
+    setGroupAdminOnlyEnabled,
     getChatSettings,
     setChatSettings,
     getChatPrefix,

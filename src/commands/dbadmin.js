@@ -8,7 +8,7 @@ module.exports = {
         description: 'Database admin panel - view stats, clear data, export',
         usage: 'dbadmin [stats|export|clear] [format] [days]',
         examples: ['dbadmin stats', 'dbadmin export json 30', 'dbadmin clear'],
-        permissions: 3,
+        permissions: 1,
         category: 'developer'
     },
     onRun: async (sock, msg, args) => {

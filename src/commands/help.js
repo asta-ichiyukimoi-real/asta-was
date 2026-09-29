@@ -26,8 +26,8 @@ function findCommand(commands, name) {
 }
 
 function permissionLabel(level) {
-    if (level === 2) return '👑 Owner only';
-    if (level === 1) return '🔐 Admin only';
+    if (level === 2) return '🔐 Bot admin or group admin';
+    if (level === 1) return '🔐 Bot owner or bot admin';
     return '👥 Everyone';
 }
 
@@ -57,8 +57,11 @@ module.exports = {
         permissions: 0,
         category: 'general'
     },
-    onRun: async (sock, msg, args) => {
-        const commands = loadCommands();
+    onRun: async (sock, msg, args, includeRestricted = false) => {
+        const allCommands = loadCommands();
+        const commands = includeRestricted
+            ? allCommands
+            : allCommands.filter(command => (command.config.permissions ?? 0) === 0);
         const requested = args[0]?.toLowerCase();
         const chatId = msg.key.remoteJid;
         const configHandler = global.configCommandHandler;
@@ -67,7 +70,17 @@ module.exports = {
         // DETAILED COMMAND VIEW
         if (requested) {
             const command = findCommand(commands, requested);
+            const restrictedCommand = !command && !includeRestricted
+                ? findCommand(allCommands, requested)
+                : null;
             const customCommand = state.getCustomCommand(chatId, requested);
+
+            if (restrictedCommand) {
+                await sock.sendMessage(chatId, {
+                    text: `That command is restricted. Bot admins and the owner can use ${prefix}adminhelp to view restricted commands.`
+                }, { quoted: msg });
+                return;
+            }
 
             if (!command && !customCommand) {
                 const errorMsg = `❌ Command Not Found

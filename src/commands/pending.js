@@ -94,7 +94,7 @@ module.exports = {
         description: 'Show pending groups and approve them by replying with numbers',
         usage: 'pending',
         examples: ['pending'],
-        permissions: 0,
+        permissions: 1,
         cooldown: 0,
         category: 'admin'
     },

@@ -2,6 +2,8 @@ const config = require('../../config');
 const state = require('../utils/stateManager');
 const logger = require('../utils/logger');
 const groupApproval = require('../utils/groupApproval');
+const { isGroupAdmin: isGroupAdminParticipant } = require('../utils/commandPermissions');
+const { chooseRandomEmoji } = require('../utils/emojiReaction');
 
 // Lazy load stats to avoid circular dependencies
 let statsManager = null;
@@ -298,7 +300,10 @@ function findAutoReply(text, autoReplyConfig) {
 }
 
 function hasLink(text) {
-    return /(https?:\/\/|www\.|chat\.whatsapp\.com\/|wa\.me\/|t\.me\/|discord\.gg\/)/i.test(text);
+    const withoutEmails = String(text || '')
+        .replace(/[\w.+-]+@(?:[\w-]+\.)+[a-z]{2,}/gi, '')
+        .replace(/[\u200B-\u200D\uFEFF]/g, '');
+    return /\b(?:https?|ftp):\/\/[^\s<>"']+|\bwww\.[^\s<>"']+|\b(?:[\w-]+\.)+[a-z]{2,}(?::\d+)?(?:\/[^\s<>"']*)?/i.test(withoutEmails);
 }
 
 function hasBadWord(text, words) {
@@ -312,9 +317,14 @@ function hasBadWord(text, words) {
 async function isGroupAdmin(sock, groupId, sender) {
     try {
         const groupMetadata = await sock.groupMetadata(groupId);
-        const participant = groupMetadata.participants.find(p => p.id === sender);
-        return Boolean(participant && (participant.admin === 'admin' || participant.admin === 'superadmin'));
-    } catch {
+        return isGroupAdminParticipant(groupMetadata.participants, sender);
+    } catch (error) {
+        logger.log('moderation_group_admin_lookup_error', {
+            groupId,
+            userId: sender,
+            error: error.message,
+            code: error.data || error.output?.statusCode
+        });
         return false;
     }
 }
@@ -356,15 +366,19 @@ async function applyModeration(sock, msg, text, configCommandHandler = null) {
 
     const reason = linkViolation ? 'links are not allowed here' : 'that word is not allowed here';
     const warningCount = state.addWarning(groupId, sender);
+    const warningsBeforeAction = Number.isInteger(config.moderation?.warningsBeforeAction)
+        && config.moderation.warningsBeforeAction > 0
+        ? config.moderation.warningsBeforeAction
+        : 3;
     const handle = sender.split('@')[0];
     logger.log('moderation_action', { groupId, userId: sender, reason, warningCount });
 
     await safeSendMessage(sock, groupId, {
-        text: `@${handle}, ${reason}. Warning ${warningCount}/3.`,
+        text: `@${handle}, ${reason}. Warning ${warningCount}/${warningsBeforeAction}.`,
         mentions: [sender]
     }, undefined, 'moderation_warning_send_error');
 
-    if (warningCount >= 3) {
+    if (warningCount >= warningsBeforeAction) {
         try {
             await sock.groupParticipantsUpdate(groupId, [sender], 'remove');
             state.clearWarnings(groupId, sender);
@@ -420,6 +434,25 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
                 if (!msg.key.fromMe) {
                     const moderated = await applyModeration(sock, msg, text, configCommandHandler);
                     if (moderated) return;
+
+                    const emoji = chooseRandomEmoji(text);
+                    if (emoji) {
+                        try {
+                            await sock.sendMessage(msg.key.remoteJid, {
+                                react: {
+                                    text: emoji,
+                                    key: msg.key
+                                }
+                            });
+                        } catch (error) {
+                            logger.log('auto_reaction_error', {
+                                chatId: msg.key.remoteJid,
+                                messageId: msg.key.id || null,
+                                error: error.message,
+                                code: error.data || error.output?.statusCode
+                            });
+                        }
+                    }
                 }
 
                 const quotedMessage = getContextInfo(msg)?.quotedMessage;

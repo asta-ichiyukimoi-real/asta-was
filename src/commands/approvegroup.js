@@ -40,7 +40,7 @@ module.exports = {
         description: 'Approve or remove approval for groups using the bot',
         usage: 'approvegroup [approve|unapprove|list] [group_jid]',
         examples: ['approvegroup', 'approvegroup list', 'approvegroup unapprove 123@g.us'],
-        permissions: 0,
+        permissions: 1,
         cooldown: 0,
         category: 'admin'
     },
