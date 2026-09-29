@@ -118,7 +118,7 @@ module.exports = {
 
         if (!expression) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Send a math expression.\nExample: !calc (12 + 8) / 4'
+                text: 'Please enter a math expression.\nExample: !calc (12 + 8) / 4'
             }, { quoted: msg });
             return;
         }

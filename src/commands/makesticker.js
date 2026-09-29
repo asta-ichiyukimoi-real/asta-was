@@ -20,7 +20,7 @@ module.exports = {
 
         if (!media) {
             await sock.sendMessage(chatId, {
-                text: 'Send an image with .sticker as the caption, or reply to an image with .sticker.'
+                text: 'Please attach an image with .sticker as the caption, or reply to an image with .sticker.'
             }, { quoted: msg });
             return;
         }
@@ -39,7 +39,7 @@ module.exports = {
         } catch (error) {
             console.error('Sticker command error:', error);
             await sock.sendMessage(chatId, {
-                text: `Could not create sticker:\n${String(error.message || error).slice(0, 1000)}`
+                text: `I could not create the sticker just now. Please try again.\n${String(error.message || error).slice(0, 1000)}`
             }, { quoted: msg });
         }
     }

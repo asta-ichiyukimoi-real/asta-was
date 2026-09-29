@@ -19,7 +19,7 @@ module.exports = {
 
         if (!names.length) {
             await sock.sendMessage(chatId, {
-                text: 'No custom commands saved here yet.\nAdmins can add one with !addcmd rules Be respectful.'
+                text: 'There are no custom commands saved here yet.\nAdmins can add one with !addcmd rules Be respectful.'
             }, { quoted: msg });
             return;
         }

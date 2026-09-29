@@ -36,6 +36,7 @@ function hasCommandPermission(level, { isOwner, isBotAdmin, isGroupAdmin: sender
 }
 
 module.exports = {
+    normalizeJid,
     isGroupAdmin,
     isSenderGroupAdmin,
     hasCommandPermission

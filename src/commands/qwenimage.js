@@ -213,7 +213,7 @@ module.exports = {
 
         if (!prompt) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Send an image prompt.\nExample: .qwenimage a retro travel poster for Mars reading Visit Mars'
+                text: 'Please provide a prompt for the image.\nExample: .qwenimage a retro travel poster for Mars reading Visit Mars'
             }, { quoted: msg });
             return;
         }

@@ -1,4 +1,5 @@
 const { askQwen, responseToText, getErrorMessage, isNetworkTimeout } = require('./qwen');
+const { ASSISTANT_TONE_GUIDANCE, chooseReply } = require('../utils/replyCopy');
 
 module.exports = {
     config: {
@@ -19,7 +20,7 @@ module.exports = {
         }
 
         try {
-            const response = await askQwen(query, 'qwen/qwen3.6-flash');
+            const response = await askQwen(`${ASSISTANT_TONE_GUIDANCE}\n\nUser request: ${query}`, 'qwen/qwen3.6-flash');
             const answer = responseToText(response).trim() || 'No answer was returned.';
 
             await sock.sendMessage(msg.key.remoteJid, {
@@ -34,8 +35,12 @@ module.exports = {
             }
 
             const text = isNetworkTimeout(error, errorMessage)
-                ? 'Smart could not connect to the AI service before it timed out. Please try again in a moment.'
-                : `Smart failed: ${errorMessage}`;
+                ? chooseReply([
+                    'I could not reach the AI service just now. Please try again in a moment.',
+                    'The connection timed out before I could prepare a reply. Please try again shortly.',
+                    'I am having trouble connecting right now. Please resend your request in a little while.'
+                ])
+                : 'I could not complete that request just now. Please try again in a moment.';
 
             await sock.sendMessage(msg.key.remoteJid, { text }, { quoted: msg });
         }

@@ -56,6 +56,14 @@ In a group, a WhatsApp group admin, bot admin, or bot owner can use `.antilink o
 
 The bot automatically reacts to incoming text or caption messages that contain emoji, choosing one emoji at random when a message contains several. It does not react to its own messages.
 
+## Reply Tone and Variations
+
+Default greetings, help/rules auto-replies, and welcome/farewell messages now use a warm, professional tone and can vary between several replies. Asta, AI, Qwen, and Smart responses are prompted to be thoughtful, clear, and honest without overstating emotion. Custom auto-replies and custom welcome/farewell messages are kept as configured; short technical status and result messages remain concise.
+
+## Asta Group Chat
+
+Mention the bot in a group and include a message to chat with Asta. Reply directly to Asta’s response to continue that conversation without mentioning the bot again. Group conversations are kept separate for each participant in each group. The Asyntai endpoint is configured as `apis.astaGroupChat` in `config.js`.
+
 ## Quick Start
 
 ### 1. Install Dependencies
@@ -209,7 +217,7 @@ If you need to login again from scratch, stop the bot and remove the auth folder
 
 ## Owner and Admin IDs During Updates
 
-When applying a GitHub update, the bot saves the current owner/admin IDs to the ignored local file `.local-permissions.json`. Those IDs override the corresponding values in the updated `config.js`, while other configuration and bot files can still be updated. Keep this file private and do not delete it if you want to retain the local owner/admin IDs across future updates.
+When applying a GitHub update, the bot saves the current owner/admin IDs and `connection.pairingPhoneNumber` to the ignored local file `.local-permissions.json`. Those values override the corresponding values in the updated `config.js`, while other configuration and bot files can still be updated. Keep this file private and do not delete it if you want to retain these local settings across future updates.
 
 ## Dashboard
 

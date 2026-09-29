@@ -255,7 +255,7 @@ module.exports = {
             await sock.sendMessage(
                 msg.key.remoteJid,
                 {
-                    text: 'Use: .eval <javascript>'
+                    text: 'Please provide the JavaScript expression to evaluate.\nUse: .eval <javascript>'
                 },
                 { quoted: msg }
             );
@@ -348,7 +348,7 @@ module.exports = {
             await sock.sendMessage(
                 msg.key.remoteJid,
                 {
-                    text: `Eval failed: ${error.message || error}`
+                    text: `I could not evaluate that expression.\n${error.message || error}`
                 },
                 { quoted: msg }
             );

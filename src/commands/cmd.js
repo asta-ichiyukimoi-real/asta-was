@@ -143,7 +143,7 @@ module.exports = {
 
             if (option === 'add') {
                 if (!text) {
-                    return await sock.sendMessage(chatId, { text: `❌ You must provide the code block to register.` }, { quoted: msg });
+                    return await sock.sendMessage(chatId, { text: 'Please provide the code block you would like to register.' }, { quoted: msg });
                 }
 
                 const check = validateCode(text);
@@ -157,7 +157,7 @@ module.exports = {
                         const commitUrl = await pushToGitHub(filename, text);
                         await sock.sendMessage(chatId, { text: `🚀 Successfully pushed to GitHub!\n\n📂 View code updates directly inside your repository folder.` }, { quoted: msg });
                     } catch (gitErr) {
-                        await sock.sendMessage(chatId, { text: `⚠️ Local command is working, but GitHub sync failed: ${gitErr.message}` }, { quoted: msg });
+                        await sock.sendMessage(chatId, { text: `The local command is working, but GitHub sync could not be completed: ${gitErr.message}` }, { quoted: msg });
                     }
 
                     // 3. Hot-Reload Bot Memory Cache
@@ -165,7 +165,7 @@ module.exports = {
                         commandHandler.loadCommands();
                     }
                 } else {
-                    await sock.sendMessage(chatId, { text: `❌ Code validation rejected! Details:\n${check.error}` }, { quoted: msg });
+                    await sock.sendMessage(chatId, { text: `The code did not pass validation. Details:\n${check.error}` }, { quoted: msg });
                 }
 
             } else if (option === 'del') {
@@ -184,7 +184,7 @@ module.exports = {
                         await sock.sendMessage(chatId, { text: `🚀 Successfully deleted \`${filename}\` from GitHub repository!` }, { quoted: msg });
                     }
                 } catch (gitErr) {
-                    await sock.sendMessage(chatId, { text: `⚠️ File deleted locally, but GitHub removal failed: ${gitErr.message}` }, { quoted: msg });
+                    await sock.sendMessage(chatId, { text: `The file was deleted locally, but GitHub removal could not be completed: ${gitErr.message}` }, { quoted: msg });
                 }
                 
                 // 3. Reload Bot Memory Cache
@@ -194,7 +194,7 @@ module.exports = {
             }
 
         } catch (error) {
-            await sock.sendMessage(msg.key.remoteJid, { text: `💥 An execution error occurred: ${error.message}` }, { quoted: msg });
+            await sock.sendMessage(msg.key.remoteJid, { text: `I could not complete that command. Details: ${error.message}` }, { quoted: msg });
         }
     }
 };

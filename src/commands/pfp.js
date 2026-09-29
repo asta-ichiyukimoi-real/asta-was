@@ -45,7 +45,7 @@ module.exports = {
         } catch (error) {
             console.error('Profile command error:', error);
             await sock.sendMessage(msg.key.remoteJid, {
-                text: `Error: ${error.message}`
+                text: `I could not retrieve the profile picture just now.\n${error.message}`
             }, { quoted: msg });
         }
     }

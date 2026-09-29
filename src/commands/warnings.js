@@ -22,7 +22,7 @@ module.exports = {
         if (args[0]?.toLowerCase() === 'clear') {
             const targets = getTargetJids(msg);
             targets.length ? targets.forEach(target => state.clearWarnings(groupId, target)) : state.clearWarnings(groupId);
-            await sock.sendMessage(groupId, { text: 'Warnings cleared.' }, { quoted: msg });
+            await sock.sendMessage(groupId, { text: 'The warning records have been cleared.' }, { quoted: msg });
             
             try {
                 await statsManager.recordCommand('warnings', groupId, msg.key.participant, 0, 'success');
@@ -44,7 +44,7 @@ module.exports = {
             const entries = Object.entries(warnings).filter(([, count]) => count > 0);
             
             if (!entries.length && allWarns.length === 0) {
-                await sock.sendMessage(groupId, { text: 'No warnings in this group.' }, { quoted: msg });
+                await sock.sendMessage(groupId, { text: 'There are no active warnings in this group.' }, { quoted: msg });
                 return;
             }
 
@@ -70,7 +70,7 @@ module.exports = {
             const warnings = state.getGroupModeration(groupId).warnings || {};
             const entries = Object.entries(warnings).filter(([, count]) => count > 0);
             if (!entries.length) {
-                await sock.sendMessage(groupId, { text: 'No warnings in this group.' }, { quoted: msg });
+                await sock.sendMessage(groupId, { text: 'There are no active warnings in this group.' }, { quoted: msg });
                 return;
             }
 

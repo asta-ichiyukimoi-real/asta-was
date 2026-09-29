@@ -44,7 +44,9 @@ module.exports = {
 
         const targets = getTargetJids(msg);
         if (!targets.length) {
-            await sock.sendMessage(groupId, { text: 'Mention someone or reply to their message.' }, { quoted: msg });
+            await sock.sendMessage(groupId, {
+                text: 'Please mention someone or reply to their message.'
+            }, { quoted: msg });
             return;
         }
 

@@ -136,6 +136,8 @@ module.exports = {
             return;
         }
 
-        await sock.sendMessage(msg.key.remoteJid, { text: 'Unknown config action.' }, { quoted: msg });
+        await sock.sendMessage(msg.key.remoteJid, {
+            text: 'I do not recognize that config action. Please review the available actions with .config.'
+        }, { quoted: msg });
     }
 };

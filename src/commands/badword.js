@@ -1,4 +1,5 @@
 const state = require('../utils/stateManager');
+const { chooseReply } = require('../utils/replyCopy');
 
 module.exports = {
     config: {
@@ -26,7 +27,7 @@ module.exports = {
             await sock.sendMessage(groupId, {
                 text: badWords.length
                     ? `Filtered words:\n${badWords.map(item => `- ${item}`).join('\n')}`
-                    : 'No filtered words set.\nUse: !badword add <word>'
+                    : 'There are no filtered words yet.\nUse: !badword add <word>'
             }, { quoted: msg });
             return;
         }
@@ -40,7 +41,12 @@ module.exports = {
 
         if (action === 'clear') {
             state.setGroupModeration(groupId, { badWords: [] });
-            await sock.sendMessage(groupId, { text: 'Filtered words cleared.' }, { quoted: msg });
+            await sock.sendMessage(groupId, {
+                text: chooseReply([
+                    'The filtered word list has been cleared.',
+                    'All filtered words have been removed.'
+                ])
+            }, { quoted: msg });
             return;
         }
 
@@ -52,12 +58,22 @@ module.exports = {
         if (action === 'add') {
             const next = Array.from(new Set([...badWords, word]));
             state.setGroupModeration(groupId, { badWords: next });
-            await sock.sendMessage(groupId, { text: `Added "${word}" to filtered words.` }, { quoted: msg });
+            await sock.sendMessage(groupId, {
+                text: chooseReply([
+                    `"${word}" has been added to the filtered word list.`,
+                    `Added "${word}" to the list of filtered words.`
+                ])
+            }, { quoted: msg });
             return;
         }
 
         const next = badWords.filter(item => item !== word);
         state.setGroupModeration(groupId, { badWords: next });
-        await sock.sendMessage(groupId, { text: `Removed "${word}" from filtered words.` }, { quoted: msg });
+        await sock.sendMessage(groupId, {
+            text: chooseReply([
+                `"${word}" has been removed from the filtered word list.`,
+                `Removed "${word}" from the list of filtered words.`
+            ])
+        }, { quoted: msg });
     }
 };

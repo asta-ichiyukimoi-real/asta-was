@@ -23,7 +23,7 @@ module.exports = {
             const data = await requestJson(endpoint, { service: 'Web Search API' });
             const results = data.results || [];
             if (!Array.isArray(results) || results.length === 0) {
-                await sock.sendMessage(msg.key.remoteJid, { text: `No results found for: ${query}` }, { quoted: msg });
+                await sock.sendMessage(msg.key.remoteJid, { text: `I could not find any results for: ${query}` }, { quoted: msg });
                 return;
             }
 

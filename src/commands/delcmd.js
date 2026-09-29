@@ -17,16 +17,16 @@ module.exports = {
         const name = args[0]?.toLowerCase();
 
         if (!name) {
-            await sock.sendMessage(chatId, { text: 'Use: !delcmd <name>' }, { quoted: msg });
+            await sock.sendMessage(chatId, { text: 'Please provide the custom command name to remove.\nUse: !delcmd <name>' }, { quoted: msg });
             return;
         }
 
         if (!state.getCustomCommand(chatId, name)) {
-            await sock.sendMessage(chatId, { text: `No custom command named !${name} exists here.` }, { quoted: msg });
+            await sock.sendMessage(chatId, { text: `I could not find a custom command named !${name} in this chat.` }, { quoted: msg });
             return;
         }
 
         state.removeCustomCommand(chatId, name);
-        await sock.sendMessage(chatId, { text: `Deleted custom command !${name}.` }, { quoted: msg });
+        await sock.sendMessage(chatId, { text: `The custom command !${name} has been removed.` }, { quoted: msg });
     }
 };

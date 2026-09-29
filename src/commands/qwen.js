@@ -16,6 +16,7 @@ const MODEL_ALIASES = {
     max37: 'qwen/qwen3.7-max',
     '3.7': 'qwen/qwen3.7-max'
 };
+const { ASSISTANT_TONE_GUIDANCE, chooseReply } = require('../utils/replyCopy');
 
 function getAuthToken() {
     const envToken = process.env.PUTER_AUTH_TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InYyIn0.eyJ0IjoiZ3VpIiwidiI6IjIiLCJ1IjoiRXNvRFdpTmZSakNaako2Y1MzOExHQT09Iiwic3UiOiJFc29EV2lOZlJqQ1pqSjZjUzM4TEdBPT0iLCJ1dSI6InJTNUZEdG1vVE5haHhTcGpJLzMyQmc9PSIsImFpIjoiclM1RkR0bW9UTmFoeFNwakkvMzJCZz09IiwiaWF0IjoxNzgwMzQ5NzY4fQ.71B5QFI7UUoxm3TFKiKeyMb_k7fqTXFwq2mQP6xFA2Y';
@@ -198,7 +199,7 @@ module.exports = {
         }
 
         try {
-            const response = await askQwen(prompt, model, imageUrl);
+            const response = await askQwen(`${ASSISTANT_TONE_GUIDANCE}\n\nUser request: ${prompt}`, model, imageUrl);
             const answer = responseToText(response).trim() || 'No response returned.';
 
             await sock.sendMessage(msg.key.remoteJid, {
@@ -212,8 +213,12 @@ module.exports = {
             const text = missingToken
                 ? 'Puter.js needs a one-time login for Node.\nRun: npm run puter:login\nThen restart the bot and try .qwen again.'
                 : isNetworkTimeout(error, errorMessage)
-                    ? 'Qwen could not connect to Puter before the network timed out. Please try again in a moment.'
-                    : `Qwen test failed: ${errorMessage}`;
+                    ? chooseReply([
+                        'I could not reach the AI service just now. Please try again in a moment.',
+                        'The connection timed out before I could prepare a reply. Please try again shortly.',
+                        'I am having trouble connecting right now. Please resend your request in a little while.'
+                    ])
+                    : 'I could not complete that request just now. Please try again in a moment.';
 
             await sock.sendMessage(msg.key.remoteJid, { text }, { quoted: msg });
         }

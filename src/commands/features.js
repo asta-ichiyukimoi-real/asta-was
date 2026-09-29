@@ -36,7 +36,7 @@ module.exports = {
 
         if (!categories.includes(category)) {
             await sock.sendMessage(chatId, {
-                text: `Unknown category. Available: ${categories.join(', ')}`
+                text: `I do not recognize that category. Available: ${categories.join(', ')}`
             }, { quoted: msg });
             return;
         }

@@ -78,7 +78,7 @@ module.exports = {
             await sock.sendMessage(
                 jid,
                 {
-                    text: 'Please provide some text to convert to audio.'
+                    text: 'Please share the text you would like converted into a voice note.'
                 },
                 { quoted: msg }
             );
@@ -89,7 +89,7 @@ module.exports = {
             await sock.sendMessage(
                 jid,
                 {
-                    text: 'Text is too long! Please keep it under 200 characters.'
+                    text: 'That text is longer than the 200-character limit. Please shorten it and try again.'
                 },
                 { quoted: msg }
             );
@@ -142,7 +142,7 @@ module.exports = {
             await sock.sendMessage(
                 jid,
                 {
-                    text: `Failed to generate the voice note.\n\n${error.message || error}`
+                    text: `I could not generate the voice note just now. Please try again.\n\n${error.message || error}`
                 },
                 { quoted: msg }
             );

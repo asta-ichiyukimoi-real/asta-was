@@ -478,7 +478,7 @@ module.exports = {
                         '❌ *Upload failed*',
                         '',
                         error.message ||
-                            'Something went wrong while uploading the media.'
+                            'I could not upload the media just now. Please try again.'
                     ].join('\n')
                 },
                 {

@@ -22,7 +22,7 @@ module.exports = {
         const targets = getTargetJids(msg);
         if (!targets.length) {
             await sock.sendMessage(groupId, {
-                text: 'Mention someone or reply to their message.\nExample: !warn @user stop spamming'
+                text: 'Please mention someone or reply to their message.\nExample: !warn @user stop spamming'
             }, { quoted: msg });
             return;
         }

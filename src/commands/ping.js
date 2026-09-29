@@ -72,7 +72,7 @@ ${qualityEmoji} *Latency:* ${ping}ms
         } catch (error) {
             console.error('Ping command error:', error);
             await sock.sendMessage(msg.key.remoteJid, 
-                { text: '❌ Error calculating ping. Please try again.' }, 
+                { text: 'I could not calculate the ping just now. Please try again.' },
                 { quoted: msg }
             );
         }

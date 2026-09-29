@@ -20,7 +20,7 @@ module.exports = {
         }
 
         if (!msg.mentionedJids || msg.mentionedJids.length === 0) {
-            return await sock.sendMessage(chat, { text: '❌ Please mention a user to ban' });
+            return await sock.sendMessage(chat, { text: 'Please mention the user you would like to ban.' });
         }
 
         const targetUser = msg.mentionedJids[0];
@@ -49,7 +49,7 @@ module.exports = {
             await statsManager.recordCommand('banuser', chat, msg.key.participant, 0, 'success');
         } catch (error) {
             console.error('Error banning user:', error);
-            await sock.sendMessage(chat, { text: '❌ Error banning user' });
+            await sock.sendMessage(chat, { text: 'I could not ban that user just now. Please try again.' });
             await statsManager.recordCommand('banuser', chat, msg.key.participant, 0, 'error');
         }
     }

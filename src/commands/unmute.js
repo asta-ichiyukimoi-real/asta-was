@@ -129,7 +129,7 @@ module.exports = {
                 await sock.sendMessage(
                     groupId,
                     {
-                        text: '❌ I could not identify myself in this group.'
+                        text: 'I could not verify my account in this group, so I cannot change the group setting.'
                     },
                     { quoted: msg }
                 );
@@ -140,7 +140,7 @@ module.exports = {
                 await sock.sendMessage(
                     groupId,
                     {
-                        text: `❌ I need to be a group admin to mute this group.\n\nDetected role: ${botParticipant.admin || 'member'}`
+                        text: `I need to be a group admin to unmute this group.\n\nDetected role: ${botParticipant.admin || 'member'}`
                     },
                     { quoted: msg }
                 );
@@ -168,7 +168,7 @@ module.exports = {
             await sock.sendMessage(
                 groupId,
                 {
-                    text: `❌ Failed to unmute the group:\n${String(error.message || error).slice(0, 1000)}`
+                    text: `I could not unmute the group just now. Please try again.\n${String(error.message || error).slice(0, 1000)}`
                 },
                 { quoted: msg }
             );

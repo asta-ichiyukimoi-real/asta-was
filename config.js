@@ -2,6 +2,7 @@ const localPermissions = require('./src/utils/localPermissions').loadLocalPermis
 const owner = localPermissions.owner ?? '63097851101285@lid';
 const admins = localPermissions.admins ?? [];
 const owners = localPermissions.owners ?? [owner];
+const pairingPhoneNumber = localPermissions.pairingPhoneNumber ?? '2347059797535';
 
 module.exports = {
     prefix: '.',
@@ -79,6 +80,7 @@ module.exports = {
 
     apis: {
         omegatechBase: 'https://omegatech-api.dixonomega.tech',
+        astaGroupChat: 'https://api.omegatech.app/api/ai/Asyntai',
         aiChat: 'https://vision-scrape-2ex8.onrender.com/ai/chat',
         aiResearch: 'https://omegatech-api.dixonomega.tech/api/ai/Ai-research',
         aiVision: 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini',
@@ -97,7 +99,7 @@ module.exports = {
     connection: {
         authDir: './auth_info_baileys',
         // Digits only, with country code. Example: '23491564521'
-        pairingPhoneNumber: '234xxxxxxxxxx',
+        pairingPhoneNumber,
         reconnectDelayMs: 2000,
         markOnlineOnConnect: false,
         syncFullHistory: false,

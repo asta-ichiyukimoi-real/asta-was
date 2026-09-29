@@ -28,7 +28,7 @@ module.exports = {
             
             if (!userStats) {
                 await sock.sendMessage(chatId, 
-                    { text: '📊 No statistics found for this user yet. Use some commands first!' }, 
+                    { text: '📊 There are no statistics for this user yet. Using commands will start building a record.' },
                     { quoted: msg }
                 );
                 return;
@@ -72,7 +72,7 @@ module.exports = {
         } catch (error) {
             console.error('MyStats command error:', error);
             await sock.sendMessage(msg.key.remoteJid, 
-                { text: '❌ Error fetching your statistics. Please try again.' }, 
+                { text: 'I could not load these statistics just now. Please try again.' },
                 { quoted: msg }
             );
         }

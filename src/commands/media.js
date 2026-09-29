@@ -214,7 +214,7 @@ module.exports = {
 
         if (!query) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Send a song or video name.\nExample: .media faded'
+                text: 'Please provide a song or video name.\nExample: .media faded'
             }, { quoted: msg });
             return;
         }
@@ -267,7 +267,7 @@ module.exports = {
             }
 
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Start again with .media <song or video name>.'
+                text: 'That media search has expired. Please start again with .media <song or video name>.'
             }, { quoted: msg });
         } catch (error) {
             await handleMediaError(sock, msg, error);

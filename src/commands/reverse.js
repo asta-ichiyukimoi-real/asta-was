@@ -10,7 +10,9 @@ module.exports = {
     onRun: async (sock, msg, args) => {
         const text = args.join(' ');
         if (!text) {
-            await sock.sendMessage(msg.key.remoteJid, { text: '⚠️ Please provide a message to reverse. Example: !reverse hello world' }, { quoted: msg });
+            await sock.sendMessage(msg.key.remoteJid, {
+                text: 'Please provide the text you would like reversed.\nExample: !reverse hello world'
+            }, { quoted: msg });
             return;
         }
 

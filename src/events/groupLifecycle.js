@@ -2,6 +2,7 @@ const config = require('../../config');
 const state = require('../utils/stateManager');
 const logger = require('../utils/logger');
 const groupApproval = require('../utils/groupApproval');
+const { chooseWelcomeReply, chooseFarewellReply } = require('../utils/replyCopy');
 
 function normalizeJid(value) {
     if (!value || typeof value !== 'string') return '';
@@ -242,7 +243,7 @@ module.exports = (sock, options = {}) => {
 
                     if (wasAlreadyInGroup) continue;
 
-                    const template = chatSettings.welcomeMessage || botState.welcome.message;
+                    const template = chooseWelcomeReply(chatSettings.welcomeMessage || botState.welcome.message);
                     const welcomeText = template.replace(/{{name}}/g, displayName).replace(/{{group}}/g, groupName);
                     await safeSendMessage(sock, groupId, { text: welcomeText }, undefined, 'welcome_send_error');
 
@@ -253,7 +254,7 @@ module.exports = (sock, options = {}) => {
                 }
 
                 if (update.action === 'remove' && (chatSettings.farewellEnabled ?? botState.farewell.enabled)) {
-                    const template = chatSettings.farewellMessage || botState.farewell.message;
+                    const template = chooseFarewellReply(chatSettings.farewellMessage || botState.farewell.message);
                     const farewellText = template.replace(/{{name}}/g, displayName).replace(/{{group}}/g, groupName);
                     await safeSendMessage(sock, groupId, { text: farewellText }, undefined, 'farewell_send_error');
                 }

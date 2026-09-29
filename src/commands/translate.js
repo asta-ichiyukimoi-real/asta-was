@@ -73,7 +73,7 @@ module.exports = {
 
         if (!target || !text) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Use: .translate <language> <text>\nOr reply to a message: .translate en'
+                text: 'Please provide the target language and text to translate.\nUse: .translate <language> <text>\nOr reply to a message: .translate en'
             }, { quoted: msg });
             return;
         }

@@ -16,7 +16,7 @@ module.exports = {
 
         if (options.length < 2) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Give me at least two options separated by commas.\nExample: !choose rice, pasta, pizza'
+                text: 'Please provide at least two options, separated by commas.\nExample: !choose rice, pasta, pizza'
             }, { quoted: msg });
             return;
         }

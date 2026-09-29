@@ -20,7 +20,7 @@ module.exports = {
         }
 
         if (!msg.mentionedJids || msg.mentionedJids.length === 0) {
-            return await sock.sendMessage(chat, { text: '❌ Please mention a user to unban' });
+            return await sock.sendMessage(chat, { text: 'Please mention the user you would like to unban.' });
         }
 
         const targetUser = msg.mentionedJids[0];
@@ -39,11 +39,11 @@ module.exports = {
 
                 await statsManager.recordCommand('unbanuser', chat, msg.key.participant, 0, 'success');
             } else {
-                await sock.sendMessage(chat, { text: '⚠️ User was not banned' });
+                await sock.sendMessage(chat, { text: 'That user is not currently banned in this group.' });
             }
         } catch (error) {
             console.error('Error unbanning user:', error);
-            await sock.sendMessage(chat, { text: '❌ Error unbanning user' });
+            await sock.sendMessage(chat, { text: 'I could not unban that user just now. Please try again.' });
             await statsManager.recordCommand('unbanuser', chat, msg.key.participant, 0, 'error');
         }
     }

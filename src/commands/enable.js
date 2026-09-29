@@ -35,7 +35,9 @@ module.exports = {
         const commandName = args[0]?.toLowerCase();
 
         if (!commandName) {
-            await sock.sendMessage(chatId, { text: 'Use: !enable <command>' }, { quoted: msg });
+            await sock.sendMessage(chatId, {
+                text: 'Please specify which command you would like to enable.\nUse: !enable <command>'
+            }, { quoted: msg });
             return;
         }
 

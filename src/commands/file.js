@@ -71,7 +71,7 @@ module.exports = {
         try {
             const target = resolveWorkspacePath(inputPath);
             if (!fs.existsSync(target)) {
-                await sock.sendMessage(msg.key.remoteJid, { text: 'Path not found.' }, { quoted: msg });
+                await sock.sendMessage(msg.key.remoteJid, { text: 'I could not find that path in the workspace.' }, { quoted: msg });
                 return;
             }
 
@@ -79,7 +79,7 @@ module.exports = {
 
             if (['list', 'ls'].includes(action)) {
                 if (!stat.isDirectory()) {
-                    await sock.sendMessage(msg.key.remoteJid, { text: 'That path is not a directory.' }, { quoted: msg });
+                    await sock.sendMessage(msg.key.remoteJid, { text: 'That path is not a directory, so it cannot be listed.' }, { quoted: msg });
                     return;
                 }
 
@@ -103,7 +103,7 @@ module.exports = {
             }
 
             if (stat.isDirectory()) {
-                await sock.sendMessage(msg.key.remoteJid, { text: 'That path is a directory. Use .file list instead.' }, { quoted: msg });
+                await sock.sendMessage(msg.key.remoteJid, { text: 'That path is a directory. Please use .file list to view its contents.' }, { quoted: msg });
                 return;
             }
 
@@ -132,7 +132,7 @@ module.exports = {
             }
         } catch (error) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: `File command failed: ${error.message || error}`
+                text: `I could not complete that file request. Please try again.\n${error.message || error}`
             }, { quoted: msg });
         }
     }

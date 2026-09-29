@@ -19,7 +19,7 @@ module.exports = {
             const botParticipant = groupMetadata.participants.find(p => p.id === botJid);
             const isBotAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
     if (!isBotAdmin) {
-         await sock.sendMessage(groupId, { text: 'I am not an admin'}, { quoted: msg });
+         await sock.sendMessage(groupId, { text: 'I need to be a group admin to mute members.'}, { quoted: msg });
       return;
     }
         
@@ -29,7 +29,7 @@ module.exports = {
         }
 
         if (!msg.mentionedJids || msg.mentionedJids.length === 0) {
-            return await sock.sendMessage(chat, { text: '❌ Please mention a user to mute' });
+            return await sock.sendMessage(chat, { text: 'Please mention the user you would like to mute.' });
         }
 
         const targetUser = msg.mentionedJids[0];
@@ -61,7 +61,7 @@ module.exports = {
             await statsManager.recordCommand('muteuser', chat, mutedBy, 0, 'success');
         } catch (error) {
             console.error('Error muting user:', error);
-            await sock.sendMessage(chat, { text: '❌ Error muting user' });
+            await sock.sendMessage(chat, { text: 'I could not mute that user just now. Please try again.' });
             await statsManager.recordCommand('muteuser', chat, msg.key.participant, 0, 'error');
         }
     }

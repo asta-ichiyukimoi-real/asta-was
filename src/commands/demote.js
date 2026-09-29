@@ -82,7 +82,7 @@ module.exports = {
             if (!isBotAdmin) {
                 await sock.sendMessage(
                     groupId,
-                    { text: 'I am not an admin.' },
+                    { text: 'I need to be a group admin to demote members.' },
                     { quoted: msg }
                 );
                 return;
@@ -94,7 +94,7 @@ module.exports = {
                 await sock.sendMessage(
                     groupId,
                     {
-                        text: 'Mention someone or reply to their message.\nExample: !promote @user'
+                        text: 'Please mention someone or reply to their message.\nExample: !demote @user'
                     },
                     { quoted: msg }
                 );
@@ -115,7 +115,7 @@ module.exports = {
             if (!validTargets.length) {
                 await sock.sendMessage(
                     groupId,
-                    { text: 'I cannot promote myself.' },
+                    { text: 'I cannot demote myself.' },
                     { quoted: msg }
                 );
                 return;
@@ -141,7 +141,7 @@ module.exports = {
             await sock.sendMessage(
                 groupId,
                 {
-                    text: `Failed to demote the user.\n${error.message || 'Unknown error'}`
+                    text: `I could not demote that user. Please try again.\n${error.message || 'Unknown error'}`
                 },
                 { quoted: msg }
             );

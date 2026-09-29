@@ -16,7 +16,7 @@ module.exports = {
         if (args[0]?.toLowerCase() === 'list') {
             const files = backup.listBackups().slice(0, 10);
             await sock.sendMessage(msg.key.remoteJid, {
-                text: files.length ? `Recent backups:\n${files.map(file => `- ${file}`).join('\n')}` : 'No backups found.'
+                text: files.length ? `Recent backups:\n${files.map(file => `- ${file}`).join('\n')}` : 'There are no backup files available yet.'
             }, { quoted: msg });
             return;
         }

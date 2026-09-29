@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { DEFAULT_REPLY_VARIANTS } = require('./replyCopy');
 
 const STATE_PATH = path.join(__dirname, '../../bot-state.json');
 
@@ -18,12 +19,7 @@ const DEFAULT_STATE = {
     },
     autoReply: {
         enabled: true,
-        keywords: {
-            hello: 'Hey there! Need help? Send !help to see what I can do.',
-            hi: 'Hello! Send !help if you want a list of commands.',
-            help: 'Need help? Use !help to get the command list.',
-            rules: 'Please be respectful and keep the chat friendly.'
-        }
+        keywords: DEFAULT_REPLY_VARIANTS.autoReply
     },
     moderation: {
         groups: {}

@@ -67,7 +67,7 @@ ${lines.length > 6 ? `... (${lines.length - 6} more rows)` : ''}
                     return await sock.sendMessage(chat, { text });
                 } 
                 else {
-                    return await sock.sendMessage(chat, { text: '❌ Invalid format. Use `json` or `csv`' });
+                    return await sock.sendMessage(chat, { text: 'Please choose a supported export format: `json` or `csv`.' });
                 }
             }
 

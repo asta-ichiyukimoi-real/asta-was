@@ -44,7 +44,7 @@ module.exports = {
 
         if (!stanzaId) {
             await sock.sendMessage(chatId, {
-                text: 'Reply to the message you want me to delete, then send .delete.'
+                text: 'Please reply to the message you would like deleted, then send .delete.'
             }, { quoted: msg });
             return;
         }

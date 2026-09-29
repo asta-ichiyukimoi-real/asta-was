@@ -27,7 +27,7 @@ module.exports = {
             }, { quoted: msg });
         } catch (error) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: `Restore failed: ${error.message}`
+                text: `I could not restore the backup. Please check the file and try again.\n${error.message}`
             }, { quoted: msg });
         }
     }

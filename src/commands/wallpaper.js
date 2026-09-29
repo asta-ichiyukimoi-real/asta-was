@@ -66,7 +66,7 @@ module.exports = {
 
         if (!query) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Send a wallpaper search query.\nExample: .wallpaper akaza -4'
+                text: 'Please provide a wallpaper search query.\nExample: .wallpaper akaza -4'
             }, { quoted: msg });
             return;
         }

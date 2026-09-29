@@ -10,6 +10,7 @@ const {
     isSenderGroupAdmin,
     hasCommandPermission
 } = require('../src/utils/commandPermissions');
+const { chooseReply } = require('../src/utils/replyCopy');
 
 class CommandHandler {
     constructor(configCommandHandler = new ConfigCommandHandler(config)) {
@@ -98,7 +99,11 @@ class CommandHandler {
 
         if (state.isAdminOnlyEnabled() && !isOwner && !isBotAdmin) {
             await this.safeSendMessage(sock, chatId, {
-                text: 'Only admins can use the bot for now.'
+                text: chooseReply([
+                    'Only bot admins can use the bot for now. Thank you for understanding.',
+                    'The bot is temporarily limited to bot admins. We appreciate your patience.',
+                    'For now, only bot admins can use the bot. Thank you for bearing with us.'
+                ])
             }, { quoted: msg });
             return;
         }
@@ -110,14 +115,22 @@ class CommandHandler {
             } catch (error) {
                 console.error(`Could not verify group admin for ${chatId}:`, error);
                 await this.safeSendMessage(sock, chatId, {
-                    text: 'I could not verify group admin status, so bot commands are temporarily restricted.'
+                    text: chooseReply([
+                        'I could not verify group admin status, so I cannot safely run that command right now.',
+                        'I am unable to confirm group admin access at the moment. Please try again shortly.',
+                        'I could not verify admin status, so commands are paused here for now. Please try again in a moment.'
+                    ])
                 }, { quoted: msg });
                 return;
             }
 
             if (!senderIsGroupAdmin) {
                 await this.safeSendMessage(sock, chatId, {
-                    text: 'Only group admins can use the bot in this group for now.'
+                    text: chooseReply([
+                        'Only this group’s admins can use the bot here for now.',
+                        'Bot access is currently limited to this group’s admins. Thank you for understanding.',
+                        'For now, only admins of this group can use the bot here.'
+                    ])
                 }, { quoted: msg });
                 return;
             }
@@ -219,7 +232,11 @@ class CommandHandler {
             if (availableAt > now) {
                 const secondsLeft = Math.ceil((availableAt - now) / 1000);
                 await this.safeSendMessage(sock, msg.key.remoteJid, {
-                    text: `Slow down a little. Try again in ${secondsLeft}s.`
+                    text: chooseReply([
+                        `Please give me ${secondsLeft}s before trying that command again.`,
+                        `That command is on a short cooldown. Please try again in ${secondsLeft}s.`,
+                        `Just a moment, please. You can use that command again in ${secondsLeft}s.`
+                    ])
                 }, { quoted: msg });
                 return;
             }
@@ -250,7 +267,13 @@ class CommandHandler {
                 command: command.config.name,
                 error: error.message
             });
-            await this.safeSendMessage(sock, msg.key.remoteJid, { text: `There was an error executing that command.here${error.message}`});
+            await this.safeSendMessage(sock, msg.key.remoteJid, {
+                text: chooseReply([
+                    'I could not complete that command just now. Please try again in a moment.',
+                    'Something interrupted that command. Please try again shortly.',
+                    'I ran into a problem while handling that request. Please try again in a little while.'
+                ])
+            }, { quoted: msg });
         }
     }
 }

@@ -5,6 +5,7 @@ const {
     getErrorMessage,
     isNetworkTimeout
 } = require('./qwen');
+const { chooseReply } = require('../utils/replyCopy');
 
 const FALLBACK_MODEL = 'qwen/qwen3.6-flash';
 
@@ -37,7 +38,10 @@ async function askAsta(message, conversationId) {
     const prompt = buildPrompt(conversationId, message);
 
     const astaPrompt = [
-        'You are Asta, a helpful WhatsApp bot. Keep replies clear, friendly, natural, and useful.',
+        'You are Asta, a helpful WhatsApp assistant. Be professional, warm, emotionally considerate, and natural.',
+        'Acknowledge the user’s feelings when relevant without sounding dramatic or claiming to have human experiences.',
+        'Give clear, accurate, useful answers. Be concise when the request is simple, and explain uncertainty honestly.',
+        'Avoid canned greetings, excessive exclamation marks, and repetitive sign-offs. Match the user’s tone respectfully.',
         prompt
     ].join('\n\n');
 
@@ -80,7 +84,7 @@ module.exports = {
         const message = args.join(' ').trim();
         if (!message) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Please send a message to start chatting with Asta.\nExample: !asta hi'
+                text: 'I am here to help. Send me a message to start a conversation with Asta.\nExample: .asta hi'
             }, { quoted: msg });
             return;
         }
@@ -96,8 +100,12 @@ module.exports = {
             }
 
             const text = isNetworkTimeout(error, errorMessage)
-                ? 'Asta could not connect to the AI service before it timed out. Please try again in a moment.'
-                : `There was an error talking to Asta: ${errorMessage}`;
+                ? chooseReply([
+                    'I could not reach the AI service just now. Please try again in a moment.',
+                    'The connection timed out before I could prepare a reply. Please try again shortly.',
+                    'I am having trouble connecting right now. Your message is safe to send again in a little while.'
+                ])
+                : 'I could not complete that reply just now. Please try again in a moment.';
 
             await sock.sendMessage(msg.key.remoteJid, {
                 text
@@ -116,8 +124,12 @@ module.exports = {
             }
 
             const text = isNetworkTimeout(error, errorMessage)
-                ? 'Asta could not connect to the AI service before it timed out. Please try again in a moment.'
-                : `There was an error continuing the conversation: ${errorMessage}`;
+                ? chooseReply([
+                    'I could not reconnect to continue our conversation. Please try again in a moment.',
+                    'The connection timed out while I was preparing a reply. Please send that again shortly.',
+                    'I am having trouble connecting right now, but we can continue when the service is back.'
+                ])
+                : 'I could not continue the conversation just now. Please try again in a moment.';
 
             await sock.sendMessage(msg.key.remoteJid, {
                 text

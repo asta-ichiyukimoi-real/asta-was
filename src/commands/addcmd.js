@@ -1,6 +1,7 @@
 const state = require('../utils/stateManager');
 const fs = require('fs');
 const path = require('path');
+const { chooseReply } = require('../utils/replyCopy');
 
 function isValidName(name) {
     return /^[a-z0-9_-]{2,24}$/.test(name);
@@ -43,7 +44,7 @@ module.exports = {
 
         if (!name || !response) {
             await sock.sendMessage(chatId, {
-                text: 'Use: !addcmd <name> <response>\nExample: !addcmd rules Be respectful and no spam.'
+                text: 'Please use the command in this format:\nUse: !addcmd <name> <response>\nExample: !addcmd rules Be respectful and no spam.'
             }, { quoted: msg });
             return;
         }
@@ -57,19 +58,24 @@ module.exports = {
 
         if (reservedCommandNames().has(name)) {
             await sock.sendMessage(chatId, {
-                text: `!${name} is already a built-in command or alias. Pick another name.`
+                text: `!${name} is already a built-in command or alias. Please choose a different name.`
             }, { quoted: msg });
             return;
         }
 
         if (response.length > 1500) {
-            await sock.sendMessage(chatId, { text: 'Custom command response is too long.' }, { quoted: msg });
+            await sock.sendMessage(chatId, {
+                text: chooseReply([
+                    'That custom command response is too long. Please shorten it and try again.',
+                    'Please shorten the custom command response before saving it.'
+                ])
+            }, { quoted: msg });
             return;
         }
 
         state.setCustomCommand(chatId, name, response);
         await sock.sendMessage(chatId, {
-            text: `Custom command saved. Use !${name} to run it.`
+            text: `Your custom command has been saved. Use !${name} whenever you are ready to run it.`
         }, { quoted: msg });
     }
 };

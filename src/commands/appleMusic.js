@@ -637,7 +637,7 @@ module.exports = {
                 {
                     text:
                         '🎵 *Music Command*\n\n' +
-                        'Send a song name.\n\n' +
+                        'Please provide a song name.\n\n' +
                         'Example:\n' +
                         '.music faded'
                 },
@@ -656,7 +656,7 @@ module.exports = {
                     msg.key.remoteJid,
                     {
                         text:
-                            `❌ No songs found for *${query}*.`
+                            `I could not find any songs for *${query}*.`
                     },
                     { quoted: msg }
                 );
@@ -690,7 +690,7 @@ module.exports = {
             await sock.sendMessage(
                 msg.key.remoteJid,
                 {
-                    text: '❌ Reply with *1* or *2*.'
+                    text: 'Please reply with *1* or *2* to choose an option.'
                 },
                 { quoted: msg }
             );

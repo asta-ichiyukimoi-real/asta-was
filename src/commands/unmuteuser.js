@@ -20,7 +20,7 @@ module.exports = {
         }
 
         if (!msg.mentionedJids || msg.mentionedJids.length === 0) {
-            return await sock.sendMessage(chat, { text: '❌ Please mention a user to unmute' });
+            return await sock.sendMessage(chat, { text: 'Please mention the user you would like to unmute.' });
         }
 
         const targetUser = msg.mentionedJids[0];
@@ -39,11 +39,11 @@ module.exports = {
 
                 await statsManager.recordCommand('unmuteuser', chat, msg.key.participant, 0, 'success');
             } else {
-                await sock.sendMessage(chat, { text: '⚠️ User was not muted' });
+                await sock.sendMessage(chat, { text: 'That user is not currently muted in this group.' });
             }
         } catch (error) {
             console.error('Error unmuting user:', error);
-            await sock.sendMessage(chat, { text: '❌ Error unmuting user' });
+            await sock.sendMessage(chat, { text: 'I could not unmute that user just now. Please try again.' });
             await statsManager.recordCommand('unmuteuser', chat, msg.key.participant, 0, 'error');
         }
     }

@@ -82,7 +82,7 @@ module.exports = {
             if (!isBotAdmin) {
                 await sock.sendMessage(
                     groupId,
-                    { text: 'I am not an admin.' },
+                    { text: 'I need to be a group admin to remove members.' },
                     { quoted: msg }
                 );
                 return;
@@ -94,7 +94,7 @@ module.exports = {
                 await sock.sendMessage(
                     groupId,
                     {
-                        text: 'Mention someone or reply to their message.\nExample: !kick @user'
+                        text: 'Please mention someone or reply to their message.\nExample: !kick @user'
                     },
                     { quoted: msg }
                 );
@@ -112,7 +112,7 @@ module.exports = {
             if (!validTargets.length) {
                 await sock.sendMessage(
                     groupId,
-                    { text: 'I cannot remove myself.' },
+                    { text: 'I cannot remove myself from the group.' },
                     { quoted: msg }
                 );
                 return;
@@ -138,7 +138,7 @@ module.exports = {
             await sock.sendMessage(
                 groupId,
                 {
-                    text: `Failed to remove the user.\n${error.message || 'Unknown error'}`
+                    text: `I could not remove that user. Please try again.\n${error.message || 'Unknown error'}`
                 },
                 { quoted: msg }
             );

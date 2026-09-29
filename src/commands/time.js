@@ -31,7 +31,7 @@ module.exports = {
             }, { quoted: msg });
         } catch {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Invalid timezone. Try something like: !time Africa/Lagos'
+                text: 'I could not recognize that timezone. Please try a format such as: !time Africa/Lagos'
             }, { quoted: msg });
         }
     }

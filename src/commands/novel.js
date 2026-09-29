@@ -1,5 +1,6 @@
 const axios = require('axios');
 const AdmZip = require('adm-zip');
+const { chooseReply } = require('../utils/replyCopy');
 
 const BASE = 'https://omegatech-api.dixonomega.tech/api/Novel/novel';
 const TTS_BASE = 'https://omegatech-api.dixonomega.tech/api/ai/text2speech-v3';
@@ -241,13 +242,23 @@ module.exports = {
         try {
             if (subCmd === 'search') {
                 const query = args.slice(1).join(' ');
-                if (!query) return await sock.sendMessage(chatId, { text: 'Give me a novel name to search.' }, { quoted: msg });
+                if (!query) return await sock.sendMessage(chatId, {
+                    text: chooseReply([
+                        'Please provide a novel title to search for.',
+                        'What novel would you like me to look up?'
+                    ])
+                }, { quoted: msg });
 
                 await sock.sendMessage(chatId, { text: `Searching *${query}*...` }, { quoted: msg });
 
                 const { data } = await axios.get(`${BASE}?action=search&query=${encodeURIComponent(query)}`, { timeout: 15000 });
                 if (!data.success || !Array.isArray(data.results) || !data.results.length) {
-                    return await sock.sendMessage(chatId, { text: 'No results found.' }, { quoted: msg });
+                    return await sock.sendMessage(chatId, {
+                        text: chooseReply([
+                            'I could not find any novels matching that search.',
+                            'No matching novels came up for that search.'
+                        ])
+                    }, { quoted: msg });
                 }
 
                 let text = `*Search Results for:* ${data.query || query}\n*Total:* ${data.total || data.results.length}\n\n`;
@@ -263,7 +274,9 @@ module.exports = {
                 await sock.sendMessage(chatId, { text }, { quoted: msg });
             } else if (subCmd === 'chapters') {
                 const novelId = args[1];
-                if (!novelId) return await sock.sendMessage(chatId, { text: 'Give me a novelId.' }, { quoted: msg });
+                if (!novelId) return await sock.sendMessage(chatId, {
+                    text: 'Please provide the novelId from a search result.'
+                }, { quoted: msg });
 
                 await sock.sendMessage(chatId, { text: 'Loading chapters...' }, { quoted: msg });
 
@@ -283,7 +296,9 @@ module.exports = {
                 const param1 = args[1];
                 const param2 = args[2];
 
-                if (!param1) return await sock.sendMessage(chatId, { text: 'Give me a chapterId or novelId.' }, { quoted: msg });
+                if (!param1) return await sock.sendMessage(chatId, {
+                    text: 'Please provide a chapterId or novelId.'
+                }, { quoted: msg });
 
                 if (param2 && !isNaN(param2)) {
                     await sock.sendMessage(chatId, { text: 'Getting chapter list...' }, { quoted: msg });
@@ -355,7 +370,7 @@ module.exports = {
 
                 if (!chapterId) {
                     return await sock.sendMessage(chatId, {
-                        text: 'Give me a chapterId or novelId.\nUsage: .novel listen <chapterId> [voice] [language]\nOr: .novel listen <novelId> <chapterNum> [voice] [language]'
+                        text: 'Please provide a chapterId or novelId.\nUsage: .novel listen <chapterId> [voice] [language]\nOr: .novel listen <novelId> <chapterNum> [voice] [language]'
                     }, { quoted: msg });
                 }
 
@@ -383,7 +398,9 @@ module.exports = {
                     chunks.push(cleanText.slice(i, i + CHUNK_SIZE));
                 }
 
-                if (chunks.length === 0) return await sock.sendMessage(chatId, { text: 'No content to speak.' }, { quoted: msg });
+                if (chunks.length === 0) return await sock.sendMessage(chatId, {
+                    text: 'I could not find any chapter text to turn into audio.'
+                }, { quoted: msg });
 
                 await sock.sendMessage(chatId, {
                     text: `*${chapData.chapterName}*\n${chunks.length} part${chunks.length > 1 ? 's' : ''} | Voice: ${voice} | Lang: ${language}\n\nGenerating audio, this may take a bit...`
@@ -399,7 +416,7 @@ module.exports = {
                         );
 
                         if (!ttsData.success || !ttsData.audio) {
-                            await sock.sendMessage(chatId, { text: `Part ${i + 1} failed.` });
+                            await sock.sendMessage(chatId, { text: `I could not generate audio for part ${i + 1}.` });
                             continue;
                         }
 
@@ -412,17 +429,19 @@ module.exports = {
                         await wait(1500);
                     } catch (err) {
                         console.error(`TTS chunk ${i + 1} error:`, err.message);
-                        await sock.sendMessage(chatId, { text: `Part ${i + 1} failed: ${err.response?.status || 'Error'}` });
+                        await sock.sendMessage(chatId, { text: `I could not generate audio for part ${i + 1}.\n${err.response?.status || 'Error'}` });
                     }
                 }
 
                 await sock.sendMessage(chatId, { text: `Done. All ${chunks.length} parts sent.` });
             } else {
-                await sock.sendMessage(chatId, { text: 'Unknown subcommand. Use: search, chapters, read, download, zip, listen' }, { quoted: msg });
+                await sock.sendMessage(chatId, { text: 'I do not recognize that option. Use: search, chapters, read, download, zip, listen' }, { quoted: msg });
             }
         } catch (err) {
             console.error('Novel command error:', err.response?.status, err.message);
-            await sock.sendMessage(chatId, { text: `Error: ${err.message || err.response?.status || 'Request failed'}` }, { quoted: msg });
+            await sock.sendMessage(chatId, {
+                text: `I could not complete that request just now. Please try again.\n${err.message || err.response?.status || 'Request failed'}`
+            }, { quoted: msg });
         }
     }
 };

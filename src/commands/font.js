@@ -61,7 +61,7 @@ module.exports = {
         const nextFont = normalizeFontName(input);
         if (!availableFonts().includes(nextFont)) {
             await sock.sendMessage(chatId, {
-                text: `Unknown font: ${input}\nUse .font list to see available fonts.`
+                text: `I could not find a font named "${input}".\nUse .font list to see available fonts.`
             }, { quoted: msg });
             return;
         }

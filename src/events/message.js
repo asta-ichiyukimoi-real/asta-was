@@ -2,8 +2,12 @@ const config = require('../../config');
 const state = require('../utils/stateManager');
 const logger = require('../utils/logger');
 const groupApproval = require('../utils/groupApproval');
-const { isGroupAdmin: isGroupAdminParticipant } = require('../utils/commandPermissions');
+const {
+    isGroupAdmin: isGroupAdminParticipant,
+    normalizeJid
+} = require('../utils/commandPermissions');
 const { chooseRandomEmoji } = require('../utils/emojiReaction');
+const { chooseAutoReply } = require('../utils/replyCopy');
 
 // Lazy load stats to avoid circular dependencies
 let statsManager = null;
@@ -116,6 +120,34 @@ function getContextInfo(msg) {
         || message.videoMessage?.contextInfo
         || message.documentMessage?.contextInfo
         || null;
+}
+
+function isBotMentioned(msg, sock) {
+    if (!String(msg.key.remoteJid || '').endsWith('@g.us')) return false;
+
+    const mentionedJids = getContextInfo(msg)?.mentionedJid || [];
+    if (!mentionedJids.length) return false;
+
+    const botJids = [sock.user?.id, sock.user?.lid, sock.user?.phone]
+        .filter(Boolean)
+        .map(normalizeJid);
+    return mentionedJids.some(mentionedJid => botJids.includes(normalizeJid(mentionedJid)));
+}
+
+function removeBotMention(text, msg, sock) {
+    const mentionedJids = getContextInfo(msg)?.mentionedJid || [];
+    const botJids = new Set([sock.user?.id, sock.user?.lid, sock.user?.phone].filter(Boolean).map(normalizeJid));
+    const botMentionNumbers = mentionedJids
+        .filter(mentionedJid => botJids.has(normalizeJid(mentionedJid)))
+        .map(mentionedJid => String(mentionedJid).split('@')[0].replace(/:\d+$/, ''))
+        .filter(Boolean);
+
+    let message = String(text || '');
+    for (const number of botMentionNumbers) {
+        const escaped = number.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        message = message.replace(new RegExp(`(^|\\s)@${escaped}(?=\\s|$|[,.!?])`, 'g'), '$1');
+    }
+    return message.replace(/\s+/g, ' ').replace(/\s+([,!?])/g, '$1').trim();
 }
 
 function getQuotedText(quotedMessage) {
@@ -467,6 +499,12 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
                     }
                 }
 
+                if (!msg.key.fromMe && isBotMentioned(msg, sock)) {
+                    const prompt = removeBotMention(text, msg, sock);
+                    await commandHandler.execute(sock, msg, 'astgroup', prompt ? [prompt] : []);
+                    return;
+                }
+
                 const prefix = state.getChatPrefix(msg.key.remoteJid, configCommandHandler?.getPrefix?.() || config.prefix);
                 if (text.startsWith(prefix)) {
                     const args = text.slice(prefix.length).trim().split(/ +/);
@@ -516,10 +554,14 @@ module.exports = (sock, commandHandler, chatCommandHandler, replyCommandHandler,
                 if (autoReplyEnabled) {
                     const matchedKeyword = findAutoReply(text, botState.autoReply);
                     if (matchedKeyword) {
+                        const prefix = state.getChatPrefix(
+                            msg.key.remoteJid,
+                            configCommandHandler?.getPrefix?.() || config.prefix
+                        );
                         await safeSendMessage(
                             sock,
                             msg.key.remoteJid,
-                            { text: botState.autoReply.keywords[matchedKeyword] },
+                            { text: chooseAutoReply(matchedKeyword, botState.autoReply.keywords[matchedKeyword], prefix) },
                             undefined,
                             'auto_reply_send_error'
                         );

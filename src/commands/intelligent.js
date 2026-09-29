@@ -4,6 +4,7 @@ const state = require('../utils/stateManager');
 const { friendlyApiError, getErrorMessage, isTimeout } = require('../utils/apiClient');
 const contextResolver = require('../utils/contextResolver');
 const logger = require('../utils/logger');
+const { chooseReply, ASSISTANT_TONE_GUIDANCE } = require('../utils/replyCopy');
 
 const AI_CHAT_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Chatbot';
 const VISION_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini';
@@ -464,10 +465,12 @@ async function sendPresence(sock, msg, type) {
 
 function buildPromptWithMemory(msg, prompt) {
     const context = buildContextText(msg);
-    if (!context) return prompt;
+    const guidance = ASSISTANT_TONE_GUIDANCE;
+    if (!context) return `${guidance}\n\nUser: ${prompt}`;
 
     return [
         'Use this recent conversation context when helpful. Do not mention the context unless it matters.',
+        guidance,
         context,
         '',
         `User: ${prompt}`
@@ -661,7 +664,11 @@ async function sendIntelligentError(sock, msg, error) {
     }
 
     const text = isNetworkTimeout(error, errorMessage)
-        ? 'AI could not connect before the network timed out. Please try again in a moment.'
+        ? chooseReply([
+            'I could not reach the AI service just now. Please try again in a moment.',
+            'The connection timed out before I could prepare a reply. Please try again shortly.',
+            'I am having trouble connecting right now. Please send your request again in a little while.'
+        ])
         : friendlyApiError(error, 'AI API');
 
     await sock.sendMessage(msg.key.remoteJid, { text }, { quoted: msg });

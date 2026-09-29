@@ -76,14 +76,14 @@ module.exports = {
         }
 
         if (!['add', 'remove', 'del', 'delete'].includes(action)) {
-            await sock.sendMessage(chatId, { text: 'Use: .adminid add/remove/list' }, { quoted: msg });
+            await sock.sendMessage(chatId, { text: 'Please choose an action.\nUse: .adminid add/remove/list' }, { quoted: msg });
             return;
         }
 
         const target = normalizeId(targetFromMessage(msg, args));
         if (!target) {
             await sock.sendMessage(chatId, {
-                text: 'Give me a LID/JID, mention someone, or reply to their message.'
+                text: 'Please provide a LID/JID, mention someone, or reply to their message.'
             }, { quoted: msg });
             return;
         }

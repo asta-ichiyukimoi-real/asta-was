@@ -27,7 +27,7 @@ module.exports = {
         const query = args.join(' ').trim();
         if (!query) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Please provide a search query. Example: .wikipedia Asta'
+                text: 'Please share a topic to search for.\nExample: .wikipedia Asta'
             }, { quoted: msg });
             return;
         }
@@ -37,7 +37,7 @@ module.exports = {
 
             if (!Array.isArray(results) || results.length === 0) {
                 await sock.sendMessage(msg.key.remoteJid, {
-                    text: `No Wikipedia results found for: ${query}`
+                    text: `I could not find any Wikipedia results for: ${query}`
                 }, { quoted: msg });
                 return;
             }
@@ -60,7 +60,7 @@ module.exports = {
         } catch (error) {
             console.error('Wikipedia command error:', error);
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'There was an error fetching Wikipedia results. Please try again later.'
+                text: 'I could not retrieve Wikipedia results just now. Please try again later.'
             }, { quoted: msg });
         }
     }

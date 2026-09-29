@@ -16,7 +16,9 @@ module.exports = {
     onRun: async (sock, msg, args) => {
         const query = args.join(' ').trim();
         if (!query) {
-            await sock.sendMessage(msg.key.remoteJid, { text: '📺 Please provide a search term. Example: !youtube asta' }, { quoted: msg });
+            await sock.sendMessage(msg.key.remoteJid, {
+                text: 'Please share a topic or title to search for.\nExample: !youtube asta'
+            }, { quoted: msg });
             return;
         }
 
@@ -35,7 +37,7 @@ module.exports = {
             const results = data.results || [];
 
             if (!Array.isArray(results) || results.length === 0) {
-                await sock.sendMessage(msg.key.remoteJid, { text: `🔍 No YouTube results found for: ${actualQuery}` }, { quoted: msg });
+                await sock.sendMessage(msg.key.remoteJid, { text: `I could not find any YouTube results for: ${actualQuery}` }, { quoted: msg });
                 return;
             }
 
@@ -56,7 +58,7 @@ ${url}`;
             await sock.sendMessage(msg.key.remoteJid, { text: reply }, { quoted: msg });
         } catch (error) {
             console.error('YouTube command error:', error);
-            await sock.sendMessage(msg.key.remoteJid, { text: '⚠️ There was an error fetching YouTube results. Please try again later.' }, { quoted: msg });
+            await sock.sendMessage(msg.key.remoteJid, { text: 'I could not retrieve YouTube results just now. Please try again later.' }, { quoted: msg });
         }
     }
 };

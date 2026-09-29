@@ -89,7 +89,7 @@ module.exports = {
                 await sock.sendMessage(chatId, { sticker: stickerBuffer }, { quoted: targetMessage });
             } catch (error) {
                 await sock.sendMessage(chatId, {
-                    text: `Could not create sticker from reaction:\n${String(error.message || error).slice(0, 1000)}`
+                    text: `I could not create a sticker from that reaction. Please try again.\n${String(error.message || error).slice(0, 1000)}`
                 }, { quoted: msg });
             }
             return true;

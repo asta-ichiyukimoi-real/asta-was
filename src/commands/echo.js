@@ -17,7 +17,9 @@ ${text}
 > Sent back exactly as requested.`;
             await sock.sendMessage(msg.key.remoteJid, { text: reply }, { quoted: msg });
         } else {
-            await sock.sendMessage(msg.key.remoteJid, { text: '⚠️ Please provide some text after the command to echo it back.' }, { quoted: msg });
+            await sock.sendMessage(msg.key.remoteJid, {
+                text: 'Please include the text you would like me to echo.'
+            }, { quoted: msg });
         }
     }
 };

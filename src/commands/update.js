@@ -74,7 +74,8 @@ function preserveLocalPermissions() {
     localPermissions.saveLocalPermissions({
         owner: config.owner || config.permissions?.owner || '',
         owners,
-        admins
+        admins,
+        pairingPhoneNumber: config.connection?.pairingPhoneNumber ?? ''
     });
 }
 
@@ -851,7 +852,7 @@ module.exports = {
         } catch (error) {
             console.error('Update command error:', error);
             await sock.sendMessage(chatId, {
-                text: `Update failed:\n${String(error.message || error).slice(0, 3000)}`
+                text: `I could not complete the update just now. Please try again.\n${String(error.message || error).slice(0, 3000)}`
             }, { quoted: msg });
         }
     },
@@ -908,7 +909,7 @@ module.exports = {
         } catch (error) {
             console.error('Update reply error:', error);
             await sock.sendMessage(chatId, {
-                text: `Update failed:\n${String(error.message || error).slice(0, 3000)}`
+                text: `I could not complete the update just now. Please try again.\n${String(error.message || error).slice(0, 3000)}`
             }, { quoted: msg });
         }
     },
@@ -961,7 +962,7 @@ module.exports = {
         } catch (error) {
             console.error('Update reaction error:', error);
             await sock.sendMessage(chatId, {
-                text: `Update failed:\n${String(error.message || error).slice(0, 3000)}`
+                text: `I could not complete the update just now. Please try again.\n${String(error.message || error).slice(0, 3000)}`
             }, { quoted: msg });
             return true;
         }

@@ -28,7 +28,7 @@ module.exports = {
                         });
                     } catch(err) {
                         await sock.sendMessage(msg.key.remoteJid, {
-                text: `an error occured ${err.message}`
+                text: `I could not generate the voice note just now. Please try again.\n${err.message}`
             }, { quoted: msg });
                     }
     }

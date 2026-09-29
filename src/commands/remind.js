@@ -41,7 +41,7 @@ module.exports = {
 
         if (duration > 30 * 24 * 60 * 60 * 1000) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Reminder time is too long. Please keep it within 30 days.'
+                text: 'That reminder is more than 30 days away. Please choose a shorter delay.'
             }, { quoted: msg });
             return;
         }
@@ -56,7 +56,7 @@ module.exports = {
         });
 
         await sock.sendMessage(msg.key.remoteJid, {
-            text: `Reminder set for ${durationArg}. It will survive bot restarts.`
+            text: `Your reminder is set for ${durationArg} and will remain scheduled if the bot restarts.`
         }, { quoted: msg });
     }
 };

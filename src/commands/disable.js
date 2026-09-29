@@ -49,7 +49,9 @@ module.exports = {
         const resolvedName = resolveCommandName(commandName);
 
         if (PROTECTED.has(resolvedName)) {
-            await sock.sendMessage(chatId, { text: `You cannot disable !${resolvedName}.` }, { quoted: msg });
+            await sock.sendMessage(chatId, {
+                text: `The !${resolvedName} command is protected and cannot be disabled.`
+            }, { quoted: msg });
             return;
         }
 

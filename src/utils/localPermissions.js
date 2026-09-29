@@ -14,6 +14,10 @@ function validatePermissionOverrides(value) {
         }
     }
 
+    if (value.pairingPhoneNumber !== undefined && typeof value.pairingPhoneNumber !== 'string') {
+        throw new Error('Local pairing phone number override must be a string.');
+    }
+
     for (const key of ['owners', 'admins']) {
         if (value[key] !== undefined
             && (!Array.isArray(value[key]) || value[key].some(item => typeof item !== 'string'))) {
@@ -24,7 +28,8 @@ function validatePermissionOverrides(value) {
     return {
         ...(value.owner !== undefined ? { owner: value.owner } : {}),
         ...(value.owners !== undefined ? { owners: value.owners } : {}),
-        ...(value.admins !== undefined ? { admins: value.admins } : {})
+        ...(value.admins !== undefined ? { admins: value.admins } : {}),
+        ...(value.pairingPhoneNumber !== undefined ? { pairingPhoneNumber: value.pairingPhoneNumber } : {})
     };
 }
 
@@ -60,7 +65,7 @@ function saveLocalPermissions(overrides) {
                 error.message += `; temporary file cleanup failed: ${cleanupError.message}`;
             }
         }
-        throw new Error(`Could not save local owner/admin IDs: ${error.message}`);
+        throw new Error(`Could not save local configuration overrides: ${error.message}`);
     }
 }
 

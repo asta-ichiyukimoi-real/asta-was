@@ -26,7 +26,7 @@ module.exports = {
 
 `;
                 if (topUsers.length === 0) {
-                    response += 'No user data yet. Start using commands!';
+                    response += 'No user activity is available yet. Try a command to get started.';
                 } else {
                     topUsers.forEach((user, index) => {
                         const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
@@ -44,7 +44,7 @@ module.exports = {
 
 `;
                 if (topCommands.length === 0) {
-                    response += 'No command data yet. Try using some commands!';
+                    response += 'No command activity is available yet. Try a few commands to get started.';
                 } else {
                     topCommands.forEach((cmd, index) => {
                         const medal = index === 0 ? '🔴' : index === 1 ? '🟠' : index === 2 ? '🟡' : '⚪';
@@ -74,7 +74,7 @@ Usage: ${require('../../config').prefix}leaderboard <type>`;
         } catch (error) {
             console.error('Leaderboard command error:', error);
             await sock.sendMessage(msg.key.remoteJid, 
-                { text: '❌ Error fetching leaderboard. Please try again.' }, 
+                { text: 'I could not load the leaderboard just now. Please try again.' },
                 { quoted: msg }
             );
         }

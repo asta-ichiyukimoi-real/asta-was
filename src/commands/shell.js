@@ -73,7 +73,7 @@ module.exports = {
 
         if (!command) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Use: .shell <command>'
+                text: 'Please provide a shell command to run.\nUse: .shell <command>'
             }, { quoted: msg });
             return;
         }
@@ -84,7 +84,7 @@ module.exports = {
                 command
             });
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'That shell command matched a blocked pattern.'
+                text: 'That shell command matches a blocked pattern and cannot be run.'
             }, { quoted: msg });
             return;
         }

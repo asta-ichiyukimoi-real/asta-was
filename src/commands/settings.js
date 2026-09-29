@@ -41,7 +41,7 @@ ${config.prefix}badword list`;
         const value = args[1]?.toLowerCase();
         if (!['on', 'off'].includes(value)) {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Use on or off.\nExample: !settings welcome on'
+                text: 'Please choose either on or off.\nExample: !settings welcome on'
             }, { quoted: msg });
             return;
         }
@@ -59,7 +59,7 @@ ${config.prefix}badword list`;
             await sock.sendMessage(msg.key.remoteJid, { text: `Auto-reply ${value}.` }, { quoted: msg });
         } else {
             await sock.sendMessage(msg.key.remoteJid, {
-                text: 'Unknown setting. Use !settings to see available options.'
+                text: 'I do not recognize that setting. Use !settings to review the available options.'
             }, { quoted: msg });
         }
     }

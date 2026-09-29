@@ -70,7 +70,9 @@ module.exports = {
     onRun: async (sock, msg, args) => {
         const query = args.join(' ').trim();
         if (!query) {
-            await sock.sendMessage(msg.key.remoteJid, { text: 'Use: .find <query>' }, { quoted: msg });
+            await sock.sendMessage(msg.key.remoteJid, {
+                text: 'Please provide a search query.\nUse: .find <query>'
+            }, { quoted: msg });
             return;
         }
 
@@ -82,7 +84,9 @@ module.exports = {
         const choice = parseChoice(replyText);
 
         if (!query) {
-            await sock.sendMessage(msg.key.remoteJid, { text: 'Start again with .find <query>.' }, { quoted: msg });
+            await sock.sendMessage(msg.key.remoteJid, {
+                text: 'That search has expired. Please start again with .find <query>.'
+            }, { quoted: msg });
             return;
         }
 
