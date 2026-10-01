@@ -1,5 +1,5 @@
 const API_URL =
-    'https://omegatech-api.dixonomega.tech/api/download/Pinterest';
+    'https://api.omegatech.app/api/download/Pinterest';
 
 const MAX_IMAGES = 10;
 const DEFAULT_LIMIT = 1;

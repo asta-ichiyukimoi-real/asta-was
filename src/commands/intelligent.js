@@ -6,9 +6,9 @@ const contextResolver = require('../utils/contextResolver');
 const logger = require('../utils/logger');
 const { chooseReply, ASSISTANT_TONE_GUIDANCE } = require('../utils/replyCopy');
 
-const AI_CHAT_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Chatbot';
-const VISION_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini';
-const IMAGE_URL = 'https://omegatech-api.dixonomega.tech/api/ai/Aicli';
+const AI_CHAT_URL = 'https://api.omegatech.app/api/ai/Chatbot';
+const VISION_URL = 'https://api.omegatech.app/api/ai/Gpt-4-mini';
+const IMAGE_URL = ' https://api.omegatech.app/api/ai/flux';
 const CATBOX_UPLOAD_URL = 'https://catbox.moe/user/api.php';
 const LOCAL_TIME_ZONE = process.env.BOT_TIMEZONE || config.ai?.timezone || config.bot?.timezone || 'Africa/Lagos';
 const MAX__IMAGES = config.ai?.maxImages || config.media?.MaxImages || 8;
@@ -435,7 +435,7 @@ async function uploadImageForVision(image) {
 
 async function searchImages(query, count = 1) {
     const limit = Math.min(Math.max(Number(count) || 1, 1), MAX__IMAGES);
-    const baseUrl = `${IMAGE_URL}?action=image&model=flux&query=${encodeURIComponent(query)}`;
+    const baseUrl = `${IMAGE_URL}?prompt${encodeURIComponent(query)}`;
     
     const images = [];
     for(let i = 0; i < limit; i++) {
