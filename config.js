@@ -79,14 +79,14 @@ module.exports = {
     },
 
     apis: {
-        omegatechBase: 'https://omegatech-api.dixonomega.tech',
+        omegatechBase: 'https://api.omegatech.app',
         astaGroupChat: 'https://api.omegatech.app/api/ai/Gpt-4-mini',
         aiChat: 'https://vision-scrape-2ex8.onrender.com/ai/chat',
-        aiResearch: 'https://omegatech-api.dixonomega.tech/api/ai/Ai-research',
-        aiVision: 'https://omegatech-api.dixonomega.tech/api/ai/Gpt-4-mini',
-        pinterest: 'https://omegatech-api.dixonomega.tech/api/Search/pinterest',
-        wallpaper: 'https://omegatech-api.dixonomega.tech/api/tools/wallpaper',
-        mediaDownload: 'https://omegatech-api.dixonomega.tech/api/download/play',
+        aiResearch: 'https://api.omegatech.app/api/ai/Ai-research',
+        aiVision: 'https://api.omegatech.app/api/ai/Gpt-4-mini',
+        pinterest: 'https://api.omegatech.app/api/download/Pinterest',
+        wallpaper: 'https://api.omegatech.app/api/tools/wallpaper',
+        mediaDownload: 'https://api.omegatech.app/api/download/play',
         catboxUpload: 'https://catbox.moe/user/api.php'
     },
 

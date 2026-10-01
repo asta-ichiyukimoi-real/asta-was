@@ -435,7 +435,7 @@ async function uploadImageForVision(image) {
 
 async function searchImages(query, count = 1) {
     const limit = Math.min(Math.max(Number(count) || 1, 1), MAX__IMAGES);
-    const baseUrl = `${IMAGE_URL}?prompt${encodeURIComponent(query)}`;
+    const baseUrl = `${IMAGE_URL}?prompt=${encodeURIComponent(query)}`;
     
     const images = [];
     for(let i = 0; i < limit; i++) {

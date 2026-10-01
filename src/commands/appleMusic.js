@@ -5,7 +5,7 @@ const { friendlyApiError } = require('../utils/apiClient');
 
 const API_URL =
     config.apis?.appleMusic ||
-    'https://omegatech-api.dixonomega.tech/api/Search/Applemusic';
+    'https://api.omegatech.app/api/Search/Applemusic';
 
 const SEARCH_LIMIT = 2;
 const TIMEOUT_MS = 60000;
