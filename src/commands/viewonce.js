@@ -127,7 +127,7 @@ module.exports = {
             '.viewonce'
         ],
 
-        permissions: 0,
+        permissions: 2,
 
         cooldown: 5,
 

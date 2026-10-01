@@ -174,67 +174,97 @@ async function askAstaGroup(conversationId, message, imageUrl = '') {
     }
 
     const url = new URL(apiUrl);
-    url.searchParams.set('action', 'chat');
     url.searchParams.set('message', buildApiMessage(conversationId, message, imageUrl));
     url.searchParams.set('sessionId', getSessionId(conversationId));
     if (imageUrl) {
         url.searchParams.set('imageUrl', imageUrl);
     }
 
-    const timeoutMs = global.configCommandHandler?.get?.('ai.requestTimeoutMs', config.ai.requestTimeoutMs)
-        || 45000;
+    const timeoutMs = global.configCommandHandler?.get?.(
+        imageUrl ? 'ai.visionTimeoutMs' : 'ai.requestTimeoutMs',
+        imageUrl ? config.ai.visionTimeoutMs : config.ai.requestTimeoutMs
+    ) || (imageUrl ? 60000 : 45000);
+    const maxAttempts = 2;
     let response;
-    try {
-        logAstaDiagnostic('asta_group_chat_request', {
-            hasApiUrl: true,
-            promptLength: url.searchParams.get('message')?.length || 0,
-            timeoutMs,
-            hasImage: Boolean(imageUrl)
-        });
-        const result = await fetch(url, {
-            headers: {
-                'Accept': 'application/json',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'
-            },
-            signal: AbortSignal.timeout(timeoutMs)
-        });
-        const body = await result.text();
-        const contentType = result.headers?.get?.('content-type') || '';
+    let reply;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
         try {
-            response = body.trim() ? JSON.parse(body.replace(/^\uFEFF/, '')) : null;
-        } catch {
-            response = null;
+            logAstaDiagnostic('asta_group_chat_request', {
+                apiHost: url.host,
+                apiPath: url.pathname,
+                promptLength: url.searchParams.get('message')?.length || 0,
+                requestLength: url.href.length,
+                timeoutMs,
+                attempt,
+                hasImage: Boolean(imageUrl)
+            });
+            const result = await fetch(url, {
+                headers: {
+                    Accept: 'application/json',
+                    'User-Agent': 'AstaBot/1.0'
+                },
+                signal: AbortSignal.timeout(timeoutMs)
+            });
+            const body = await result.text();
+            const contentType = result.headers?.get?.('content-type') || '';
+            try {
+                response = body.trim() ? JSON.parse(body.replace(/^\uFEFF/, '')) : null;
+            } catch {
+                response = null;
+            }
+
+            const requestMessage = url.searchParams.get('message') || '';
+            const apiError = (response?.success === false || !result.ok)
+                ? [response?.error, response?.details, response?.message === requestMessage ? null : response?.message]
+                    .find((value) => typeof value === 'string' && value.trim())
+                : null;
+            logAstaDiagnostic('asta_group_chat_response', {
+                httpStatus: result.status,
+                apiStatusCode: response?.statusCode || null,
+                ok: result.ok,
+                success: response?.success ?? null,
+                hasAnswer: typeof response?.answer === 'string' && Boolean(response.answer.trim()),
+                error: apiError ? apiError.slice(0, 240) : null,
+                contentType: contentType.split(';')[0] || 'unknown',
+                bodyLength: body.length,
+                bodyKind: classifyResponseBody(body, contentType),
+                attempt
+            });
+
+            if (!response) {
+                const error = new Error(`Asta group chat API returned a non-JSON response (HTTP ${result.status}, ${classifyResponseBody(body, contentType)}).`);
+                error.statusCode = result.status;
+                throw error;
+            }
+            if (!result.ok || response.success === false || response.status === false) {
+                const error = new Error(`Asta group chat API responded with HTTP ${result.status}${apiError ? `: ${apiError.slice(0, 240)}` : ''}.`);
+                error.statusCode = result.status;
+                throw error;
+            }
+
+            reply = typeof response.answer === 'string' ? response.answer.trim() :
+                typeof response.reply === 'string' ? response.reply.trim() : '';
+            if (!reply) {
+                throw new Error('Asta group chat API returned no reply.');
+            }
+            break;
+        } catch (error) {
+            if (isTimeout(error)) {
+                throw new Error('Asta group chat API request timed out.');
+            }
+            if (error.statusCode >= 500 && error.statusCode <= 599 && attempt < maxAttempts) {
+                logAstaDiagnostic('asta_group_chat_retry', { httpStatus: error.statusCode, attempt: attempt + 1 });
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                continue;
+            }
+            if (/^Asta group chat API/.test(error.message)) throw error;
+            throw new Error('Could not connect to the Asta group chat API.');
         }
-        logAstaDiagnostic('asta_group_chat_response', {
-            httpStatus: result.status,
-            ok: result.ok,
-            hasJson: Boolean(response),
-            hasReply: typeof response?.reply === 'string' && Boolean(response.reply.trim()),
-            contentType: contentType.split(';')[0] || 'unknown',
-            bodyLength: body.length,
-            bodyKind: classifyResponseBody(body, contentType),
-            hasAnswer: typeof response?.answer === 'string' && Boolean(response.answer.trim())
-        });
-        if (!response) {
-            throw new Error(`Asta group chat API returned a non-JSON response (HTTP ${result.status}, ${classifyResponseBody(body, contentType)}).`);
-        }
-        if (!result.ok || response.success === false || response.status === false) {
-            const apiError = [response.error, response.message, response.details]
-                .find((value) => typeof value === 'string' && value.trim());
-            throw new Error(`Asta group chat API responded with HTTP ${result.status}${apiError ? `: ${apiError.slice(0, 240)}` : ''}.`);
-        }
-    } catch (error) {
-        if (isTimeout(error)) {
-            throw new Error('Asta group chat API request timed out.');
-        }
-        if (/Asta group chat API/.test(error.message)) throw error;
-        throw new Error('Could not connect to the Asta group chat API.');
     }
 
-    const reply = typeof response.reply === 'string' ? response.reply.trim() :
-        typeof response.answer === 'string' ? response.answer.trim() : '';
     if (!reply) {
-        throw new Error('Asta group chat API returned no reply.');
+        throw new Error(`Asta group chat API did not return a reply after ${maxAttempts} attempts.`);
     }
 
     return reply;
@@ -285,6 +315,8 @@ async function sendAstaGroupReply(sock, msg, userMessage) {
                 'I’m having a little trouble connecting right now. Could you send that again in a moment?',
                 'The connection timed out before I could reply. I’m still here—please try again shortly.'
             ])
+            : /HTTP 5\d\d/.test(error.message)
+                ? 'The AI service is temporarily having trouble (server error). Please try again shortly.'
             : 'I couldn’t reach my chat service just now. Please try again in a little while.';
         await sock.sendMessage(msg.key.remoteJid, { text }, { quoted: msg });
     }
